@@ -442,7 +442,7 @@ compromettre la démonstration.
 - [x] ~~Protocole de preuve~~ — 20b brut vs 20b fine-tuné (§7)
 - [x] ~~Chantier pilote~~ — peinture et sols (§4)
 - [x] ~~Canal de démo~~ — web uniquement (§4)
-- [ ] **Planning des 4 mois** — devenu le point le plus urgent
+- [x] ~~Planning des 4 mois~~ — voir `PLANNING.md`
 - [ ] Valider les seuils d'acceptation de `DISPOSITIF_AGENT.md` §4
 - [ ] La voix : modalité d'entrée à décider (essentielle à la démo, ou confort ?).
       Impacte la validation des entrées, pas le modèle
