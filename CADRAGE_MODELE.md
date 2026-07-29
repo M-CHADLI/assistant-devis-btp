@@ -182,9 +182,33 @@ Principe : le noyau doit tenir en **une seule démo continue**, un seul parcours
 | 5 | **Consommables oubliés** — colle, joints, vis, EPI | Fonction « wow », expertise métier pure |
 | 6 | **Injection prix + promos** sur le devis | Payoff business (côté code) |
 
-Parcours de démo : *« je refais ma salle de bain »* → le modèle interroge →
-décompose → quantifie → produit le devis → rattrape les oublis → chiffre au prix
-promo → **le client et son artisan arbitrent et valident ensemble**.
+Parcours de démo : *« je refais mon salon — peinture et sol »* → le modèle
+interroge → décompose → quantifie → produit le devis → rattrape les oublis →
+chiffre au prix promo → **le client et son artisan arbitrent et valident ensemble**.
+
+### Chantier pilote — peinture et sols
+
+**Décision : le référentiel et la démo se limitent à la peinture et aux
+revêtements de sol.** C'est le domaine le plus rapide à boucler : rendements
+publiés clairement par les fabricants, quantitatif honnête mais simple (surfaces,
+couches, taux de chute), aucun lot technique lourd.
+
+Ce que ce choix coûte : moins de lots, donc une décomposition moins
+spectaculaire, et peu de cas en mention forte. Assumé — le sujet de la soutenance
+est le fine-tuning, pas l'étendue du catalogue.
+
+Ce que ce choix achète : un référentiel bouclé dans les délais, et donc du temps
+pour entraîner et mesurer. C'est le bon arbitrage.
+
+Élargissement possible (salle de bain, cloisons) **seulement** si le référentiel
+est clos et le premier entraînement passé.
+
+### Canal de démo — web uniquement
+
+**Décision : une seule interface, web.** La scène finale à deux acteurs y est
+naturelle (deux fenêtres, deux sessions). Le SMS reste une *capacité du modèle* —
+les exemples courts restent au dataset — mais n'est pas démontré : la plomberie
+Twilio ne prouve rien sur le fine-tuning.
 
 ### Second cercle (si le temps le permet)
 
@@ -231,7 +255,7 @@ Le modèle signale lui-même sa tâche via `intent`, le code route derrière.
 
 ```json
 {
-  "intent": "clarification | lots | quantitatif | devis | consommables",
+  "intent": "clarification | lots | quantitatif | devis | consommables | reponse",
   "payload": { },
   "mention": null | "simple" | "forte"
 }
@@ -239,19 +263,24 @@ Le modèle signale lui-même sa tâche via `intent`, le code route derrière.
 
 Un format à apprendre, un parseur à écrire, une métrique à mesurer.
 
+`reponse` couvre les réponses directes hors devis (question technique, conseil
+court). Sans lui, les 350 exemples courts du dataset n'auraient pas d'intention.
+
 ### Format d'un exemple
 
 gpt-oss étant un modèle de raisonnement, chaque exemple a trois parties :
 
 ```
-user      : "Je refais ma salle de bain, 8 m², budget 5000 €"
+user      : "Je refais le salon, 22 m² au sol, murs à repeindre, budget 1500 €"
 
-reasoning : Surface 8 m² → sol + murs jusqu'à 1,20 m ≈ 14 m² de faïence.
-            Chutes +10 % → 15,4 m². Lots : dépose, plomberie, étanchéité,
-            revêtements, sanitaires. Budget 5000 € → gamme intermédiaire.
-            Étanchéité obligatoire sous douche → mention.
+reasoning : Sol 22 m² → stratifié, chutes +8 % (pose droite) → 23,8 m².
+            Murs : périmètre ~19 m × 2,50 m = 47,5 m², moins ouvertures
+            ≈ 42 m². Peinture 10 m²/L par couche, 2 couches → 8,4 L, plus
+            sous-couche 1 couche → 4,2 L. Lots : préparation des supports,
+            peinture, sol. Consommables : bandes, enduit de rebouchage,
+            sous-couche, barres de seuil, cale de dilatation.
 
-final     : { "intent": "devis", "payload": {...}, "mention": "simple" }
+final     : { "intent": "devis", "payload": {...}, "mention": null }
 ```
 
 Le bloc `reasoning` est le cœur du travail : il porte l'expertise métier
@@ -324,8 +353,50 @@ Sources écartées pour l'instant :
 **Limite de périmètre — impérative.** Le pipeline d'extraction est un projet en soi
 et peut absorber les 4 mois, laissant le projet sans modèle fine-tuné. Plafond :
 **2 à 3 semaines**, et un référentiel volontairement étroit — les 20 à 30 matériaux
-qui couvrent le parcours de démo salle de bain. Élargissement seulement si le reste
+qui couvrent le parcours peinture et sols. Élargissement seulement si le reste
 avance vite.
+
+#### Contenu réglementaire du référentiel
+
+Le référentiel ne porte pas que des rendements. Il porte aussi les règles qui
+rendent un devis crédible — reprises d'une session de recherche antérieure
+(ex-`HANDOFF.md`).
+
+**TVA à trois taux** — le point technique central du secteur :
+
+| Taux | Cas |
+|---|---|
+| 20 % | Neuf, logement < 2 ans, agrandissement, gros équipements |
+| 10 % | Amélioration, entretien, aménagement — logement achevé > 2 ans |
+| 5,5 % | Rénovation énergétique et travaux induits — logement > 2 ans |
+
+Pièges à encoder volontairement : les fournitures **posées par l'entreprise**
+suivent le taux réduit, celles achetées séparément par le client sont à 20 % ;
+certains gros équipements restent à 20 % même posés. Un devis réel mélange
+plusieurs taux → **la ventilation TVA par taux est un champ à part entière**.
+*(Détail réglementaire à revérifier avant de figer le référentiel.)*
+
+**Mentions obligatoires d'un devis BTP** : n° de devis, dates d'émission et de
+validité, coordonnées émetteur (SIRET, RCS, APE/NAF, TVA intracom.), **assurance
+décennale** (assureur, n° de contrat, couverture géographique), client, adresse de
+chantier (parfois ≠ adresse client), détail par poste, ventilation TVA, acompte
+(souvent 30 %), délai d'exécution, mention « Bon pour accord ».
+
+**Cas limite à ne pas oublier** : auto-entrepreneur → mention « TVA non applicable,
+art. 293 B du CGI », et aucune ligne de TVA.
+
+**Unités du secteur** : m², ml, m³, u, h, j, forfait, ens., kg.
+
+**Frontière maintenue.** Le modèle *qualifie* le taux de TVA applicable et
+*restitue* la structure du devis commercial. Il ne calcule aucun montant : la
+ventilation, les totaux et l'acompte sont du code. Le SIRET et la décennale
+appartiennent à l'artisan, ils ne sont jamais produits par le modèle.
+
+**Reprise du devis de l'artisan.** À l'inscription, l'artisan dépose un devis
+existant pour que l'agent reprenne sa mise en page. La conversion image/PDF →
+Markdown passe par une **API OCR externe**, jamais par le modèle — gpt-oss est
+purement textuel et un VLM serait un second projet. Le gabarit obtenu est stocké
+en mémoire utilisateur (voir `DISPOSITIF_AGENT.md` §2).
 
 **Jeu de test : 150-200 exemples écrits ou corrigés à la main.** Jamais vus à
 l'entraînement, jamais générés. Seule mesure honnête.
@@ -333,6 +404,27 @@ l'entraînement, jamais générés. Seule mesure honnête.
 ---
 
 ## 7. Métriques
+
+### Protocole de preuve — décidé
+
+**gpt-oss-20b brut contre gpt-oss-20b fine-tuné.** Même modèle de base, même jeu
+de test gelé, même prompt système. La seule variable est le fine-tuning — donc
+tout écart mesuré lui est imputable. C'est la seule comparaison défendable devant
+un jury.
+
+Deux garde-fous :
+
+- Le modèle brut reçoit un **prompt sérieux** (schéma décrit, exemple few-shot).
+  Comparer à une baseline mal promptée gonfle artificiellement le résultat et se
+  détecte en cinq minutes de questions.
+- Le jeu de test est **gelé avant l'entraînement** et jamais élargi en cours de
+  route.
+
+Le **gpt-oss-120b fine-tuné** reste au programme, mais comme **modèle de démo**,
+pas comme preuve. Il répond à « est-ce que ça passe à l'échelle », pas à
+« est-ce que le fine-tuning sert ». S'il manque du temps, il saute sans
+compromettre la démonstration.
+
 
 | Métrique | Pourquoi |
 |---|---|
@@ -347,21 +439,21 @@ l'entraînement, jamais générés. Seule mesure honnête.
 
 ## 8. Points ouverts
 
-- [ ] **Protocole de preuve du fine-tuning** — à décider *avant* d'entraîner :
-      modèle de référence, métriques, jeu de test gelé. Conditionne tout le reste
-- [ ] Répercuter la scène à deux acteurs dans `DISPOSITIF_AGENT.md` : le point
-      d'intervention HITL-2 devient multipartite, la fiche projet porte deux
-      utilisateurs de statut différent, les corrections d'artisan entrent dans la
-      boucle qualité
+- [x] ~~Protocole de preuve~~ — 20b brut vs 20b fine-tuné (§7)
+- [x] ~~Chantier pilote~~ — peinture et sols (§4)
+- [x] ~~Canal de démo~~ — web uniquement (§4)
+- [ ] **Planning des 4 mois** — devenu le point le plus urgent
+- [ ] Valider les seuils d'acceptation de `DISPOSITIF_AGENT.md` §4
 - [ ] La voix : modalité d'entrée à décider (essentielle à la démo, ou confort ?).
       Impacte la validation des entrées, pas le modèle
-- [ ] Liste des fabricants et des fiches techniques à extraire (20-30 matériaux)
+- [ ] Liste des fabricants et des fiches techniques à extraire (20-30 matériaux
+      peinture / sols)
+- [ ] Revérifier les règles de TVA avant de figer le référentiel
 - [ ] Format du référentiel métier
 - [ ] Schéma JSON détaillé de chaque `payload` (au moment d'écrire le code)
 - [ ] Pipeline de génération synthétique
 - [ ] Vérifier la licence réelle de Gemma 4 26B A4B
 - [ ] Structure du dump catalogue LM (réutiliser celle de `SOURCES_DONNEES.md`)
-- [ ] Choix du canal de démo (SMS Twilio conservé ? web ? les deux ?)
 - [ ] Décider si le second cercle entre dans le périmètre
 
 ---

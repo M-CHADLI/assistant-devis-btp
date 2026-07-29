@@ -8,8 +8,8 @@
 ## 0. Rôle de l'agent
 
 **Ce qu'il est.** Un assistant de préparation de chantier. Il aide un particulier à
-passer d'une intention floue (« je refais ma salle de bain ») à un devis matériaux
-structuré et chiffré.
+passer d'une intention floue (« je refais mon salon ») à un devis matériaux
+structuré et chiffré, puis à l'arbitrer avec son artisan.
 
 **Ce qu'il n'est pas.** Ni un bureau d'études, ni un diagnostiqueur, ni un
 professionnel certifié. Il **informe toujours, ne certifie jamais**.
@@ -101,10 +101,28 @@ manquantes. C'est la boucle normale, pas une exception. Plafonnée à **3 tours*
 au-delà, l'agent propose des hypothèses par défaut explicites plutôt que
 d'interroger indéfiniment.
 
-**HITL-2 — Validation du devis avant chiffrage (systématique).** L'utilisateur
-confirme la structure et les quantités avant que les prix soient injectés. Position
-délibérée : on fait valider ce qui est stable, avant d'y accrocher ce qui est
-volatil.
+**HITL-2 — Validation du devis avant chiffrage (systématique, multipartite).** La
+structure et les quantités sont confirmées avant que les prix soient injectés.
+Position délibérée : on fait valider ce qui est stable, avant d'y accrocher ce qui
+est volatil.
+
+Ce point est **le seul du dispositif à réunir deux humains** — le client et son
+artisan, chacun de son côté, en simultané. Leurs interventions n'ont pas le même
+poids :
+
+| Intervenant | Nature de l'intervention | Traitement |
+|---|---|---|
+| Client | *Préférence* (« je veux du blanc ») | Appliquée si elle ne contredit pas une contrainte technique |
+| Artisan | *Correction technique* (« il faut de l'hydrofuge ») | Appliquée sans discussion, **journalisée comme signal qualité** |
+
+**Règle : l'artisan fait autorité, toujours** — y compris contre le modèle. Sa
+correction alimente directement la boucle qualité (§5.2). Un professionnel qui
+corrige le modèle en production est une source de données d'expert, gratuite et
+qualifiée.
+
+Une correction d'artisan n'est jamais soumise à l'accord du client : elle porte sur
+la faisabilité, pas sur le goût. À l'inverse, une préférence du client qui heurte
+une contrainte technique remonte à l'artisan, pas au modèle.
 
 **HITL-3 — Renvoi vers un professionnel (conditionnel).** Déclenché par une mention
 forte. L'agent ne bloque pas et ne tronque pas sa réponse : il répond complètement
@@ -150,6 +168,26 @@ confiance** :
 Cette distinction permet à l'agent de savoir quoi redemander, et à l'utilisateur de
 voir sur quoi repose son chiffrage. Un devis fondé sur trois hypothèses par défaut
 n'a pas le même statut qu'un devis entièrement renseigné.
+
+**Deux utilisateurs de statut inégal.** À partir de HITL-2, la fiche porte deux
+intervenants. L'origine d'un champ ne se réduit donc plus à « utilisateur / modèle /
+défaut » :
+
+| Origine | Statut | Peut être écrasée par |
+|---|---|---|
+| Artisan | Fait technique | Rien (sauf l'artisan lui-même) |
+| Client | Préférence | Une correction d'artisan |
+| Modèle | À confirmer | Client ou artisan |
+| Défaut | Signalée dans le devis | Tous |
+
+Chaque modification est **horodatée et attribuée**. Ce n'est pas de la traçabilité
+décorative : sans l'auteur, une correction d'artisan est indiscernable d'une
+préférence client, et le signal qualité de §5.2 devient inexploitable.
+
+**Gabarit de devis de l'artisan.** Stocké en mémoire utilisateur : mise en page
+reprise de son devis existant (converti par une API OCR externe), SIRET, RCS,
+APE/NAF, TVA intracom., assurance décennale, conditions habituelles. Renseigné une
+fois à l'inscription, jamais produit par le modèle.
 
 ### 2.4 Ce qu'on ne retient pas — délibérément
 
@@ -298,11 +336,19 @@ négociables à la baisse.
 
 Trois configurations, **même jeu de test, mêmes conditions** :
 
-| Configuration | Rôle |
-|---|---|
-| gpt-oss-20b brut + prompt élaboré | Baseline honnête |
-| gpt-oss-20b fine-tuné | Mesure de l'apport du fine-tuning |
-| gpt-oss-120b fine-tuné | Mesure de l'apport de la taille |
+| Configuration | Rôle | Statut |
+|---|---|---|
+| gpt-oss-20b brut + prompt élaboré | Baseline honnête | **La preuve** |
+| gpt-oss-20b fine-tuné | Mesure de l'apport du fine-tuning | **La preuve** |
+| gpt-oss-120b fine-tuné | Mesure de l'apport de la taille | Démo, optionnel |
+
+**Décision : la preuve repose sur le seul couple 20b brut / 20b fine-tuné.** Même
+modèle de base, même jeu de test, même prompt système — la seule variable est le
+fine-tuning, donc tout écart lui est imputable.
+
+Le 120b répond à une autre question (« est-ce que ça passe à l'échelle ») et sert de
+modèle de démonstration. S'il manque du temps, il saute sans affaiblir la
+démonstration.
 
 Comparer le modèle fine-tuné à un modèle brut *mal promptté* serait une victoire
 truquée. La baseline doit être le meilleur résultat atteignable sans fine-tuning.
@@ -347,6 +393,7 @@ flowchart LR
 |---|---|---|
 | Contrôles de sortie en échec | Sortie non conforme | Cas de non-régression + analyse |
 | Escalades humaines | Limite de l'agent atteinte | Périmètre ou dataset |
+| **Corrections d'artisan** | **Erreur métier attestée par un professionnel** | **Référentiel en priorité** |
 | Retours utilisateurs | Devis jugé faux ou incomplet | Référentiel ou dataset |
 | Dérive du catalogue | Catégorie disparue | Résolution catalogue |
 | Correction du référentiel | Valeur métier erronée | Régénération du dataset |
@@ -359,6 +406,11 @@ livrable distinct : corriger 2000 exemples un par un est impossible, corriger un
 ligne de référentiel est trivial.
 
 **Le jeu de test ne rétrécit jamais.** Tout défaut constaté y entre définitivement.
+
+**Une correction d'artisan est un signal fort, pas un vote.** Elle ne modifie pas le
+référentiel automatiquement — elle ouvre une revue. Deux artisans peuvent se
+contredire, et un usage local n'est pas une prescription fabricant. Ce qui tranche
+reste la documentation technique, sourcée (`CADRAGE_MODELE.md` §6).
 
 **Aucune mise en service sans franchissement des seuils.** L'évaluation est une
 barrière, pas un rapport d'information.
@@ -380,8 +432,9 @@ chacun l'a produit.
 
 ## 6. Points ouverts
 
-- [ ] Canal de la démonstration (SMS, web, ou les deux) — influence le workflow
-      d'entrée et une partie du dataset
+- [x] ~~Canal de la démonstration~~ — web uniquement (`CADRAGE_MODELE.md` §4)
+- [ ] **Validation des seuils du §4.3** par l'encadrant — ils conditionnent la
+      barrière de mise en service
 - [ ] Barème détaillé du LLM-juge pour les métriques 3 et 4
 - [ ] Bornes de plausibilité par matériau (garde-fou §3.2)
 - [ ] Champs obligatoires de la fiche projet, par type de pièce

@@ -34,10 +34,10 @@ Quand du code apparaîtra, il découlera de ces principes posés dans `CADRAGE_M
   et le devis. Frontière stricte à ne pas franchir.
 - **Devis généré sans prix.** Le modèle sort la structure et les quantités (stable) ; le catalogue
   injecte prix et promos a posteriori (volatil). Objectif : zéro hallucination de prix.
-- **Schéma de sortie unique** partagé par les 6 fonctions du noyau — le modèle signale sa tâche via
+- **Schéma de sortie unique** partagé par toutes les capacités — le modèle signale sa tâche via
   `intent`, le code route derrière :
   ```json
-  { "intent": "clarification | lots | quantitatif | devis | consommables",
+  { "intent": "clarification | lots | quantitatif | devis | consommables | reponse",
     "payload": { },
     "mention": null | "simple" | "forte" }
   ```
@@ -50,19 +50,31 @@ Quand du code apparaîtra, il découlera de ces principes posés dans `CADRAGE_M
 
 ## Périmètre du noyau de démo
 
-Le produit se démontre en **un seul parcours utilisateur continu** (« je refais ma salle de bain »
-→ le modèle interroge → décompose → quantifie → produit le devis → rattrape les oublis → chiffre au
-prix promo). Six fonctions, chacune adossée au schéma `intent` :
+Le produit se démontre en **un seul parcours utilisateur continu** (« je refais mon salon —
+peinture et sol » → interroger → calculer → arbitrer). **Trois fonctions**, qui recouvrent six
+capacités internes (celles-ci sont le découpage du dataset, pas de la présentation) :
 
-1. **Clarification** — poser les bonnes questions avant de répondre (sépare le jouet du produit).
-2. **Décomposition en lots** — projet → gros œuvre, plomberie, finitions (100 % dépendant du FT).
-3. **Quantitatif** — poser les calculs (m², rendements, chutes).
-4. **Devis structuré sans prix** — le livrable central (JSON : lots, lignes, quantités, réfs).
-5. **Consommables oubliés** — colle, joints, vis, EPI (fonction différenciante, expertise pure).
-6. **Injection prix + promos** — côté code déterministe, jamais côté modèle.
+| Fonction | Ce qu'elle fait | Capacités internes |
+|---|---|---|
+| **1. Interroger** | Intention floue → projet cadré | Clarification, Décomposition en lots |
+| **2. Calculer** | Projet → matériaux et quantités | Quantitatif, Consommables oubliés |
+| **3. Arbitrer** | Chiffrage, puis accord client + artisan | Devis sans prix, Injection prix + promos |
 
-Le « second cercle » (question technique, arbitrage budget, reco produit, adaptation SMS/web) est
-optionnel ; le diagnostic de pathologie et l'estimation de main d'œuvre sont explicitement **écartés**.
+**Un seul interlocuteur au début, deux à la fin.** La scène finale réunit le client et *son*
+artisan (pas un partenaire LM), à distance en simultané. **L'artisan fait autorité, toujours** ;
+ses corrections sont journalisées comme signal qualité.
+
+**Décisions de cadrage figées :**
+- Chantier pilote : **peinture et sols** uniquement (référentiel de 20-30 matériaux).
+- Canal de démo : **web uniquement**. Le SMS reste une capacité du modèle, non démontrée.
+- Protocole de preuve : **20b brut (bien promptté) vs 20b fine-tuné**. Le 120b est la démo, pas
+  la preuve.
+- TVA, mentions obligatoires BTP et unités du secteur appartiennent au **référentiel métier** ;
+  le modèle *qualifie* le taux, le code calcule tous les montants.
+- L'OCR devis image/PDF → Markdown passe par une **API externe**, jamais par le modèle.
+
+Le « second cercle » (question technique, arbitrage budget, reco produit) est optionnel ; le
+diagnostic de pathologie et l'estimation de main d'œuvre sont explicitement **écartés**.
 
 ## Contraintes techniques structurantes
 
