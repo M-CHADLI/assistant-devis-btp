@@ -1,0 +1,434 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="slides-format" content="viewport">
+    <title>Marché de l'emploi IA en France (2026) - support enrichi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bg: #0f172a;
+            --color-bg-deep: #020617;
+            --color-surface: #1e293b;
+            --color-text: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-muted: #94a3b8;
+            --color-accent-1: #22c55e;
+            --color-accent-2: #38bdf8;
+            --color-accent-3: #a855f7;
+            --color-glass-bg: rgba(15,23,42,0.78);
+            --color-glass-border: rgba(148,163,184,0.28);
+            --color-vignette: rgba(0,0,0,0.45);
+            --font-display: 'Instrument Serif', Georgia, serif;
+            --font-body: 'Inter', system-ui, sans-serif;
+        }
+    </style>
+    <style>
+        :root { --color-bg: #0f172a; --color-text: #f1f5f9; --glow-color-rgb: 34,197,94; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { background: var(--color-bg); margin: 0; }
+        body { font-family: var(--font-body); color: var(--color-text); overflow: hidden; height: 100vh; width: 100vw; }
+        .deck { width: 100vw; height: 100vh; position: relative; }
+        .slide { position: absolute; inset: 0; background: var(--color-bg); display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; transform:scale(.95); transition: opacity .7s ease, transform .7s ease; pointer-events:none; overflow:hidden; }
+        .slide.active { opacity:1; transform:scale(1); pointer-events:all; }
+        .slide > .content { position:relative; z-index:2; width:100%; max-width:1180px; padding: clamp(1.2rem, 3vw, 3rem); }
+        .nav-controls { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 100; background: var(--color-glass-bg); backdrop-filter: blur(10px); padding: 10px 24px; border-radius: 40px; border: 1px solid var(--color-glass-border); }
+        .nav-btn { width: 40px; height: 40px; border: none; background: var(--color-glass-bg); color: var(--color-accent-1); border-radius: 50%; font-size: 1.2rem; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+        .slide-dots { display:flex; gap:8px; }
+        .slide-dots .dot { width:10px; height:10px; border-radius:50%; background: var(--color-glass-border); cursor:pointer; transition:.3s; }
+        .slide-dots .dot.active { background: var(--color-accent-1); transform:scale(1.25); }
+        .slide-counter { font-size:.8rem; color: var(--color-text-muted); min-width:50px; text-align:center; }
+        .reveal { opacity:0; transform:translateY(20px); }
+        .gradient-mesh { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+        .blob { position:absolute; border-radius:50%; filter: blur(80px); animation: float-slow 15s ease-in-out infinite; }
+        .blob:nth-child(2) { animation: float-drift 18s ease-in-out infinite; }
+        .blob:nth-child(3) { animation: float-slow 22s ease-in-out infinite reverse; }
+        @keyframes float-slow { 0% { transform: translate(0,0) scale(1);} 25% { transform: translate(60px,-50px) scale(1.08);} 50% { transform: translate(-40px,40px) scale(.92);} 75% { transform: translate(50px,20px) scale(1.06);} 100% { transform: translate(0,0) scale(1);} }
+        @keyframes float-drift { 0% { transform: translate(0,0) scale(1) rotate(0deg);} 33% { transform: translate(-50px,-60px) scale(1.12) rotate(3deg);} 66% { transform: translate(40px,30px) scale(.9) rotate(-2deg);} 100% { transform: translate(0,0) scale(1) rotate(0deg);} }
+        .slide::before { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); background-size:256px 256px; opacity:.03; mix-blend-mode:overlay; }
+        .slide::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background: radial-gradient(ellipse at center, transparent 42%, var(--color-vignette) 100%); }
+        .kpi-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:18px; margin-top:1.1rem; }
+        .kpi-card,.panel,.role-card,.note-box { background: var(--color-glass-bg); border:1px solid var(--color-glass-border); border-radius:20px; backdrop-filter: blur(12px); }
+        .kpi-card { padding:1rem 1.1rem; }
+        .kpi-num { font-size: clamp(1.6rem,2.5vw,2.2rem); font-weight:800; color:white; }
+        .kpi-lbl { font-size:.78rem; text-transform:uppercase; letter-spacing:.12em; color:#94a3b8; margin-top:.35rem; }
+        .kpi-sub { font-size:.84rem; color:#cbd5e1; margin-top:.35rem; }
+        .two-col { display:grid; grid-template-columns: 1.15fr .85fr; gap:22px; align-items:start; }
+        .bullets { margin:0; padding-left:1.2rem; color:#e2e8f0; font-size:.98rem; line-height:1.45; }
+        .bullets li { margin:.48rem 0; }
+        .panel { padding:1rem 1.05rem; }
+        .bars { display:flex; align-items:flex-end; gap:14px; height:180px; }
+        .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:.45rem; }
+        .bar-track { width:64px; height:132px; border-radius:16px; background: rgba(255,255,255,.07); border:1px solid rgba(148,163,184,.16); position:relative; overflow:hidden; }
+        .bar-fill { position:absolute; left:0; bottom:0; width:100%; background: linear-gradient(180deg, var(--color-accent-2), var(--color-accent-1)); border-radius:16px 16px 0 0; }
+        .bar-value { font-size:.9rem; font-weight:700; color:white; }
+        .bar-caption { font-size:.78rem; color:#cbd5e1; text-align:center; }
+        .flow-row { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; margin-top:1rem; }
+        .flow-box { position:relative; min-height:115px; padding:1rem; background: var(--color-glass-bg); border:1px solid var(--color-glass-border); border-radius:18px; }
+        .flow-box:not(:last-child)::after { content:'➜'; position:absolute; right:-14px; top:42%; font-size:1.3rem; color:var(--color-accent-2); }
+        .flow-title { font-size:1rem; font-weight:700; color:white; margin-bottom:.4rem; }
+        .flow-text { color:#cbd5e1; font-size:.88rem; line-height:1.35; }
+        .roles-grid { display:grid; grid-template-columns: repeat(2,1fr); gap:16px; margin-top:1rem; }
+        .role-card { padding:1rem; min-height:160px; }
+        .role-title { font-size:1rem; font-weight:700; color:white; margin-bottom:.35rem; }
+        .role-tag { display:inline-block; font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:#93c5fd; margin-bottom:.45rem; }
+        .salary-band { margin-top:.9rem; display:grid; grid-template-columns: 120px 1fr 80px; gap:10px; align-items:center; }
+        .salary-role { font-size:.88rem; color:#e2e8f0; }
+        .salary-track { height:18px; border-radius:999px; background: rgba(255,255,255,.07); overflow:hidden; border:1px solid rgba(148,163,184,.16); }
+        .salary-range { height:100%; border-radius:999px; background: linear-gradient(90deg, var(--color-accent-1), var(--color-accent-2)); }
+        .salary-max { text-align:right; font-size:.82rem; color:#cbd5e1; }
+        .hint-list { margin-top:.8rem; display:grid; grid-template-columns: repeat(2,1fr); gap:12px; }
+        .note-box { padding:.9rem 1rem; }
+        .note-title { color:white; font-weight:700; font-size:.94rem; margin-bottom:.2rem; }
+        .note-text { color:#cbd5e1; font-size:.84rem; line-height:1.35; }
+        .source-line { margin-top:.75rem; font-size:.7rem; color:#94a3b8; line-height:1.35; }
+        .hero-title { max-width: 860px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; } }
+    </style>
+</head>
+<body>
+<div class="deck">
+
+    <div class="slide slide-1 active" data-slide="1">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-1); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-2); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-3); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            <p class="reveal text-sm uppercase tracking-[0.25em] text-text-muted mb-3">Marché de l’emploi · France · 2026</p>
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Marché de l’emploi IA en France (2026) : combien ça paie ?</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Marché IA : de 42 k€ à 150 k€+ selon rôle et séniorité en France.</li><li>Salaire médian IA autour de 55–60 k€.</li><li>Les rôles GenAI / MLOps / Prompt sont clairement dans le haut du panier.</li><li>La promesse pour les développeurs : une trajectoire salariale plus rapide que sur des postes software généralistes.</li></ul>
+                </div>
+                <div>
+                    <div class="kpi-grid reveal"><div class="kpi-card"><div class="kpi-num">42 k€</div><div class="kpi-lbl">Entrée de marché</div><div class="kpi-sub">Junior IA France</div></div><div class="kpi-card"><div class="kpi-num">55–60 k€</div><div class="kpi-lbl">Médiane</div><div class="kpi-sub">Repère marché 2026</div></div><div class="kpi-card"><div class="kpi-num">150 k€+</div><div class="kpi-lbl">Haut de fourchette</div><div class="kpi-sub">Seniors / labs</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : AI2 Lab baromètre salaires IA 2026 ; Glassdoor France salaires AI Engineer ; Coursera AI Engineer Salary Guide 2026.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-2" data-slide="2">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-2); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-3); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-1); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Un marché qui recrute vraiment</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>900+ offres “AI Engineer” en France sur Indeed en 2026.</li><li>600+ offres “Ingénieur IA” sur Hellowork.</li><li>400+ offres liées à RAG/LLM et 200+ pour “Prompt Engineer”.</li><li>Le marché n’est plus expérimental : il existe désormais un volume d’offres suffisant pour permettre de vraies mobilités de carrière.</li></ul>
+                </div>
+                <div>
+                    <div class="panel reveal"><div class="bars"><div class="bar-col"><div class="bar-track"><div class="bar-fill" style="height:100%"></div></div><div class="bar-value">900+</div><div class="bar-caption">AI Engineer</div></div><div class="bar-col"><div class="bar-track"><div class="bar-fill" style="height:67%"></div></div><div class="bar-value">600+</div><div class="bar-caption">Ing. IA</div></div><div class="bar-col"><div class="bar-track"><div class="bar-fill" style="height:44%"></div></div><div class="bar-value">400+</div><div class="bar-caption">RAG / LLM</div></div><div class="bar-col"><div class="bar-track"><div class="bar-fill" style="height:22%"></div></div><div class="bar-value">200+</div><div class="bar-caption">Prompt</div></div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : Indeed France AI Engineer ; Hellowork Ingénieur en intelligence artificielle ; Glassdoor France RAG/LLM ; Indeed Prompt Engineer.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-3" data-slide="3">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-3); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-1); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-2); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Pourquoi ces salaires montent ?</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Explosion des cas d’usage LLM/RAG depuis 2023.</li><li>Manque de profils capables de mettre en prod et monitorer.</li><li>Nouvelle demande sur agents IA, workflows multi-LLM, GenAI productisée.</li><li>La valeur est captée par les profils qui transforment un prototype en système exploitable en entreprise.</li></ul>
+                </div>
+                <div>
+                    <div class="flow-row reveal"><div class="flow-box"><div class="flow-title">1. Adoption LLM</div><div class="flow-text">Les cas d’usage deviennent visibles dans presque toutes les équipes produit.</div></div><div class="flow-box"><div class="flow-title">2. Passage en prod</div><div class="flow-text">Les enjeux de qualité, coût, sécurité et monitoring deviennent centraux.</div></div><div class="flow-box"><div class="flow-title">3. Prime salariale</div><div class="flow-text">Les profils capables de tenir cette complexité captent la valeur.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : GetInTalent AI Engineer / GenAI ; Free-Work Agentic Systems ; AI2 Lab baromètre 2026.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-4" data-slide="4">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-1); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-2); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-3); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Les 4 rôles qui captent la valeur</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>AI Engineer / ML Engineer : dev produit autour des LLM et de la data.</li><li>MLOps Engineer : industrialisation, CI/CD, infra ML, monitoring.</li><li>Dev agentique (RAG & Agents) : orchestration multi-agents, outils, mémoire.</li><li>Prompt Engineer : optimisation fine des LLM, évaluation, quality assurance.</li></ul>
+                </div>
+                <div>
+                    <div class="roles-grid reveal"><div class="role-card"><div class="role-tag">Produit IA</div><div class="role-title">AI Engineer</div><div class="flow-text">Développe des apps IA, intègre LLM, RAG, APIs et logique métier.</div></div><div class="role-card"><div class="role-tag">Plateforme</div><div class="role-title">MLOps Engineer</div><div class="flow-text">Industrialise, automatise, supervise et fiabilise les pipelines ML/LLM.</div></div><div class="role-card"><div class="role-tag">Agents</div><div class="role-title">Dev agentique</div><div class="flow-text">Construit des workflows multi-agents, outils, mémoire et orchestration.</div></div><div class="role-card"><div class="role-tag">Optimisation</div><div class="role-title">Prompt Engineer</div><div class="flow-text">Optimise le comportement, l’évaluation et la qualité des sorties LLM.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : GetInTalent ML / MLOps ; Free-Work Agentic Systems ; AI2 Lab Prompt Engineer 2026.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-5" data-slide="5">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-2); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-3); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-1); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">AI Engineer : profil dev + LLM</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Salaire moyen AI Engineer France ≈ 52 k€ selon Glassdoor.</li><li>Ordre de grandeur : 40–50 k€ junior, 50–70 k€ confirmé.</li><li>70–100 k€+ pour des seniors capables de mettre en prod des systèmes LLM/RAG.</li><li>Le différenciateur clé : API LLM + architecture RAG + intégration produit + qualité de livraison.</li></ul>
+                </div>
+                <div>
+                    <div class="panel reveal"><div class="salary-band"><div class="salary-role">Junior</div><div class="salary-track"><div class="salary-range" style="width:50%"></div></div><div class="salary-max">50 k€</div></div><div class="salary-band"><div class="salary-role">Confirmé</div><div class="salary-track"><div class="salary-range" style="width:70%"></div></div><div class="salary-max">70 k€</div></div><div class="salary-band"><div class="salary-role">Senior</div><div class="salary-track"><div class="salary-range" style="width:100%"></div></div><div class="salary-max">100 k€+</div></div><div class="hint-list"><div class="note-box"><div class="note-title">Ce qui paie</div><div class="note-text">RAG, APIs, intégration produit, qualité logicielle.</div></div><div class="note-box"><div class="note-title">Signal marché</div><div class="note-text">Les profils hybrides software + LLM sont les plus recherchés.</div></div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : Glassdoor salaire AI Engineer ; Coursera AI Engineer Salary Guide ; AI2 Lab baromètre 2026.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-6" data-slide="6">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-3); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-1); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-2); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">MLOps Engineer : faire tourner la machine</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>MLOps junior : 45–58 k€, médiane autour de 55 k€.</li><li>Confirmé : 55–78 k€, médiane ~65–67 k€.</li><li>Senior / Lead : 75–105 k€, jusqu’à 130–180 k€ dans certaines scale-ups.</li><li>Le salaire grimpe avec la criticité de la stack, l’automatisation et la capacité à tenir le run.</li></ul>
+                </div>
+                <div>
+                    <div class="panel reveal"><div class="salary-band"><div class="salary-role">Junior</div><div class="salary-track"><div class="salary-range" style="width:32%"></div></div><div class="salary-max">58 k€</div></div><div class="salary-band"><div class="salary-role">Confirmé</div><div class="salary-track"><div class="salary-range" style="width:43%"></div></div><div class="salary-max">78 k€</div></div><div class="salary-band"><div class="salary-role">Lead</div><div class="salary-track"><div class="salary-range" style="width:100%"></div></div><div class="salary-max">180 k€</div></div><div class="hint-list"><div class="note-box"><div class="note-title">Ce qui paie</div><div class="note-text">Kubernetes, CI/CD, monitoring, dérive, run critique.</div></div><div class="note-box"><div class="note-title">Pourquoi</div><div class="note-text">Peu de profils savent opérer des systèmes ML/LLM fiables.</div></div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : Lity MLOps Engineer ; Carrières.dev salaire MLOps France 2026 ; AI2 Lab MLOps 2026.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-7" data-slide="7">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-1); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-2); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-3); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Dev agentique : RAG & multi-agents</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Postes “Agentic AI Engineer / RAG & Agents” fortement orientés confirmé/senior.</li><li>Confirmé : typiquement 60–90 k€, calé sur AI/MLOps confirmé.</li><li>Senior : 90–130 k€+, selon impact produit et périmètre (lead, archi, plateforme).</li><li>Ce segment valorise particulièrement l’orchestration, la mémoire, les outils et l’architecture applicative.</li></ul>
+                </div>
+                <div>
+                    <div class="roles-grid reveal"><div class="role-card"><div class="role-tag">Confirmé</div><div class="role-title">60–90 k€</div><div class="flow-text">RAG, orchestration, agents outillés, architecture d’apps intelligentes.</div></div><div class="role-card"><div class="role-tag">Senior</div><div class="role-title">90–130 k€+</div><div class="flow-text">Lead technique, responsabilité plateforme, impact produit et delivery.</div></div><div class="role-card"><div class="role-tag">Stack clé</div><div class="role-title">Tools + memory</div><div class="flow-text">LangGraph, routing, tool use, evaluation et supervision.</div></div><div class="role-card"><div class="role-tag">Signal</div><div class="role-title">Rôle premium</div><div class="flow-text">Encore peu standardisé, donc valorisé dans les équipes avancées.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : Agentic AI Engineer job boards ; Senior AI Engineer RAG & Agent Systems ; GetInTalent AI Engineer.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-8" data-slide="8">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-2); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-3); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-1); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Prompt Engineer : la fusée salariale</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Salaire médian Prompt Engineer France ≈ 68 k€ en 2026.</li><li>Junior : 45–60 k€ ; confirmé : 60–90 k€.</li><li>Senior / Lead : 90–150 k€, certains cas 150–200 k€ en lab IA.</li><li>Le métier paie surtout lorsqu’il est couplé à de l’évaluation, de l’automatisation et une logique produit.</li></ul>
+                </div>
+                <div>
+                    <div class="panel reveal"><div class="salary-band"><div class="salary-role">Junior</div><div class="salary-track"><div class="salary-range" style="width:30%"></div></div><div class="salary-max">60 k€</div></div><div class="salary-band"><div class="salary-role">Confirmé</div><div class="salary-track"><div class="salary-range" style="width:45%"></div></div><div class="salary-max">90 k€</div></div><div class="salary-band"><div class="salary-role">Lead / Lab</div><div class="salary-track"><div class="salary-range" style="width:100%"></div></div><div class="salary-max">200 k€</div></div><div class="hint-list"><div class="note-box"><div class="note-title">Ce qui paie</div><div class="note-text">Evaluation, QA, prompt systems, industrialisation des tests.</div></div><div class="note-box"><div class="note-title">Limite</div><div class="note-text">Le métier seul est moins défendable sans culture produit ou code.</div></div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : AI2 Lab Prompt Engineer 2026 ; Coursera Prompt Engineering Jobs ; guides salaires Prompt Engineer 2026.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-9" data-slide="9">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-3); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-1); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-2); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Dev aujourd’hui → combien dans 3–5 ans ?</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Dev “classique” France : souvent 40–50 k€ autour de 2–3 ans d’expérience.</li><li>En basculant vers IA/MLOps, viser 60–80 k€ en 3–5 ans est réaliste.</li><li>Top profils GenAI/agents montent ensuite vers 90–120 k€+.</li><li>La montée de salaire est accélérée si les projets sont visibles, mesurables et réellement en production.</li></ul>
+                </div>
+                <div>
+                    <div class="flow-row reveal"><div class="flow-box"><div class="flow-title">Aujourd’hui</div><div class="flow-text">Dev backend ou data engineer : souvent 40–50 k€ après 2–3 ans.</div></div><div class="flow-box"><div class="flow-title">3–5 ans</div><div class="flow-text">AI Engineer / MLOps confirmé : cible réaliste 60–80 k€.</div></div><div class="flow-box"><div class="flow-title">Ensuite</div><div class="flow-text">GenAI senior / agents / plateforme : 90–120 k€+ pour les meilleurs profils.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : Coursera AI Engineer Salary Guide ; AI2 Lab baromètre 2026 ; Lity MLOps Engineer.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-10" data-slide="10">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-1); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-2); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-3); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Remote, hybride, Paris vs régions</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>10+ offres AI Engineer remote basées en France, selon RemoteRocketship.</li><li>Des offres Agentic AI Engineer explicitement remote, parfois international.</li><li>Paris garde la densité d’offres, mais Lyon / Toulouse / autres hubs montent.</li><li>Le remote existe, mais les meilleurs packages restent souvent liés à des équipes très sélectives.</li></ul>
+                </div>
+                <div>
+                    <div class="roles-grid reveal"><div class="role-card"><div class="role-tag">Paris</div><div class="role-title">Densité max</div><div class="flow-text">Plus gros volume d’offres, plus forte concentration de packages élevés.</div></div><div class="role-card"><div class="role-tag">Régions</div><div class="role-title">Montée progressive</div><div class="flow-text">Lyon, Toulouse et d’autres hubs gagnent en visibilité sur l’IA appliquée.</div></div><div class="role-card"><div class="role-tag">Remote France</div><div class="role-title">Présent mais sélectif</div><div class="flow-text">Souvent réservé à des profils déjà très autonomes ou internationaux.</div></div><div class="role-card"><div class="role-tag">Hybride</div><div class="role-title">Format dominant</div><div class="flow-text">Compromis fréquent pour les équipes qui veulent garder du lien produit et infra.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : RemoteRocketship France AI Engineer remote ; offres Agentic AI remote ; job boards France 2026.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-11" data-slide="11">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-2); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-3); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-1); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Freelance GenAI : TJM qui pique</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>TJM Prompt/GenAI souvent entre 600 et 1 200 € / jour.</li><li>Équivalent annuel : largement > 120 k€ si bien staffé.</li><li>Prime nette pour les missions RAG, agents, migration LLM.</li><li>La courbe de revenus freelance devient particulièrement intéressante pour les profils orientés delivery et architecture.</li></ul>
+                </div>
+                <div>
+                    <div class="kpi-grid reveal"><div class="kpi-card"><div class="kpi-num">600 €</div><div class="kpi-lbl">TJM bas</div><div class="kpi-sub">Prompt / GenAI</div></div><div class="kpi-card"><div class="kpi-num">1 200 €</div><div class="kpi-lbl">TJM haut</div><div class="kpi-sub">RAG / agents / archi</div></div><div class="kpi-card"><div class="kpi-num">120 k€+</div><div class="kpi-lbl">Équiv. annuel</div><div class="kpi-sub">Si bien staffé</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : guides TJM Prompt/GenAI 2026 ; missions RAG / LLM / agents sur job boards freelance.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-12" data-slide="12">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-3); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-1); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-2); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Ce qui fait vraiment grimper le salaire</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Maîtrise d’un framework LLM : LangChain, LlamaIndex, Semantic Kernel.</li><li>Compétences MLOps : Kubernetes, CI/CD, MLflow, monitoring, dérive.</li><li>Capacité à évaluer, monitorer et expliquer les comportements LLM.</li><li>Plus le profil couvre produit, software et ops, plus il se rapproche du haut de fourchette.</li></ul>
+                </div>
+                <div>
+                    <div class="roles-grid reveal"><div class="role-card"><div class="role-tag">Frameworks</div><div class="role-title">LangChain / LlamaIndex</div><div class="flow-text">Les employeurs valorisent la profondeur d’usage, pas seulement la connaissance nominale.</div></div><div class="role-card"><div class="role-tag">Ops</div><div class="role-title">K8s / CI-CD / MLflow</div><div class="flow-text">L’industrialisation reste un facteur de salaire central.</div></div><div class="role-card"><div class="role-tag">Évaluation</div><div class="role-title">QA des LLM</div><div class="flow-text">Scoring, monitoring, garde-fous et observabilité deviennent différenciants.</div></div><div class="role-card"><div class="role-tag">Profil rare</div><div class="role-title">Full-stack IA</div><div class="flow-text">Produit + software + ops = accès au haut de la fourchette.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : offres Dev Azure IA LangChain ; Eton Technologies AI Engineer ; GetInTalent ML / MLOps.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-13" data-slide="13">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-1); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-2); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-3); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Le vrai différenciateur : la prod</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>“Avoir fait tourner un POC” : maintenant, tout le monde l’a fait.</li><li>Ce qui compte : prod, SLO, logs, métriques d’éval, rollback.</li><li>Les annonces AI/MLOps insistent sur industrialisation, qualité et sécurité.</li><li>La valeur marchande vient de la fiabilité, pas seulement de la compréhension théorique des LLM.</li></ul>
+                </div>
+                <div>
+                    <div class="flow-row reveal"><div class="flow-box"><div class="flow-title">POC</div><div class="flow-text">Le marché considère désormais qu’un prototype est un prérequis minimum.</div></div><div class="flow-box"><div class="flow-title">Production</div><div class="flow-text">On attend logs, rollback, SLO, sécurité, supervision et coût maîtrisé.</div></div><div class="flow-box"><div class="flow-title">Valeur</div><div class="flow-text">La rémunération suit la capacité à livrer un système robuste et maintenable.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : GetInTalent ML / MLOps ; Lity MLOps Engineer ; offres AI Engineer / RAG production.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-14" data-slide="14">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-2); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-3); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-1); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">Stratégie pour un dev qui veut upgrader son salaire</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Court terme (6–12 mois) : 1–2 projets concrets GenAI/RAG en side ou interne.</li><li>Moyen terme (2–3 ans) : viser AI Engineer / MLOps confirmé 60–80 k€.</li><li>Long terme (3–5+ ans) : spécialisation agents / Prompt / plateforme, objectif 90–120 k€+.</li><li>Le plus important : des preuves d’exécution, pas seulement une veille technologique.</li></ul>
+                </div>
+                <div>
+                    <div class="flow-row reveal"><div class="flow-box"><div class="flow-title">6–12 mois</div><div class="flow-text">Construire 1–2 projets visibles : RAG, copilote interne, automation documentée.</div></div><div class="flow-box"><div class="flow-title">2–3 ans</div><div class="flow-text">Viser un poste confirmé AI Engineer / MLOps avec vraie exposition production.</div></div><div class="flow-box"><div class="flow-title">3–5+ ans</div><div class="flow-text">Se spécialiser sur agents, plateforme ou PromptOps pour viser 90–120 k€+.</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : Glassdoor / Coursera / AI2 Lab 2026 ; offres RAG et MLOps France.</p>
+        </div>
+    </div>
+    
+    <div class="slide slide-15" data-slide="15">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -100px; background: var(--color-accent-3); opacity: 0.16;"></div>
+            <div class="blob" style="width: 280px; height: 280px; bottom: -90px; left: -60px; background: var(--color-accent-1); opacity: 0.11;"></div>
+            <div class="blob" style="width: 180px; height: 180px; top: 48%; left: 14%; background: var(--color-accent-2); opacity: 0.08;"></div>
+        </div>
+        <div class="content">
+            
+            <h2 class="reveal font-display hero-title text-[clamp(2rem,3.6vw,3rem)] font-bold mb-4">En 2026, les LLM paient… ceux qui livrent</h2>
+            <div class="two-col">
+                <div>
+                    <ul class="reveal bullets"><li>Les métiers IA sont déjà mieux payés que la moyenne des jobs dev.</li><li>La vraie prime est sur les profils qui mettent en prod du GenAI robuste.</li><li>Si vous savez coder, c’est une opportunité de +20–40 k€ en quelques années.</li><li>Le meilleur levier n’est pas de “faire de l’IA”, mais de résoudre des problèmes métier avec un vrai niveau d’ingénierie.</li></ul>
+                </div>
+                <div>
+                    <div class="kpi-grid reveal"><div class="kpi-card"><div class="kpi-num">+20–40 k€</div><div class="kpi-lbl">Upside</div><div class="kpi-sub">En quelques années</div></div><div class="kpi-card"><div class="kpi-num">Prod</div><div class="kpi-lbl">Mot-clé</div><div class="kpi-sub">Fiabilité & delivery</div></div><div class="kpi-card"><div class="kpi-num">LLM × Eng</div><div class="kpi-lbl">Positionnement</div><div class="kpi-sub">Levier de carrière</div></div></div>
+                </div>
+            </div>
+            <p class="reveal source-line">Sources : synthèse AI2 Lab 2026 ; Glassdoor ; Lity ; job boards IA France 2026.</p>
+        </div>
+    </div>
+    
+</div>
+<div class="nav-controls">
+    <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+    <div class="slide-dots" id="dots"></div>
+    <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+    <span class="slide-counter" id="counter">1 / 15</span>
+</div>
+<script>
+let current = 1;
+const total = document.querySelectorAll('.slide').length;
+const dotsContainer = document.getElementById('dots');
+const counter = document.getElementById('counter');
+for (let i = 1; i <= total; i++) { const dot = document.createElement('div'); dot.className = 'dot' + (i===1 ? ' active':''); dot.onclick = () => goToSlide(i); dotsContainer.appendChild(dot); }
+function goToSlide(n){ const prev=document.querySelector('.slide.active'); const next=document.querySelector(`.slide[data-slide="${n}"]`); if(prev) prev.classList.remove('active'); if(next){ next.classList.add('active'); animateSlide(next);} current=n; updateNav(); }
+function changeSlide(dir){ let next=current+dir; if(next<1) next=total; if(next>total) next=1; goToSlide(next);} 
+function updateNav(){ document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active', i+1===current)); counter.textContent = current + ' / ' + total; }
+document.addEventListener('keydown', (e)=>{ if(e.key==='ArrowRight' || e.key===' '){ e.preventDefault(); changeSlide(1);} if(e.key==='ArrowLeft'){ e.preventDefault(); changeSlide(-1);} });
+let touchStartX = 0; document.addEventListener('touchstart', (e)=>{ touchStartX = e.touches[0].clientX; }); document.addEventListener('touchend', (e)=>{ const diff = touchStartX - e.changedTouches[0].clientX; if(Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1); });
+function animateSlide(slide){ slide.querySelectorAll('.reveal').forEach((el,i)=>{ el.style.transition='none'; el.style.opacity='0'; el.style.transform='translateY(20px)'; el.offsetHeight; const delay=i*0.08; el.style.transition=`opacity 0.35s ease ${delay}s, transform 0.35s ease ${delay}s`; el.style.opacity='1'; el.style.transform='translateY(0px)'; }); }
+try { animateSlide(document.querySelector('.slide.active')); } catch(e) { console.warn(e); }
+</script>
+</body>
+</html>

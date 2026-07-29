@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>15 Scripts - Marché du Travail IA en France</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #667eea;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .slide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .slide {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+            animation: slideIn 0.3s ease-out;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .slide:hover {
+            transform: translateY(-5px);
+        }
+        
+        .slide.active {
+            display: block;
+            grid-column: 1 / -1;
+        }
+        
+        .slide.show-all {
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .slide h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .slide-content {
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .slide-content p {
+            margin-bottom: 12px;
+        }
+        
+        .slide-content ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 15px 0;
+        }
+        
+        .slide-content li {
+            padding-left: 20px;
+            position: relative;
+            margin-bottom: 8px;
+        }
+        
+        .slide-content li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .key-point {
+            background: #f0f4ff;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+        
+        .stat {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .nav-btn {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .progress {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.95em;
+        }
+        
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .view-toggle button {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Marché du Travail IA en France/Remote</h1>
+            <p>15 Scripts pour votre présentation de veille technologique</p>
+        </div>
+        
+        <div class="view-toggle">
+            <button onclick="switchView('slider')" class="active">Mode Lecture</button>
+            <button onclick="switchView('all')">Voir Tout</button>
+        </div>
+        
+        <div id="slider-view">
+            <div class="slide-grid" id="slide-container">
+                <!-- Les slides vont être générées ici -->
+            </div>
+            
+            <div class="navigation">
+                <button class="nav-btn" onclick="previousSlide()">← Précédent</button>
+                <button class="nav-btn" onclick="nextSlide()">Suivant →</button>
+            </div>
+            
+            <div class="progress">
+                <span id="slide-counter">Slide 1 / 15</span>
+            </div>
+        </div>
+        
+        <div id="all-view" style="display: none;">
+            <div class="slide-grid" id="all-slides-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const slides = [
+            {
+                num: 1,
+                title: "Contexte : L'explosion de l'IA en France",
+                content: `
+                    <p><strong>Accroche</strong> : En 2025-2026, le marché français de l'IA connaît une transformation radicale. Les entreprises recrutent massivement des profils spécialisés.</p>
+                    <div class="stat">
+                        <span class="stat-number">+180%</span>
+                        <span>Croissance des offres d'emploi IA en 2 ans</span>
+                    </div>
+                    <div class="key-point">
+                        <strong>Pourquoi cette veille ?</strong><br>Le marché du travail IA évolue à vitesse exponentielle. Comprendre cette dynamique est essentiel pour se positionner professionnellement.
+                    </div>
+                    <p><strong>Chiffre clé</strong> : Plus de 15 000 postes liés à l'IA sont ouverts en France et en remote à cette date.</p>
+                `
+            },
+            {
+                num: 2,
+                title: "La Veille : Méthodo & Sources",
+                content: `
+                    <p><strong>Comment j'ai collecté cette info</strong> :</p>
+                    <ul>
+                        <li><strong>LinkedIn & Indeed</strong> : Scan des JD pour les tendances salariales et compétences</li>
+                        <li><strong>Rapports spécialisés</strong> : McKinsey, Statista, Eurostat</li>
+                        <li><strong>Réseaux & newsletters</strong> : The Batch, Papers with Code, ProductHunt</li>
+                        <li><strong>Entretiens informels</strong> : Échanges avec recruteurs tech et CTO</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Fiabilité des données</strong> : Recoupement sur 3+ sources, données 2025-2026, filtre sur postes confirmés.
+                    </div>
+                `
+            },
+            {
+                num: 3,
+                title: "Panorama : Les 5 Postes Clés",
+                content: `
+                    <p><strong>Segmentation du marché IA en France/Remote</strong> :</p>
+                    <ul>
+                        <li><strong>AI Engineer / ML Engineer</strong> : Cœur technique, dominant (45% des offres)</li>
+                        <li><strong>MLOps Engineer</strong> : Mise en production, ops (25%)</li>
+                        <li><strong>Dev Agentique / Agents IA</strong> : Émergent, croissance rapide (15%)</li>
+                        <li><strong>Prompt Engineer / AI Trainer</strong> : Nouveau métier (10%)</li>
+                        <li><strong>Data Scientist / Researcher</strong> : Stable, compétition intense (5%)</li>
+                    </ul>
+                    <div class="key-point">
+                        Les profils les plus demandés ? MLOps et Dev Agentique : multiplicateurs de valeur.
+                    </div>
+                `
+            },
+            {
+                num: 4,
+                title: "Poste 1 : AI Engineer / ML Engineer",
+                content: `
+                    <p><strong>Le cœur du métier IA</strong></p>
+                    <div class="stat">
+                        <span class="stat-number">45%</span>
+                        <span>des offres sur le marché</span>
+                    </div>
+                    <ul>
+                        <li><strong>Salaire moyen (France)</strong> : 45k-65k€ brut/an (junior-mid), 70k-100k+ (senior)</li>
+                        <li><strong>Remote</strong> : 85% des offres permettent du télétravail</li>
+                        <li><strong>Compétences clés</strong> : Python, PyTorch/TF, Deep Learning, NLP, Vision</li>
+                        <li><strong>Tendance</strong> : Besoin croissant de fine-tuning & RAG, moins de tout-neuf</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Insight</strong> : Le marché se déplace vers des rôles hybrides : ML + DevOps + LLM fine-tuning.
+                    </div>
+                `
+            },
+            {
+                num: 5,
+                title: "Poste 2 : MLOps Engineer",
+                content: `
+                    <p><strong>L'ingénieur qui met l'IA en prod</strong></p>
+                    <div class="stat">
+                        <span class="stat-number">25%</span>
+                        <span>des offres (en croissance)</span>
+                    </div>
+                    <ul>
+                        <li><strong>Salaire</strong> : 50k-70k€ (mid), 80k-120k€+ (senior)</li>
+                        <li><strong>Remote</strong> : 90%+ full remote possible</li>
+                        <li><strong>Compétences clés</strong> : Docker, K8s, CI/CD, monitoring, SQL, infra cloud</li>
+                        <li><strong>Tendance</strong> : Criticité explose = salaires montent rapidement</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>C'est le bottleneck</strong> : Beaucoup de modèles, peu de bonnes pipelines. MLOps = rare + payé.
+                    </div>
+                `
+            },
+            {
+                num: 6,
+                title: "Poste 3 : Dev Agentique / Agents IA",
+                content: `
+                    <p><strong>Le nouveau, l'hype de 2025-2026</strong></p>
+                    <div class="stat">
+                        <span class="stat-number">+200%</span>
+                        <span>croissance YoY</span>
+                    </div>
+                    <ul>
+                        <li><strong>Salaire</strong> : 40k-55k€ (junior), 60k-90k€ (confirmé)</li>
+                        <li><strong>Remote</strong> : Majoritairement remote-first</li>
+                        <li><strong>Compétences</strong> : LLM APIs (OpenAI, Anthropic), frameworks agents (LangChain, Crew), prompting avancé</li>
+                        <li><strong>Profil type</strong> : Dev full-stack qui pivote + curiosité IA</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Opportunité</strong> : Marché jeune, moins compétition, évolution rapide. Entry-level plus accessible.
+                    </div>
+                `
+            },
+            {
+                num: 7,
+                title: "Poste 4 : Prompt Engineer / AI Trainer",
+                content: `
+                    <p><strong>Le métier qui n'existait pas il y a 2 ans</strong></p>
+                    <div class="stat">
+                        <span class="stat-number">10%</span>
+                        <span>des offres (en montée)</span>
+                    </div>
+                    <ul>
+                        <li><strong>Salaire</strong> : 35k-50k€ (junior), 55k-75k€ (senior)</li>
+                        <li><strong>Remote</strong> : 95% remote / asynchrone</li>
+                        <li><strong>Compétences</strong> : Prompting, test & eval d'IA, product thinking, user psychology</li>
+                        <li><strong>Barrière d'entrée</strong> : Basse (pas de code requis, formation rapide)</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Attention</strong> : Métier en stabilisation = risque d'obsolescence si pas évolution vers Product AI.
+                    </div>
+                `
+            },
+            {
+                num: 8,
+                title: "Comparaison Salariale (France vs Remote International)",
+                content: `
+                    <p><strong>Fourchettes observées en 2025-2026</strong> :</p>
+                    <ul>
+                        <li><strong>AI Engineer Senior (France)</strong> : 70-100k€</li>
+                        <li><strong>AI Engineer Senior (Remote International)</strong> : 80-150k€ (USD)</li>
+                        <li><strong>MLOps Senior (France)</strong> : 80-120k€</li>
+                        <li><strong>MLOps Senior (Remote Int'l)</strong> : 120-180k€ (USD)</li>
+                        <li><strong>Dev Agentique (France)</strong> : 50-70k€</li>
+                        <li><strong>Dev Agentique (Remote Int'l)</strong> : 70-110k€ (USD)</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Écart</strong> : +40% à +60% pour postes remote internationaux. La réalité : visa, impôts, compétition accrue.
+                    </div>
+                `
+            },
+            {
+                num: 9,
+                title: "Tendance 1 : Consolidation & Pragmatisme",
+                content: `
+                    <p><strong>Fin de la mode « tout fine-tuner »</strong></p>
+                    <ul>
+                        <li>Entreprises reviennent à <strong>prompting + RAG + agents</strong> plutôt que fine-tuning coûteux</li>
+                        <li><strong>Recrutement</strong> : Moins de « AI researcher étoile », plus d'« ingénieur IA pragmatique »</li>
+                        <li><strong>Stack qui gagne</strong> : LLM API (OpenAI, Claude, LLaMA via Replicate) + framework agents + DB vecteur</li>
+                        <li><strong>Impact salarial</strong> : Salaires se stabilisent, moins de folie 2023-2024</li>
+                    </ul>
+                    <div class="key-point">
+                        Pour intéressant : Besoin = pragmatisme tech. Postes plus stables, moins speculatifs.
+                    </div>
+                `
+            },
+            {
+                num: 10,
+                title: "Tendance 2 : Agents IA = Nouveau Frontière",
+                content: `
+                    <p><strong>Les agents autonomes transforment le jeu</strong></p>
+                    <ul>
+                        <li><strong>Adoption montée</strong> : Startups + grandes boîtes testent agents = demande explose</li>
+                        <li><strong>Dev Agentique</strong> : Devient le profil multi-valeur (Dev + AI + système thinking)</li>
+                        <li><strong>Frameworks gagnants</strong> : Crew AI, Autogen, LangChain Agents, LlamaIndex</li>
+                        <li><strong>Salaires en hausse</strong> : +25% YoY pour ce profil</li>
+                        <li><strong>Remote-first</strong> : 98% des offres = télétravail possible</li>
+                    </ul>
+                    <div class="key-point">
+                        C'est LE profil à développer en 2026 si tu veux maximiser ta valeur marché.
+                    </div>
+                `
+            },
+            {
+                num: 11,
+                title: "Tendance 3 : France vs Étranger",
+                content: `
+                    <p><strong>Où la demande est la plus forte</strong></p>
+                    <ul>
+                        <li><strong>France (Île-de-France + Lyon)</strong> : Croissance stable (+80% YoY), salaires bas-mid vs US</li>
+                        <li><strong>Remote International (US, UK, DE, NL)</strong> : Salaires +40-60%, mais compétition globale accrue</li>
+                        <li><strong>Hubs IA français émergents</strong> : Hugging Face (Montpellier), Mistral AI (Paris), Scale AI (Paris)</li>
+                        <li><strong>Tendance</strong> : Délocalisations vers France pour coûts = plus d'offres légères en France</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Stratégie</strong> : Remote France = meilleur compromis coût/qualité/stabilité. Étranger = max revenu (ou instabilité visa).
+                    </div>
+                `
+            },
+            {
+                num: 12,
+                title: "Compétences les Plus Demandées (Tech Stack)",
+                content: `
+                    <p><strong>Hiérarchie des skills en 2025-2026</strong> :</p>
+                    <ul>
+                        <li><strong>Tier 1 (Must-have)</strong> : Python, SQL, API integration, Cloud (AWS/GCP/Azure), Docker</li>
+                        <li><strong>Tier 2 (Très demandé)</strong> : RAG, LLM fine-tuning, Vector DB, Prompt engineering, Monitoring</li>
+                        <li><strong>Tier 3 (Émergent)</strong> : Agents IA, Multi-agent systems, Orchestration, Eval frameworks</li>
+                        <li><strong>Bonus</strong> : Connaissance domaine (finance, santé, e-commerce) = +20-30k€</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Soft skills cruciaux</strong> : Communication technique, documentation, ownership produit.
+                    </div>
+                `
+            },
+            {
+                num: 13,
+                title: "Les Pièges & Limitations du Marché",
+                content: `
+                    <p><strong>Ce qu'on ne dit pas publiquement</strong> :</p>
+                    <ul>
+                        <li><strong>Turnover élevé</strong> : Beaucoup quittent après 12-18 mois (besserwisser, flou produit)</li>
+                        <li><strong>Burn-out technique</strong> : Cycles rapides, infra souvent chaotique, on-call intensive</li>
+                        <li><strong>Oversupply certain profils</strong> : Data Scientist mid-level = sursat; Prompt Engineer = risque obsolescence</li>
+                        <li><strong>Effet bulle</strong> : Startup IA = financement sec souvent = réduction soudaine</li>
+                        <li><strong>Remote = isolation + moins mentoring</strong> : Junior doivent être autonomes</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>Conseil</strong> : Choisis pour learning + equity + équipe, pas juste salaire.
+                    </div>
+                `
+            },
+            {
+                num: 14,
+                title: "Projections 2026-2027 & Récommandations",
+                content: `
+                    <p><strong>Où va le marché ?</strong></p>
+                    <ul>
+                        <li><strong>Court terme (6 mois)</strong> : Consolidation agents IA, baisse spéculative, salaires se stabilisent</li>
+                        <li><strong>Moyen terme (12-18 mois)</strong> : L'IA devient infra standard = besoin d'ingénieurs stables, moins chercheurs</li>
+                        <li><strong>Profils gagnants</strong> : MLOps (croissance +30%), Dev Agentique (+25%), Hybrid Data-DevOps</li>
+                        <li><strong>Profils en baisse</strong> : Pure Data Scientist (-10%), Prompt Engineer (-5% si pas évolution)</li>
+                    </ul>
+                    <div class="key-point">
+                        <strong>À faire maintenant</strong> : Upskill MLOps ou Agents, pas pure ML. Build portfolio avec agents déployés.
+                    </div>
+                `
+            },
+            {
+                num: 15,
+                title: "Conclusion & Appel à Action",
+                content: `
+                    <p><strong>Synthèse 30 secondes</strong> :</p>
+                    <p>Le marché IA français/remote explose. Les postes sont là (45k-120k€+), mais il y a tri. Les profils stratégiques = MLOps + Dev Agentique. Les pièges = overhype, turnover, isolation remote.</p>
+                    <div class="key-point">
+                        <strong>Votre position</strong> : Vers ML Ops ou Dev Agentique, en montrant une trajectoire claire (pas juste hype).
+                    </div>
+                    <p><strong>Pour en savoir plus</strong> : Suivi mensuel de cette veille possible, approfondissement sur postes spécifiques, benchmark salarial personnalisé.</p>
+                    <p style="margin-top: 20px; font-weight: bold; color: #667eea;">Merci. Questions ?</p>
+                `
+            }
+        ];
+
+        let currentSlide = 0;
+
+        function createSlideHTML(slide) {
+            return `
+                <div class="slide">
+                    <div class="slide-number">Slide ${slide.num} / 15</div>
+                    <h2>${slide.title}</h2>
+                    <div class="slide-content">${slide.content}</div>
+                </div>
+            `;
+        }
+
+        function initSlides() {
+            const container = document.getElementById('slide-container');
+            const allContainer = document.getElementById('all-slides-container');
+            
+            slides.forEach(slide => {
+                const html = createSlideHTML(slide);
+                container.innerHTML += html;
+                allContainer.innerHTML += html;
+            });
+            
+            updateSlideView();
+        }
+
+        function updateSlideView() {
+            const allSlides = document.querySelectorAll('#slide-container .slide');
+            allSlides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            document.getElementById('slide-counter').textContent = `Slide ${currentSlide + 1} / 15`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlideView();
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlideView();
+            }
+        }
+
+        function switchView(view) {
+            const sliderView = document.getElementById('slider-view');
+            const allView = document.getElementById('all-view');
+            const buttons = document.querySelectorAll('.view-toggle button');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (view === 'slider') {
+                sliderView.style.display = 'block';
+                allView.style.display = 'none';
+                event.target.classList.add('active');
+            } else {
+                sliderView.style.display = 'none';
+                allView.style.display = 'block';
+                event.target.classList.add('active');
+            }
+        }
+
+        // Clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        initSlides();
+    </script>
+</body>
+</html>

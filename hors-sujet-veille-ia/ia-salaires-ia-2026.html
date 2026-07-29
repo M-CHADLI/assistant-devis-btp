@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="slides-format" content="viewport">
+    <title>Marché de l'emploi IA en France (2026)</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind v4 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style type="text/tailwindcss">
+        @theme {
+            --color-bg: #0f172a;
+            --color-bg-deep: #020617;
+            --color-surface: #1e293b;
+            --color-text: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-muted: #94a3b8;
+            --color-accent-1: #22c55e;
+            --color-accent-2: #38bdf8;
+            --color-accent-3: #a855f7;
+            --color-glass-bg: rgba(15,23,42,0.8);
+            --color-glass-border: rgba(148,163,184,0.4);
+            --color-vignette: rgba(0,0,0,0.4);
+            --font-display: 'Instrument Serif', Georgia, serif;
+            --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+    </style>
+
+    <style>
+        :root { --color-bg: #0f172a; --color-text: #f1f5f9; --glow-color-rgb: 34,197,94; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { background: var(--color-bg); margin: 0; }
+        body { font-family: var(--font-body); color: var(--color-text); overflow: hidden; height: 100vh; width: 100vw; }
+        .deck { width: 100vw; height: 100vh; position: relative; }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--color-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: scale(0.95); transition: opacity 0.7s ease, transform 0.7s ease; pointer-events: none; overflow: hidden; }
+        .slide.active { opacity: 1; transform: scale(1); pointer-events: all; }
+        .slide > .content { position: relative; z-index: 2; width: 100%; max-width: 1100px; padding: clamp(1.5rem, 4vw, 4rem); }
+        .nav-controls { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 100; background: var(--color-glass-bg); backdrop-filter: blur(10px); padding: 10px 24px; border-radius: 40px; border: 1px solid var(--color-glass-border); }
+        .nav-btn { width: 40px; height: 40px; border: none; background: var(--color-glass-bg); color: var(--color-accent-1); border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+        .nav-btn:hover { background: var(--color-glass-border); }
+        .slide-dots { display: flex; gap: 8px; }
+        .slide-dots .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-glass-border); cursor: pointer; transition: background 0.3s, transform 0.3s; }
+        .slide-dots .dot.active { background: var(--color-accent-1); transform: scale(1.3); }
+        .slide-counter { font-size: 0.8rem; color: var(--color-text-muted); min-width: 40px; text-align: center; }
+        .reveal { opacity: 0; transform: translateY(20px); }
+
+        @keyframes float-slow { 0% { transform: translate(0, 0) scale(1); } 25% { transform: translate(60px, -50px) scale(1.12); } 50% { transform: translate(-40px, 40px) scale(0.9); } 75% { transform: translate(50px, 20px) scale(1.08); } 100% { transform: translate(0, 0) scale(1); } }
+        @keyframes float-drift { 0% { transform: translate(0, 0) scale(1) rotate(0deg); } 33% { transform: translate(-50px, -60px) scale(1.15) rotate(3deg); } 66% { transform: translate(40px, 30px) scale(0.88) rotate(-2deg); } 100% { transform: translate(0, 0) scale(1) rotate(0deg); } }
+        .gradient-mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); animation: float-slow 14s ease-in-out infinite; }
+        .blob:nth-child(2) { animation: float-drift 20s ease-in-out infinite; }
+        .blob:nth-child(3) { animation: float-slow 18s ease-in-out infinite reverse; }
+
+        .slide::before {
+            content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            background-repeat: repeat; background-size: 256px 256px; opacity: 0.03; mix-blend-mode: overlay;
+        }
+        .slide::after {
+            content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, var(--color-vignette) 100%);
+        }
+
+        .mouse-spotlight { position:fixed; inset:0; z-index:99; pointer-events:none; }
+
+
+        .mini-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; margin-top: 1.5rem; }
+        .mini-card { background: rgba(15,23,42,0.58); border:1px solid rgba(148,163,184,0.25); border-radius: 18px; padding: 1rem 1.1rem; backdrop-filter: blur(8px); }
+        .mini-kpi { font-size: clamp(1.6rem,2.6vw,2.2rem); font-weight: 800; color: white; line-height: 1; }
+        .mini-label { margin-top: .45rem; font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: #94a3b8; }
+        .mini-note { margin-top: .35rem; font-size: .82rem; color: #cbd5e1; }
+        .bars { display:flex; align-items:flex-end; gap: 18px; height: 180px; margin-top: 1.4rem; }
+        .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:.55rem; }
+        .bar-track { width: 72px; height: 140px; border-radius: 16px; background: rgba(255,255,255,0.07); position: relative; overflow:hidden; border:1px solid rgba(148,163,184,0.18); }
+        .bar-fill { position:absolute; left:0; bottom:0; width:100%; border-radius: 16px 16px 0 0; background: linear-gradient(180deg, var(--color-accent-2), var(--color-accent-1)); }
+        .bar-caption { font-size:.82rem; color:#cbd5e1; text-align:center; }
+        .bar-value { font-size:.9rem; font-weight:700; color:white; }
+        .flow-row { display:grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin-top: 1.5rem; }
+        .flow-box { background: rgba(15,23,42,0.52); border:1px solid rgba(148,163,184,0.24); border-radius: 18px; padding: 1rem; position:relative; min-height: 118px; }
+        .flow-box:not(:last-child)::after { content:'➜'; position:absolute; right:-14px; top:42%; color: var(--color-accent-2); font-size: 1.35rem; }
+        .flow-title { font-size: 1rem; font-weight: 700; color:white; margin-bottom:.35rem; }
+        .flow-text { font-size:.88rem; color:#cbd5e1; line-height:1.35; }
+        .salary-band { margin-top: 1.4rem; display:grid; grid-template-columns: 160px 1fr 80px; gap: 12px; align-items:center; }
+        .salary-role { font-size:.92rem; color:#e2e8f0; }
+        .salary-track { height: 18px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow:hidden; border:1px solid rgba(148,163,184,0.18); }
+        .salary-range { height:100%; border-radius:999px; background: linear-gradient(90deg, var(--color-accent-1), var(--color-accent-2)); }
+        .salary-max { font-size:.85rem; color:#cbd5e1; text-align:right; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.2s !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="mouse-spotlight"></div>
+
+<div class="deck">
+    <!-- Slide 1 -->
+    <div class="slide slide-1 active" data-slide="1">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 500px; height: 500px; top: -120px; right: -120px; background: var(--color-accent-1); opacity: 0.18;"></div>
+            <div class="blob" style="width: 320px; height: 320px; bottom: -100px; left: -80px; background: var(--color-accent-2); opacity: 0.14;"></div>
+            <div class="blob" style="width: 220px; height: 220px; top: 45%; left: 12%; background: var(--color-accent-3); opacity: 0.12;"></div>
+        </div>
+        <div class="content text-left">
+            <p class="reveal text-sm uppercase tracking-[0.25em] text-text-muted mb-4">Marché de l'emploi · France · 2026</p>
+            <h1 class="reveal font-display text-[clamp(2.4rem,4.5vw,3.4rem)] font-black bg-linear-to-br from-accent-1 via-accent-2 to-accent-1 bg-clip-text text-transparent mb-6">
+                Marché de l’emploi IA en France (2026) : combien ça paie ?
+            </h1>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Marché IA : de 42 k€ à 150 k€+ selon rôle et séniorité en France.</li>
+                <li>Salaire médian IA autour de 55–60 k€.</li>
+                <li>Les rôles GenAI / MLOps / Prompt sont clairement dans le haut du panier.</li>
+            </ul>
+            <div class="mini-grid reveal">
+                <div class="mini-card">
+                    <div class="mini-kpi">42 k€</div>
+                    <div class="mini-label">Entrée de marché</div>
+                    <div class="mini-note">Junior IA en France</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-kpi">55–60 k€</div>
+                    <div class="mini-label">Médiane</div>
+                    <div class="mini-note">Référence marché IA 2026</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-kpi">150 k€+</div>
+                    <div class="mini-label">Haut de fourchette</div>
+                    <div class="mini-note">Experts seniors / labs</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide slide-2" data-slide="2">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 380px; height: 380px; top: -100px; right: -80px; background: var(--color-accent-1); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-2); opacity: 0.1;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Un marché qui recrute vraiment</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>900+ offres “AI Engineer” en France sur Indeed en 2026.</li>
+                <li>600+ offres “Ingénieur IA” sur Hellowork.</li>
+                <li>400+ offres liées à RAG/LLM et 200+ pour “Prompt Engineer”.</li>
+            </ul>
+            <div class="bars reveal">
+                <div class="bar-col">
+                    <div class="bar-track"><div class="bar-fill" style="height:100%"></div></div>
+                    <div class="bar-value">900+</div><div class="bar-caption">AI Engineer</div>
+                </div>
+                <div class="bar-col">
+                    <div class="bar-track"><div class="bar-fill" style="height:67%"></div></div>
+                    <div class="bar-value">600+</div><div class="bar-caption">Ingénieur IA</div>
+                </div>
+                <div class="bar-col">
+                    <div class="bar-track"><div class="bar-fill" style="height:44%"></div></div>
+                    <div class="bar-value">400+</div><div class="bar-caption">RAG / LLM</div>
+                </div>
+                <div class="bar-col">
+                    <div class="bar-track"><div class="bar-fill" style="height:22%"></div></div>
+                    <div class="bar-value">200+</div><div class="bar-caption">Prompt Eng.</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="slide slide-3" data-slide="3">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-3); opacity: 0.13;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-2); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Pourquoi ces salaires montent ?</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Explosion des cas d’usage LLM/RAG depuis 2023.</li>
+                <li>Manque de profils capables de mettre en prod et monitorer.</li>
+                <li>Nouvelle demande sur agents IA, workflows multi-LLM, GenAI productisée.</li>
+            </ul>
+            <div class="flow-row reveal">
+                <div class="flow-box">
+                    <div class="flow-title">1. LLM everywhere</div>
+                    <div class="flow-text">Les POC deviennent des cas d’usage métier visibles.</div>
+                </div>
+                <div class="flow-box">
+                    <div class="flow-title">2. Passage en prod</div>
+                    <div class="flow-text">Il faut SLA, sécurité, monitoring, coût et qualité.</div>
+                </div>
+                <div class="flow-box">
+                    <div class="flow-title">3. Prime salariale</div>
+                    <div class="flow-text">Les profils qui livrent prennent la valeur.</div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide slide-4" data-slide="4">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-1); opacity: 0.11;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-3); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Les 4 rôles qui captent la valeur</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>AI Engineer / ML Engineer : dev produit autour des LLM et de la data.</li>
+                <li>MLOps Engineer : industrialisation, CI/CD, infra ML, monitoring.</li>
+                <li>Dev agentique (RAG &amp; Agents) : orchestration multi-agents, outils, mémoire.</li>
+                <li>Prompt Engineer : optimisation fine des LLM, évaluation, quality assurance.</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide slide-5" data-slide="5">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-2); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-1); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">AI Engineer : profil dev + LLM</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Salaire moyen AI Engineer France ≈ 52 k€ selon Glassdoor.</li>
+                <li>Ordre de grandeur : 40–50 k€ junior, 50–70 k€ confirmé.</li>
+                <li>70–100 k€+ pour des seniors capables de mettre en prod des systèmes LLM/RAG.</li>
+            </ul>
+            <div class="reveal">
+                <div class="salary-band"><div class="salary-role">Junior</div><div class="salary-track"><div class="salary-range" style="width:50%"></div></div><div class="salary-max">50 k€</div></div>
+                <div class="salary-band"><div class="salary-role">Confirmé</div><div class="salary-track"><div class="salary-range" style="width:70%"></div></div><div class="salary-max">70 k€</div></div>
+                <div class="salary-band"><div class="salary-role">Senior</div><div class="salary-track"><div class="salary-range" style="width:100%"></div></div><div class="salary-max">100 k€+</div></div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Slide 6 -->
+    <div class="slide slide-6" data-slide="6">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-1); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-2); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">MLOps Engineer : faire tourner la machine</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>MLOps junior : 45–58 k€, médiane autour de 55 k€.</li>
+                <li>Confirmé : 55–78 k€, médiane ~65–67 k€.</li>
+                <li>Senior / Lead : 75–105 k€, jusqu’à 130–180 k€ dans certaines scale-ups.</li>
+            </ul>
+            <div class="reveal">
+                <div class="salary-band"><div class="salary-role">Junior</div><div class="salary-track"><div class="salary-range" style="width:32%"></div></div><div class="salary-max">58 k€</div></div>
+                <div class="salary-band"><div class="salary-role">Confirmé</div><div class="salary-track"><div class="salary-range" style="width:43%"></div></div><div class="salary-max">78 k€</div></div>
+                <div class="salary-band"><div class="salary-role">Lead</div><div class="salary-track"><div class="salary-range" style="width:100%"></div></div><div class="salary-max">180 k€</div></div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Slide 7 -->
+    <div class="slide slide-7" data-slide="7">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-3); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-1); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Dev agentique : RAG &amp; multi-agents</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Postes “Agentic AI Engineer / RAG &amp; Agents” fortement orientés confirmé/senior.</li>
+                <li>Confirmé : typiquement 60–90 k€, calé sur AI/MLOps confirmé.</li>
+                <li>Senior : 90–130 k€+, selon impact produit et périmètre (lead, archi, plateforme).</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 8 -->
+    <div class="slide slide-8" data-slide="8">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-2); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-3); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Prompt Engineer : la fusée salariale</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Salaire médian Prompt Engineer France ≈ 68 k€ en 2026.</li>
+                <li>Junior : 45–60 k€ ; confirmé : 60–90 k€.</li>
+                <li>Senior / Lead : 90–150 k€, certains cas 150–200 k€ en lab IA.</li>
+            </ul>
+            <div class="reveal">
+                <div class="salary-band"><div class="salary-role">Junior</div><div class="salary-track"><div class="salary-range" style="width:30%"></div></div><div class="salary-max">60 k€</div></div>
+                <div class="salary-band"><div class="salary-role">Confirmé</div><div class="salary-track"><div class="salary-range" style="width:45%"></div></div><div class="salary-max">90 k€</div></div>
+                <div class="salary-band"><div class="salary-role">Lead / Lab</div><div class="salary-track"><div class="salary-range" style="width:100%"></div></div><div class="salary-max">200 k€</div></div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Slide 9 -->
+    <div class="slide slide-9" data-slide="9">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-1); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-2); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Dev aujourd’hui → combien dans 3–5 ans ?</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Dev classique France : souvent 40–50 k€ autour de 2–3 ans d’expérience.</li>
+                <li>En basculant vers IA/MLOps, viser 60–80 k€ en 3–5 ans est réaliste.</li>
+                <li>Top profils GenAI/agents montent ensuite vers 90–120 k€+.</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 10 -->
+    <div class="slide slide-10" data-slide="10">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-3); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-1); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Remote, hybride, Paris vs régions</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>10+ offres AI Engineer remote basées en France, selon certains jobboards.</li>
+                <li>Des offres Agentic AI Engineer explicitement remote, parfois international.</li>
+                <li>Paris garde la densité d’offres, mais Lyon / Toulouse / autres hubs montent.</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 11 -->
+    <div class="slide slide-11" data-slide="11">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-2); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-3); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Freelance GenAI : TJM qui pique</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>TJM Prompt/GenAI souvent entre 600 et 1 200 € / jour.</li>
+                <li>Équivalent annuel : largement &gt; 120 k€ si bien staffé.</li>
+                <li>Prime nette pour les missions RAG, agents, migration LLM.</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 12 -->
+    <div class="slide slide-12" data-slide="12">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-1); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-2); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Ce qui fait vraiment grimper le salaire</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Maîtrise d’un framework LLM : LangChain, LlamaIndex, Semantic Kernel.</li>
+                <li>Compétences MLOps : Kubernetes, CI/CD, MLflow, monitoring, dérive.</li>
+                <li>Capacité à évaluer, monitorer et expliquer les comportements LLM.</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 13 -->
+    <div class="slide slide-13" data-slide="13">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-3); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-1); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Le vrai différenciateur : la prod</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>“Avoir fait tourner un POC” : maintenant, tout le monde l’a fait.</li>
+                <li>Ce qui compte : prod, SLO, logs, métriques d’éval, rollback.</li>
+                <li>Les annonces AI/MLOps insistent sur industrialisation, qualité et sécurité.</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 14 -->
+    <div class="slide slide-14" data-slide="14">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 360px; height: 360px; top: -90px; right: -70px; background: var(--color-accent-2); opacity: 0.12;"></div>
+            <div class="blob" style="width: 260px; height: 260px; bottom: -80px; left: -60px; background: var(--color-accent-3); opacity: 0.09;"></div>
+        </div>
+        <div class="content">
+            <h2 class="reveal font-display text-[clamp(2rem,3.5vw,2.6rem)] font-bold mb-4">Stratégie pour un dev qui veut upgrader son salaire</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Court terme (6–12 mois) : 1–2 projets concrets GenAI/RAG en side ou interne.</li>
+                <li>Moyen terme (2–3 ans) : viser AI Engineer / MLOps confirmé 60–80 k€.</li>
+                <li>Long terme (3–5+ ans) : spécialisation agents / Prompt / plateforme, objectif 90–120 k€+.</li>
+            </ul>
+            
+        </div>
+    </div>
+
+    <!-- Slide 15 -->
+    <div class="slide slide-15" data-slide="15">
+        <div class="gradient-mesh">
+            <div class="blob" style="width: 420px; height: 420px; top: -120px; right: -120px; background: var(--color-accent-1); opacity: 0.18;"></div>
+            <div class="blob" style="width: 320px; height: 320px; bottom: -100px; left: -80px; background: var(--color-accent-2); opacity: 0.14;"></div>
+            <div class="blob" style="width: 220px; height: 220px; top: 45%; left: 12%; background: var(--color-accent-3); opacity: 0.12;"></div>
+        </div>
+        <div class="content text-left">
+            <h2 class="reveal font-display text-[clamp(2.2rem,4vw,3rem)] font-bold mb-4">En 2026, les LLM paient… ceux qui livrent</h2>
+            <ul class="reveal list-disc pl-6 space-y-2 text-[clamp(0.95rem,1.2vw,1.05rem)] text-text-secondary">
+                <li>Les métiers IA sont déjà mieux payés que la moyenne des jobs dev.</li>
+                <li>La vraie prime est sur les profils qui mettent en prod du GenAI robuste.</li>
+                <li>Si vous savez coder, c’est une opportunité de +20–40 k€ en quelques années.</li>
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+<div class="nav-controls">
+    <button class="nav-btn" onclick="changeSlide(-1)">&#8249;</button>
+    <div class="slide-dots" id="dots"></div>
+    <button class="nav-btn" onclick="changeSlide(1)">&#8250;</button>
+    <span class="slide-counter" id="counter">1 / 15</span>
+</div>
+
+<script>
+    let current = 1;
+    const total = document.querySelectorAll('.slide').length;
+    const dotsContainer = document.getElementById('dots');
+    const counter = document.getElementById('counter');
+    for (let i = 1; i <= total; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 1 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+    }
+    function goToSlide(n) {
+        const prev = document.querySelector('.slide.active');
+        const next = document.querySelector(`.slide[data-slide="${n}"]`);
+        if (prev) prev.classList.remove('active');
+        if (next) { next.classList.add('active'); animateSlide(next); }
+        current = n; updateNav();
+    }
+    function changeSlide(dir) {
+        let next = current + dir;
+        if (next < 1) next = total;
+        if (next > total) next = 1;
+        goToSlide(next);
+    }
+    function updateNav() {
+        document.querySelectorAll('.dot').forEach((d, i) => {
+            d.classList.toggle('active', i + 1 === current);
+        });
+        counter.textContent = current + ' / ' + total;
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+    });
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+    document.addEventListener('touchend', (e) => {
+        const diff = touchStartX - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1);
+    });
+
+    function animateSlide(slide) {
+        slide.querySelectorAll('.reveal').forEach((el, i) => {
+            el.style.transition = 'none';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.offsetHeight;
+            const delay = i * 0.08;
+            el.style.transition = `opacity 0.35s ease ${delay}s, transform 0.35s ease ${delay}s`;
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0px)';
+        });
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        const spotlight = document.querySelector('.mouse-spotlight');
+        if (spotlight) {
+            const rgb = getComputedStyle(document.documentElement).getPropertyValue('--glow-color-rgb').trim() || '34,197,94';
+            spotlight.style.background = `radial-gradient(600px circle at ${e.clientX}px ${e.clientY}px, rgba(${rgb}, 0.08), transparent 40%)`;
+        }
+    });
+
+    try { animateSlide(document.querySelector('.slide.active')); } catch(e) { console.warn('Initial animation error:', e); }
+</script>
+
+</body>
+</html>

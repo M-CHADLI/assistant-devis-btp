@@ -1,0 +1,33 @@
+# OS / OneDrive
+Thumbs.db
+desktop.ini
+.DS_Store
+*.tmp
+~$*
+
+# Python (pour le code à venir)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Secrets & config locale
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# Artefacts de fine-tuning (volumineux — ne jamais versionner)
+*.gguf
+*.safetensors
+*.bin
+checkpoints/
+outputs/
+adapters/
+wandb/
+
+# Données brutes catalogue (contrainte légale — voir SOURCES_DONNEES.md)
+data/raw/
+*.dump
+*.sql
