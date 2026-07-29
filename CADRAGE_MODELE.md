@@ -217,12 +217,54 @@ toutes les autres (~15 % simple, ~5 % forte). Sinon le modèle apprend
 
 ### Production des données
 
-Génération synthétique par un gros modèle depuis la structure du catalogue,
-puis revue humaine. 2000 exemples à la main ne sont pas tenables en 4 mois.
+Génération synthétique par un gros modèle, puis revue humaine. 2000 exemples à la
+main ne sont pas tenables en 4 mois.
 
 **Vigilance :** un seul modèle + un seul prompt = 2000 variantes de trois exemples.
 Faire varier explicitement les axes : type de pièce, surface, budget, niveau du
 bricoleur, précision de la formulation.
+
+#### Le référentiel métier — livrable intermédiaire
+
+Le risque principal du projet : un modèle généraliste ne *connaît* pas les valeurs
+métier (rendements, taux de chute, ordre des lots). Il produit du **plausible**, pas
+du **juste**. Générer les exemples directement depuis sa mémoire revient à entraîner
+le modèle sur de l'expertise inventée — apprise parfaitement, restituée avec
+assurance, et invisible à la relecture.
+
+**Chaîne retenue :**
+
+```
+Documentation fabricants  →  référentiel de faits validé  →  génération des exemples
+```
+
+Ne jamais court-circuiter l'étape du milieu. Une valeur fausse se corrige à un seul
+endroit et on régénère ; diluée dans 2000 exemples, elle est irrécupérable.
+
+Chaque valeur du référentiel porte **sa source** (« 4 kg/m², fiche technique Weber,
+p. 3 »). C'est ce qui rend le travail défendable en soutenance.
+
+**Source retenue : documentation technique des fabricants uniquement.**
+Publique, elle fait autorité, et les fiches donnent les rendements explicitement.
+Critère de sélection : **les fabricants dont Leroy Merlin vend les produits** — ça
+borne la liste et aligne le référentiel sur le catalogue.
+
+Sources écartées pour l'instant :
+
+- **Normes (DTU)** — vendues par l'AFNOR et le CSTB, non librement accessibles.
+  Les scraper poserait un problème de droits, visible sur un projet lié à une enseigne.
+  Contournement : les docs fabricants reprennent légalement les prescriptions DTU
+  applicables à leurs produits.
+- **Transcriptions YouTube** — sources non techniques, transcriptions automatiques
+  peu fiables sur les chiffres et unités, et volume qui écraserait mécaniquement les
+  bonnes sources. Si réintroduites plus tard : vocabulaire, gestes et erreurs
+  courantes uniquement, **jamais une valeur numérique**.
+
+**Limite de périmètre — impérative.** Le pipeline d'extraction est un projet en soi
+et peut absorber les 4 mois, laissant le projet sans modèle fine-tuné. Plafond :
+**2 à 3 semaines**, et un référentiel volontairement étroit — les 20 à 30 matériaux
+qui couvrent le parcours de démo salle de bain. Élargissement seulement si le reste
+avance vite.
 
 **Jeu de test : 150-200 exemples écrits ou corrigés à la main.** Jamais vus à
 l'entraînement, jamais générés. Seule mesure honnête.
@@ -244,7 +286,11 @@ l'entraînement, jamais générés. Seule mesure honnête.
 
 ## 8. Points ouverts
 
-- [ ] Schéma JSON détaillé de chaque `payload`
+- [ ] **Protocole de preuve du fine-tuning** — à décider *avant* d'entraîner :
+      modèle de référence, métriques, jeu de test gelé. Conditionne tout le reste
+- [ ] Liste des fabricants et des fiches techniques à extraire (20-30 matériaux)
+- [ ] Format du référentiel métier
+- [ ] Schéma JSON détaillé de chaque `payload` (au moment d'écrire le code)
 - [ ] Pipeline de génération synthétique
 - [ ] Vérifier la licence réelle de Gemma 4 26B A4B
 - [ ] Structure du dump catalogue LM (réutiliser celle de `SOURCES_DONNEES.md`)
