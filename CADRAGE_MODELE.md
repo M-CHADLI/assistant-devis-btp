@@ -109,7 +109,67 @@ bureau, sans cloud.
 
 ## 4. Périmètre fonctionnel
 
-### Noyau de démo — 6 fonctions
+### Les trois fonctions
+
+L'agent fait trois choses, dans l'ordre :
+
+| | Fonction | Ce qu'elle fait | Qui parle |
+|---|---|---|---|
+| 1 | **Interroger** | Passe d'une intention floue à un projet cadré : surface, budget, existant, contraintes | Client |
+| 2 | **Calculer** | Traduit le projet en matériaux et quantités, y compris ce qu'on oublie toujours | Personne — le modèle travaille |
+| 3 | **Arbitrer** | Chiffre, puis laisse le client et son artisan ajuster jusqu'à l'accord | Client + artisan |
+
+Le produit se résume en une phrase : **un seul interlocuteur au début, deux à la
+fin.** Le client arrive seul avec une intention, il repart avec un accord.
+
+La troisième fonction n'est pas un aboutissement passif. Le devis n'est pas un
+document livré, c'est un objet qu'on négocie à deux et que l'agent tient à jour.
+
+### La scène finale — devis interactif à deux
+
+Le client et son artisan — celui qu'il a engagé, pas un partenaire Leroy Merlin —
+ouvrent le devis ensemble, **chacun de son côté, en simultané**. Ils discutent avec
+l'agent, à la voix ou au clavier, et valident ligne à ligne.
+
+**Autorité différenciée.** Les deux interlocuteurs ne pèsent pas pareil. Une demande
+du client est une *préférence* (« je veux du carrelage blanc »). Une objection de
+l'artisan est une *correction technique* (« il faut du placo hydrofuge, pas du
+standard ») — et il a raison contre le modèle.
+
+**Règle retenue : l'artisan fait autorité, toujours.** Sa correction est appliquée
+sans discussion et **journalisée comme signal qualité**.
+
+Conséquence importante pour le projet : chaque correction d'artisan est une donnée
+d'expert, gratuite et qualifiée. Elle alimente directement la boucle qualité (voir
+`DISPOSITIF_AGENT.md` §5). Un professionnel qui corrige le modèle en production vaut
+mieux qu'une journée d'entretien avec un vendeur.
+
+**Deux avertissements de périmètre :**
+
+- Le temps réel partagé (sessions synchronisées, présence, conflits d'édition) est
+  de la **plomberie** : plusieurs semaines de travail qui ne démontrent rien sur le
+  sujet de la soutenance. Côté modèle, le design est identique que les deux soient
+  sur une tablette ou sur deux écrans — l'agent voit une conversation à trois voix.
+  Démontrer avec deux fenêtres sur la même machine est acceptable.
+- Le distanciel **simplifie** la voix : chacun sur son micro, donc on sait toujours
+  qui parle. En présentiel il aurait fallu séparer deux voix sur un seul micro —
+  problème difficile et hors sujet.
+
+### Détail interne — 6 capacités
+
+Les trois fonctions se décomposent en six capacités, qui sont le vrai découpage du
+dataset et de l'évaluation. Elles n'ont pas à être présentées séparément : elles se
+déduisent.
+
+| Fonction | Capacités |
+|---|---|
+| Interroger | Clarification, Décomposition en lots |
+| Calculer | Quantitatif, Consommables oubliés |
+| Arbitrer | Devis structuré sans prix, Injection prix + promos |
+
+Réserve assumée sur ce regroupement : « Arbitrer » réunit une étape modèle (le
+devis) et une étape code (les prix), ce qui brouille légèrement la frontière
+architecturale du §2. Le choix est de la nommer plutôt que de changer le découpage.
 
 Principe : le noyau doit tenir en **une seule démo continue**, un seul parcours utilisateur.
 
@@ -123,7 +183,8 @@ Principe : le noyau doit tenir en **une seule démo continue**, un seul parcours
 | 6 | **Injection prix + promos** sur le devis | Payoff business (côté code) |
 
 Parcours de démo : *« je refais ma salle de bain »* → le modèle interroge →
-décompose → quantifie → produit le devis → rattrape les oublis → chiffre au prix promo.
+décompose → quantifie → produit le devis → rattrape les oublis → chiffre au prix
+promo → **le client et son artisan arbitrent et valident ensemble**.
 
 ### Second cercle (si le temps le permet)
 
@@ -288,6 +349,12 @@ l'entraînement, jamais générés. Seule mesure honnête.
 
 - [ ] **Protocole de preuve du fine-tuning** — à décider *avant* d'entraîner :
       modèle de référence, métriques, jeu de test gelé. Conditionne tout le reste
+- [ ] Répercuter la scène à deux acteurs dans `DISPOSITIF_AGENT.md` : le point
+      d'intervention HITL-2 devient multipartite, la fiche projet porte deux
+      utilisateurs de statut différent, les corrections d'artisan entrent dans la
+      boucle qualité
+- [ ] La voix : modalité d'entrée à décider (essentielle à la démo, ou confort ?).
+      Impacte la validation des entrées, pas le modèle
 - [ ] Liste des fabricants et des fiches techniques à extraire (20-30 matériaux)
 - [ ] Format du référentiel métier
 - [ ] Schéma JSON détaillé de chaque `payload` (au moment d'écrire le code)
