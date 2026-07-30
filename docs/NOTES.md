@@ -16,15 +16,34 @@ Il faut donc une **bascule automatique** vers un modèle de secours quand
 l'appel primaire échoue : machine indisponible, modèle non chargé, timeout,
 saturation mémoire, ou sortie inexploitable.
 
-**Piste technique.** Méthode `model_fallback` — une liste ordonnée de modèles,
-essayés dans l'ordre jusqu'à obtenir une réponse valide. À confirmer : le nom
-exact et la sémantique dépendent de la couche d'orchestration retenue (routeur
-type LiteLLM, ou implémentation maison dans l'API du §C9). **Ne pas figer le
-nom de la méthode avant d'avoir choisi la couche.**
+**Piste technique — LangChain.** `ModelFallbackMiddleware`, module
+`langchain.agents.middleware.model_fallback`. C'est un **middleware d'agent**,
+à ne pas confondre avec `Runnable.with_fallbacks()` qui traite le même besoin
+au niveau d'un runnable isolé.
+
+```python
+ModelFallbackMiddleware(
+    first_model: str | BaseChatModel,
+    *additional_models: str | BaseChatModel,
+)
+```
+
+Point d'attention : les modèles listés sont les **alternatives**. Le modèle
+primaire reste celui déclaré sur l'agent ; le middleware n'entre en jeu qu'après
+son échec, puis essaie ses modèles dans l'ordre jusqu'au premier succès.
+
+La documentation ne dit **pas** quels types d'erreur déclenchent la bascule —
+elle parle d'« échec de l'appel modèle », sans plus. À vérifier en lisant le
+code : ça détermine si une sortie non conforme (JSON invalide) déclenche ou non,
+ce qui est justement la question ouverte plus bas.
+
+Choisir LangChain comme couche d'orchestration n'est pas neutre : ça engage
+l'architecture de l'API qui expose le modèle. À poser explicitement, pas à
+subir par défaut parce que le fallback y était pratique.
 
 **Chaîne de secours envisagée**, du plus fidèle au plus dégradé :
 
-1. **gpt-oss-120b fine-tuné** — le modèle de démo
+1. **gpt-oss-120b fine-tuné** — le modèle primaire, déclaré sur l'agent
 2. **gpt-oss-20b fine-tuné** — même dataset, même schéma de sortie, tient sur
    bien moins de mémoire. Le fallback naturel : les réponses restent conformes
 3. **20b brut avec prompt système** — celui de la baseline du §7. Déjà écrit,
@@ -58,6 +77,11 @@ ce schéma unique, chaque fallback demanderait son propre parseur.
 directe pour deux compétences : le **monitorage** (taux de bascule, seuil
 d'alerte) et la **gestion d'incident**. Le fallback est un cas d'incident réel,
 reproductible et documentable — pas un incident fabriqué pour l'occasion.
+
+**Sources.**
+
+- [ModelFallbackMiddleware — LangChain Reference](https://reference.langchain.com/python/langchain/agents/middleware/model_fallback/ModelFallbackMiddleware)
+- [How to add fallbacks to a runnable](https://python.langchain.com/v0.2/docs/how_to/fallbacks/) — l'autre mécanisme, au niveau runnable
 
 **Coût honnête.** Faire tourner deux modèles simultanément sur 128 Go de mémoire
 unifiée n'est pas gratuit : le 120b en occupe déjà une large part. Deux options
