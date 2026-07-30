@@ -15,6 +15,7 @@ les données ne sortent pas de la machine.
 | [docs/CADRAGE_MODELE.md](docs/CADRAGE_MODELE.md) | **Le document de référence** — périmètre, dataset, protocole de preuve |
 | [docs/DISPOSITIF_AGENT.md](docs/DISPOSITIF_AGENT.md) | Workflow, mémoire, garde-fous, plan d'évaluation |
 | [docs/LIVRABLES.md](docs/LIVRABLES.md) | Grille de contrôle : ce que le projet couvre, ce qu'il ne couvre pas |
+| [docs/NOTES.md](docs/NOTES.md) | Bloc-notes — idées attrapées au vol, pas encore arbitrées |
 | [docs/SOURCES_DONNEES.md](docs/SOURCES_DONNEES.md) | Structure du dump catalogue et contrainte légale sur les données |
 
 ## Arborescence

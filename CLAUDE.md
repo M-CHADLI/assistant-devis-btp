@@ -30,6 +30,8 @@ archive/renoassistant/ conception précédente
 - **`docs/LIVRABLES.md`** — grille de contrôle de la couverture des cinq livrables attendus.
   **Ce n'est pas le projet** : le projet vaut par lui-même, cette grille ne fait que signaler
   les manques. Ne jamais dénaturer le cadrage pour cocher une case.
+- **`docs/NOTES.md`** — bloc-notes des idées non encore arbitrées. Ce qui y est tranché remonte
+  dans les documents de conception, et la note est retirée.
 - **`docs/SOURCES_DONNEES.md`** — ancienne conception *RenoAssistant*, **périmée en tant
   qu'architecture**, mais conservée car toujours utile : structure du dump catalogue Leroy Merlin
   et contrainte légale sur les données (structure réelle, valeurs simulées). Ne pas la traiter
