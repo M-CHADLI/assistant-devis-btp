@@ -18,14 +18,14 @@
 ## Août — le référentiel
 
 Le mois le plus ingrat et le plus décisif : sans lui, le dataset apprend des
-valeurs plausibles et fausses (§6 de `CADRAGE_MODELE.md`).
+valeurs plausibles et fausses (§6 de `docs/CADRAGE_MODELE.md`).
 
 1. Arrêter la liste des fabricants (peinture, sous-couche, enduit, stratifié,
    sous-couche de sol, barres de seuil) et récupérer les fiches techniques.
 2. Extraire : rendements, taux de chute par type de pose, temps de séchage,
    consommables associés. **Une ligne = une valeur = une source.**
 3. Figer le format du référentiel et sa version.
-4. En parallèle, faire valider les seuils du §4 de `DISPOSITIF_AGENT.md`.
+4. En parallèle, faire valider les seuils du §4 de `docs/DISPOSITIF_AGENT.md`.
 
 **Sortie :** référentiel v1 versionné. Trancher aussi la voix (oui/non) — elle
 n'impacte pas le modèle, mais elle impacte la démo, et on ne décide pas ça en

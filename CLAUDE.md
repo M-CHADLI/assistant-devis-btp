@@ -5,29 +5,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Nature du dépôt
 
 Dépôt de **cadrage / documentation** pour un projet de soutenance d'AI Engineer. Il ne contient
-aujourd'hui **aucun code** : uniquement des specs Markdown, des supports HTML/PPTX et des images.
+aujourd'hui **aucun code** : uniquement des specs Markdown, des supports HTML et des images.
 Toute la documentation est rédigée **en français** — conserver cette langue pour les nouveaux fichiers.
 
-Pas de dépôt git, pas de système de build, de lint ou de tests. Ne pas inventer de telles commandes.
+Dépôt git, mais pas de système de build, de lint ou de tests. Ne pas inventer de telles commandes.
 
-## Le pivot — ce qui fait autorité
+## Arborescence et statut des documents
 
-Le projet a pivoté. L'ordre de lecture et le statut des documents comptent :
+Le projet a pivoté. Le rangement porte le statut : **`docs/` fait autorité, `archive/` non.**
 
-- **`CADRAGE_MODELE.md`** — document de référence **actuel**. Décrit l'*Assistant Bricolage fine-tuné*
-  (le projet en cours). Toute nouvelle décision s'aligne dessus.
-- **`SOURCES_DONNEES.md`** (racine) — ancienne conception *RenoAssistant*, **périmée en tant
-  qu'architecture**, mais conservée à la racine car toujours utile : structure du dump catalogue
-  Leroy Merlin et contrainte légale sur les données (structure réelle, valeurs simulées).
-  Ne pas la traiter comme la cible actuelle.
-- **`archive-renoassistant/`** — le reste de l'ancienne conception : `DIAGRAMMES.md`, le PDF de
-  cadrage des flux, les images de user story SMS. Valeur historique uniquement.
-- **`hors-sujet-veille-ia/`** — livrables de **veille IA / marché de l'emploi**, sans rapport avec
-  le projet Assistant Bricolage. Ne pas en tenir compte.
+```
+README.md              porte d'entrée
+CLAUDE.md              ce fichier
+PLANNING.md            calendrier des 4 mois
+docs/                  la conception — fait autorité
+veille/                livrables de veille
+reference/             référentiel de compétences
+archive/renoassistant/ conception précédente
+```
+
+- **`docs/CADRAGE_MODELE.md`** — document de référence **actuel**. Décrit l'*Assistant Bricolage
+  fine-tuné* (le projet en cours). Toute nouvelle décision s'aligne dessus.
+- **`docs/DISPOSITIF_AGENT.md`** — workflow, mémoire, garde-fous, plan d'évaluation.
+- **`docs/LIVRABLES.md`** — grille de contrôle de la couverture des cinq livrables attendus.
+  **Ce n'est pas le projet** : le projet vaut par lui-même, cette grille ne fait que signaler
+  les manques. Ne jamais dénaturer le cadrage pour cocher une case.
+- **`docs/SOURCES_DONNEES.md`** — ancienne conception *RenoAssistant*, **périmée en tant
+  qu'architecture**, mais conservée car toujours utile : structure du dump catalogue Leroy Merlin
+  et contrainte légale sur les données (structure réelle, valeurs simulées). Ne pas la traiter
+  comme la cible actuelle.
+- **`veille/`** — livrables de veille IA / marché de l'emploi. **Pas hors sujet** : c'est la
+  compétence « veille technique et réglementaire ». La thématique doit toutefois être recadrée
+  sur un outil ou une réglementation du projet (voir `docs/LIVRABLES.md`).
+- **`reference/referentiel-rncp-ai-engineer.xlsx`** — les 21 compétences et 5 livrables attendus.
+  Matière première de `docs/LIVRABLES.md`, à ne pas paraphraser ailleurs.
+- **`archive/renoassistant/`** — le reste de l'ancienne conception : `DIAGRAMMES.md`, le PDF de
+  cadrage des flux, les images de user story SMS, le handoff dataset devis. Valeur historique
+  uniquement.
 
 ## Idées directrices du projet (à respecter dans tout code futur)
 
-Quand du code apparaîtra, il découlera de ces principes posés dans `CADRAGE_MODELE.md` :
+Quand du code apparaîtra, il découlera de ces principes posés dans `docs/CADRAGE_MODELE.md` :
 
 - **Le modèle décrit, il ne calcule jamais.** Le LLM produit du JSON structuré (intention, lots,
   quantités, références) ; un **code Python déterministe** fait les requêtes catalogue, les calculs
@@ -91,9 +109,9 @@ diagnostic de pathologie et l'estimation de main d'œuvre sont explicitement **�
 
 ## Outils
 
-- Diagrammes Mermaid (`archive-renoassistant/DIAGRAMMES.md`) : rendus sur https://mermaid.live
+- Diagrammes Mermaid (`archive/renoassistant/DIAGRAMMES.md`) : rendus sur https://mermaid.live
   ou dans tout Markdown.
 - Skills projet dans `.claude/skills/` : `brainstorming`, `writing-plans`,
   `subagent-driven-development` (copiées depuis le plugin perso `mehdi-superpowers`).
-- Le `docker-compose.yml` (PostgreSQL + pgvector, Redis) figurant dans `SOURCES_DONNEES.md` appartient
+- Le `docker-compose.yml` (PostgreSQL + pgvector, Redis) figurant dans `docs/SOURCES_DONNEES.md` appartient
   à l'ancienne conception RenoAssistant, pas au projet actuel.

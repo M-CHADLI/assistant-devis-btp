@@ -22,7 +22,7 @@ Ce que le pivot apporte :
 | Démontrable | Un workflow | Une amélioration mesurable (avant/après FT) |
 | Hébergement | Cloud/API | 100 % local — les données ne sortent jamais |
 
-Le dernier point résout le blocage légal déjà identifié dans `SOURCES_DONNEES.md`.
+Le dernier point résout le blocage légal déjà identifié dans `SOURCES_DONNEES.md` (même dossier).
 
 ---
 
@@ -444,6 +444,8 @@ compromettre la démonstration.
 - [x] ~~Canal de démo~~ — web uniquement (§4)
 - [x] ~~Planning des 4 mois~~ — voir `PLANNING.md`
 - [ ] Valider les seuils d'acceptation de `DISPOSITIF_AGENT.md` §4
+- [ ] Trancher les quatre points de `LIVRABLES.md` avec l'encadrant — dont le
+      « système big data » et le standard d'accessibilité
 - [ ] La voix : modalité d'entrée à décider (essentielle à la démo, ou confort ?).
       Impacte la validation des entrées, pas le modèle
 - [ ] Liste des fabricants et des fiches techniques à extraire (20-30 matériaux
