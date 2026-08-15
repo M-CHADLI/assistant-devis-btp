@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>Veille C6 — Unsloth et fine-tuning MoE</title>
+    <dateCreated>Fri, 31 Jul 2026 00:00:00 +0000</dateCreated>
+    <ownerName>the-project — Assistant Bricolage fine-tune</ownerName>
+  </head>
+  <body>
+    <outline text="Veille C6 — Unsloth et fine-tuning MoE" title="Veille C6 — Unsloth et fine-tuning MoE">
+
+      <outline type="rss"
+               text="Unsloth — releases"
+               title="Unsloth — releases"
+               description="L'outil de fine-tuning du projet. Priorite 1."
+               xmlUrl="https://github.com/unslothai/unsloth/releases.atom"
+               htmlUrl="https://github.com/unslothai/unsloth/releases"/>
+
+      <outline type="rss"
+               text="PEFT — releases"
+               title="PEFT — releases"
+               description="Etat de l'art LoRA en pratique (v0.20.0 : 9 nouvelles methodes PEFT)."
+               xmlUrl="https://github.com/huggingface/peft/releases.atom"
+               htmlUrl="https://github.com/huggingface/peft/releases"/>
+
+      <outline type="rss"
+               text="arXiv — Mixture of Experts (cs.LG)"
+               title="arXiv — Mixture of Experts (cs.LG)"
+               description="Requete Atom triee par date de soumission. Bruyant : balayer, ne pas lire."
+               xmlUrl="https://export.arxiv.org/api/query?search_query=abs:%22mixture+of+experts%22+AND+cat:cs.LG&amp;sortBy=submittedDate&amp;sortOrder=descending&amp;max_results=10"
+               htmlUrl="https://arxiv.org/list/cs.LG/recent"/>
+
+      <outline type="rss"
+               text="Hugging Face — blog"
+               title="Hugging Face — blog"
+               description="Ecosysteme et modeles ouverts. Large : filtrer sur fine-tuning et MoE."
+               xmlUrl="https://huggingface.co/blog/feed.xml"
+               htmlUrl="https://huggingface.co/blog"/>
+
+      <outline type="rss"
+               text="Ahead of AI — Sebastian Raschka"
+               title="Ahead of AI — Sebastian Raschka"
+               description="Mise en perspective. Rythme irregulier, forte valeur par article."
+               xmlUrl="https://magazine.sebastianraschka.com/feed"
+               htmlUrl="https://magazine.sebastianraschka.com"/>
+
+    </outline>
+  </body>
+</opml>

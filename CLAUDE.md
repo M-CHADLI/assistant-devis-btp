@@ -36,9 +36,12 @@ archive/renoassistant/ conception précédente
   qu'architecture**, mais conservée car toujours utile : structure du dump catalogue Leroy Merlin
   et contrainte légale sur les données (structure réelle, valeurs simulées). Ne pas la traiter
   comme la cible actuelle.
-- **`veille/`** — livrables de veille IA / marché de l'emploi. **Pas hors sujet** : c'est la
-  compétence « veille technique et réglementaire ». La thématique doit toutefois être recadrée
-  sur un outil ou une réglementation du projet (voir `docs/LIVRABLES.md`).
+- **`veille/`** — la compétence « veille technique et réglementaire » (C6). Le dispositif est
+  décrit dans `veille/DISPOSITIF.md` : thématique **Unsloth et fine-tuning MoE**, cinq flux dans
+  `sources.opml`, rituel d'une heure le vendredi, comptes rendus dans `veille/seances/` au format
+  `GABARIT-SEANCE.md`. Les quatre supports HTML « IA et marché de l'emploi » sont la **thématique
+  précédente**, écartée car le référentiel exige un outil ou une réglementation du projet —
+  conservés, non reconduits.
 - **`reference/referentiel-rncp-ai-engineer.xlsx`** — les 21 compétences et 5 livrables attendus.
   Matière première de `docs/LIVRABLES.md`, à ne pas paraphraser ailleurs.
 - **`archive/renoassistant/`** — le reste de l'ancienne conception : `DIAGRAMMES.md`, le PDF de

@@ -19,7 +19,7 @@
 | Livrable | Compétences | Format attendu | Couverture |
 |---|---|---|---|
 | **E1** — Données | C1-C5 | 2-5 p., 15 min | ⚠️ Le maillon faible |
-| **E2** — Veille et benchmark | C6-C8 | 15-20 p., 15 min | 🟡 Existe, à recadrer |
+| **E2** — Veille et benchmark | C6-C8 | 15-20 p., 15 min | 🟡 C6 recadré et outillé ; manque les séances et C7 |
 | **E3** — Modèle IA | C9-C13 | 15-20 p., 20 min + démo | 🟢 Le cœur du projet |
 | **E4** — Application | C14-C19 | 15-20 p., 20 min | 🟡 Conçu, pas construit |
 | **E5** — Exploitation | C20-C21 | 2-5 p., 10 min | 🔴 Absent |
@@ -78,14 +78,15 @@ erreur de lecture : **c'est C6.**
 
 **Ce qui manque.**
 
-- C6 exige une **récurrence planifiée** (au moins une heure hebdomadaire) et des
-  **outils d'agrégation** cohérents (RSS, newsletters). Il faut la trace du
-  rituel, pas seulement le résultat.
-- C6 exige aussi que la thématique porte sur **un outil ou une réglementation
-  mobilisée dans le projet**. « IA et marché du travail » n'en est pas un.
-  Candidats naturels : Unsloth et le fine-tuning de MoE (outil), ou la
-  réglementation du devis BTP et de la TVA travaux (réglementation — déjà
-  travaillée dans `CADRAGE_MODELE.md` §6).
+- ~~C6 exige une **récurrence planifiée** (au moins une heure hebdomadaire) et
+  des **outils d'agrégation** cohérents.~~ **Fait** — `veille/DISPOSITIF.md`
+  pose le rituel (vendredi, 1 h) et `veille/sources.opml` les cinq flux
+  vérifiés. **Reste à produire la trace** : les comptes rendus dans
+  `veille/seances/`. Le dispositif ne vaut que par eux.
+- ~~C6 exige aussi que la thématique porte sur un outil ou une réglementation
+  mobilisée dans le projet.~~ **Tranché** : **Unsloth et le fine-tuning de MoE**.
+  Le devis BTP et la TVA travaux ont été écartés — trop stables pour une séance
+  hebdomadaire sur quatre mois ; ils restent traités comme référentiel métier.
 - **C7 — le benchmark de services IA préexistants** n'existe nulle part. C'est
   pourtant la justification la plus utile du projet : pourquoi fine-tuner
   gpt-oss plutôt que d'appeler une API généraliste. Le benchmark doit lister les
@@ -95,8 +96,9 @@ erreur de lecture : **c'est C6.**
   exactement ça. Il faut la documenter comme telle (accès, configuration,
   monitorage, dépendances).
 
-**À faire.** Recadrer la thématique de veille, poser le rituel hebdomadaire, et
-écrire le benchmark C7 — qui est de toute façon un argument de soutenance.
+**À faire.** ~~Recadrer la thématique de veille, poser le rituel hebdomadaire~~
+(fait, voir `veille/DISPOSITIF.md`), **tenir les séances**, et écrire le
+benchmark C7 — qui est de toute façon un argument de soutenance.
 
 ---
 
@@ -185,7 +187,8 @@ Deux conséquences :
 
 - [ ] Le « système big data » de C1 — quelle forme acceptable dans ce projet ?
 - [ ] Le standard d'accessibilité retenu (RGAA ou WCAG), une fois pour tout
-- [ ] La thématique de veille C6 — outil (Unsloth / MoE) ou réglementation
-      (devis BTP et TVA travaux) ?
+- [x] La thématique de veille C6 — **outil : Unsloth et fine-tuning MoE**
+      (31/07/2026). À confirmer auprès de l'encadrant, mais le dispositif est
+      posé et le rituel peut démarrer sans attendre.
 - [ ] E4 et E5 exigent une application déployée : jusqu'où va l'exigence de
       déploiement réel ?
