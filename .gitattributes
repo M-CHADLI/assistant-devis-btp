@@ -1,0 +1,31 @@
+# Fins de ligne
+#
+# Ce dépôt est synchronisé par OneDrive, qui réécrit les fichiers texte en CRLF.
+# Sans ces règles, chaque synchronisation fait apparaître des fichiers « modifiés »
+# dont le diff ne contient aucun changement de sens — typiquement les scripts des
+# skills, qui ressortaient à 936 lignes ajoutées / 936 supprimées pour rien.
+#
+# On force donc LF dans le dépôt. Les binaires sont exclus en fin de fichier :
+# en gitattributes, la dernière règle qui correspond l'emporte.
+
+# Défaut : git détecte le texte et le stocke en LF
+*         text=auto eol=lf
+
+# Scripts et gabarits des skills — trois d'entre eux n'ont pas d'extension
+# (review-package, sdd-workspace, task-brief), d'où la règle sur le dossier.
+.claude/skills/**   text eol=lf
+.claude/commands/** text eol=lf
+
+# Binaires — ne jamais convertir, ne jamais présenter en diff texte.
+# Ces règles viennent en dernier : elles écrasent le `text=auto` ci-dessus.
+*.xlsx         binary
+*.pdf          binary
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.gif          binary
+*.ico          binary
+*.gguf         binary
+*.safetensors  binary
+*.bin          binary
+*.dump         binary
