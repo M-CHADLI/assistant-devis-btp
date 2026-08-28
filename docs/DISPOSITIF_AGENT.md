@@ -68,8 +68,9 @@ flowchart TD
 ```
 
 En vert : les étapes exécutées par du **code déterministe**, jamais par le modèle. En orange :
-les **points d'intervention humaine** — désormais deux nouveaux venus en amont (capture audio,
-reformulation) en plus des points déjà connus.
+les **points d'intervention humaine**, désormais précédés de deux nouvelles étapes de pipeline
+en amont (capture audio, reformulation) qui alimentent un nouveau point d'intervention humaine,
+HITL-0, en plus des points déjà connus.
 
 ### 1.2 Étapes détaillées
 
@@ -251,7 +252,7 @@ côté code, jamais uniquement dans le prompt.
 | Données personnelles non sollicitées | Non stockées, non répétées en sortie |
 | Valeurs physiquement improbables | Demande de confirmation |
 
-Sur l'avant-dernier point : un chantier de 400 m² n'est pas impossible, il est improbable.
+Sur le dernier point : un chantier de 400 m² n'est pas impossible, il est improbable.
 L'agent ne rejette pas, il demande confirmation — la différence entre un garde-fou et une
 entrave.
 
