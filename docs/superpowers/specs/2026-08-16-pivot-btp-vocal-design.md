@@ -1,8 +1,7 @@
 # Pivot — Application B2B vocale pour prestataires BTP
 
-> **Statut : EN COURS.** Séance de brainstorming interrompue avant la fin. Sections 1 à 3
-> validées avec l'utilisateur. Sections 4+ (parcours démo, écarté, impact sur le planning,
-> impact sur les livrables RNCP) restent à faire à la reprise.
+> **Statut : sections 1 à 6 validées avec l'utilisateur — cadrage complet.** Reste l'auto-revue
+> du spec puis la répercussion dans les documents de conception (voir checklist en bas).
 >
 > **Ce document remplace, à terme, `docs/CADRAGE_MODELE.md`.** Tant que ce document n'est pas
 > finalisé et que `CADRAGE_MODELE.md` n'est pas réécrit, **les deux coexistent** — mais
@@ -17,9 +16,10 @@
 client + artisan, chantier pilote peinture/sols uniquement, canal web, saisie texte.
 
 **Après** — Application web B2B pour prestataires de services (priorité BTP) : l'artisan est
-admin/validateur, le client participe (coordonnées, relances, signature). Devis **et** facture,
-générés par **commande vocale** sur chantier. Chantier pilote élargi à 4 corps de métier
-(peinture, sols, plomberie, électricité).
+admin/validateur, le client participe (coordonnées). Devis structuré, modifiable et exportable
+(Word), généré par **commande vocale** sur chantier. Chantier pilote élargi à 4 corps de métier
+(peinture, sols, plomberie, électricité). Le produit s'arrête au devis — facture, signature et
+relances sont hors périmètre.
 
 ---
 
@@ -71,6 +71,11 @@ reste, lui, écrit/corrigé à la main — non négociable.
 ┌──────────────────────┐
 │ Artisan valide/corrige │  Chaque correction journalisée comme signal qualité
 │ (voix ou texte)         │
+└──────┬────────────────┘
+       ↓
+┌──────────────────────┐
+│ Devis modifiable/      │  Édition directe + export Word. Le produit s'arrête ici —
+│ export Word             │  facture, signature, relances hors périmètre
 └──────────────────────┘
 ```
 
@@ -79,13 +84,8 @@ capture, appel STT, appel LLM reformulation, appel LLM fine-tuné, appels d'outi
 référentiel/catalogue. Décision : architecture d'agents réelle (pas juste un sujet de veille),
 cohérent avec le `ModelFallbackMiddleware` déjà exploré dans `docs/NOTES.md`.
 
-**Facture :** générée par **code déterministe** à partir du devis validé (mêmes lignes +
-mentions légales + acompte/solde) — pas un second passage du modèle. Cohérent avec "le modèle
-ne calcule jamais".
-
 **API Pappers :** auto-remplit les infos légales du prestataire à l'inscription (SIRET, forme
-juridique, adresse) à partir du numéro SIRET — alimente les mentions obligatoires du
-devis/facture.
+juridique, adresse) à partir du numéro SIRET — alimente les mentions obligatoires du devis.
 
 **Point ouvert, non bloquant :** un seul modèle chargé qui fait les deux rôles (reformulation
 promptée + génération JSON fine-tunée), ou deux modèles séparés — à trancher plus tard sur la
@@ -138,21 +138,101 @@ sans repasser par la collecte manuelle.
 
 ---
 
+## Section 4 — Parcours de démo & écarté explicite
+
+**Parcours démontré en direct (cœur de la démo) :**
+Un chantier continu multi-corps de métier (peinture, sols, plomberie, électricité) en une
+captation vocale suivie : l'utilisateur décrit son chantier à la voix, le pipeline (STT local →
+LLM reformulation → LLM fine-tuné → code déterministe) produit un devis structuré couvrant les
+4 corps de métier. L'artisan valide et **corrige volontairement une erreur provoquée** sur un
+des corps de métier (ex. quantité ou référence), démontrant en direct la capture du signal
+qualité — pas seulement décrite, jouée.
+
+**Montré, non interactif :**
+Le devis est **exportable en Word** et/ou **éditable directement** dans l'interface — capacité
+montrée à l'écran en fin de démo.
+
+**Hors produit, point final (pas seulement hors périmètre 4 mois) :**
+Facture, signature électronique, relances client. Le produit s'arrête au devis structuré,
+modifiable et exportable ; au-delà, le client se débrouille. Décision assumée : ça simplifie
+l'architecture (plus de génération de facture, cf. Section 2) et recentre l'argument de
+différenciation sur le devis par la voix.
+
+**Reconduit de l'ancien cadrage, à reconfirmer en Section 6 (RNCP) :** diagnostic de pathologie
+du bâtiment et estimation de main d'œuvre restent écartés du périmètre (déjà actés dans
+`docs/CADRAGE_MODELE.md`, sans lien avec le pivot).
+
+---
+
+## Section 5 — Impact sur `PLANNING.md`
+
+**Août — référentiel :** créneau inchangé. La nature du travail change (relecture/validation du
+référentiel comblé par le LLM sur 4 corps de métier, plutôt que collecte sourcée sur 1), mais le
+plafond de 2-3 semaines tient — décision assumée, à surveiller en pratique une fois le travail
+commencé.
+
+**Septembre — dataset :** inchangé dans sa forme (schéma JSON, jeu de test 150-200 exemples
+gelé, génération ~2000 exemples). Porte plus loin qu'avant : le référentiel non sourcé
+systématiquement rend le jeu de test manuel encore plus central (cf. Section 3).
+
+**Octobre — la preuve :** inchangé. Le code déterministe à écrire perd la brique facture
+(retirée du produit, cf. Section 4) — légèrement allégé.
+
+**Novembre — la démo :** simplifié. L'interface à deux sessions simultanées (client/artisan)
+disparaît — le produit s'arrête au devis côté artisan, il n'y a plus de rôle client actif à
+démontrer. Une seule interface (artisan, capture vocale + validation + export) à faire tenir.
+Le parcours répété plusieurs fois reste le chantier continu multi-corps de métier avec
+correction provoquée (cf. Section 4).
+
+**Marges et points de rupture — mis à jour :** l'ordre de dégradation en cas de dérapage reste
+*120b puis second cercle*. Le repli "interface à une seule fenêtre" disparaît avec la session
+client — pas de filet de sécurité supplémentaire ajouté à sa place : au-delà de 120b et second
+cercle, plus rien n'est négociable (référentiel, jeu de test, devis vocal sur les 4 corps de
+métier).
+
+---
+
+## Section 6 — Impact sur les livrables RNCP (`docs/LIVRABLES.md`)
+
+**E1 — Données (C1-C5) : renforcé, décision assumée.** Le référentiel comblé par le LLM
+(Section 3) ne peut plus porter à lui seul l'argument « collecte multi-sources sourcée » de C1.
+Décision : le **scraping des fiches techniques fabricants est maintenu comme exercice de
+collecte à part entière**, même s'il ne sert plus directement à entraîner le modèle. Deux usages
+distincts, assumés comme tels dans le document : collecte structurée pour C1, référentiel
+d'entraînement comblé par le LLM pour le dataset. Le dump catalogue LM et l'API OCR restent les
+autres piliers de C1 déjà identifiés.
+
+**E2 — Veille (C6-C8) : inchangé par le pivot en lui-même**, mais le champ de la veille s'élargit
+mécaniquement (STT, agents, API type Pappers — déjà noté dans la checklist de reprise). **C8**
+reste porté par l'OCR ; l'**API Pappers n'est pas un service IA** et ne revendique pas C8 — elle
+est documentée comme service externe intégré (accès, configuration), sans effet sur la
+couverture.
+
+**E3 — Le modèle IA (C9-C13) : renforcé sur C9.** Le framework d'orchestration d'agents
+(Section 2) n'est plus qu'un sujet de veille : c'est une architecture réelle qui pilote
+l'enchaînement STT → LLM reformulation → LLM fine-tuné → outils référentiel. Il **renforce C9**
+(API exposant le modèle) plutôt que d'ouvrir une compétence à part — l'orchestration fait partie
+de la réponse à C9, pas un livrable distinct.
+
+**E4 — L'application (C14-C19) : pas d'inquiétude particulière.** Le retrait de la
+facture/signature/relances (Section 4) réduit un peu la matière disponible pour C15 (parcours,
+plus de rôle client actif) et C17 (développement, moins d'écrans), mais le gain sur C1 et C9
+suffit à compenser — pas de manque à signaler dans la grille pour cette raison.
+
+**E5 — Exploitation (C20-C21) : inchangé.** Le pivot ne change rien à ce qui reste à faire
+(journalisation, outil de suivi des incidents dès le début).
+
+**Conséquence à reporter dans `docs/LIVRABLES.md` :** la ligne C1 du tableau « source exigée →
+ce que le projet peut y mettre » doit préciser que le scraping fabricants sert la collecte (C1)
+indépendamment du dataset d'entraînement, pour ne pas laisser croire que le référentiel reste
+sourcé ligne à ligne comme dans l'ancien cadrage.
+
+---
+
 ## Reste à faire à la reprise
 
-- [ ] **Section 4 — Parcours de démo & écarté explicite.** Le parcours validé plus tôt dans la
-      conversation (à reconfirmer par écrit ici) : capture vocale → devis structuré validé par
-      l'artisan = le cœur démontré en direct. Signature électronique, facture, relances =
-      conçues et documentées, pas le clou de la démo (signature légale explicitement écartée
-      du périmètre 4 mois — trop complexe en soi).
-- [ ] **Section 5 — Impact sur `PLANNING.md`.** Le jalon d'août ("référentiel v1") change de
-      nature : moins de collecte manuelle, mais un vrai travail de relecture/validation du
-      référentiel généré par LLM sur 4 corps de métier au lieu d'un. Le plafond de 2-3 semaines
-      est-il encore le bon repère ?
-- [ ] **Section 6 — Impact sur les livrables RNCP** (`docs/LIVRABLES.md`) — nouvelles
-      compétences potentiellement mieux couvertes (C9 agents, base de données client/devis,
-      API Pappers = C1/C8), à revérifier corp par corp de métier.
-- [ ] Auto-revue du spec (placeholders, cohérence, ambiguïté)
+- [x] Auto-revue du spec (placeholders, cohérence, ambiguïté) — faite, spec complète et
+      cohérente
 - [ ] Une fois validé : réécrire `docs/CADRAGE_MODELE.md`, `docs/DISPOSITIF_AGENT.md`,
       `PLANNING.md`, `docs/LIVRABLES.md` pour refléter ce cadrage
 - [ ] Répercuter dans Notion (the-projet + Livrables RNCP)
@@ -168,7 +248,9 @@ sans repasser par la collecte manuelle.
 | 2 | STT | Local (type Whisper), même machine que le LLM |
 | 3 | Corps de métier | Peinture + sols + plomberie + électricité |
 | 4 | Choix plomberie/électricité | Retenu malgré la complexité `mention forte` |
-| 5 | Parcours démo | Capture vocale → devis validé (signature/facture/relances = conçues, pas démontrées) |
+| 5 | Parcours démo | Chantier continu, 4 corps de métier enchaînés dans une captation vocale unique |
+| 5b | Correction artisan en démo | Provoquée volontairement sur un corps de métier, pour montrer le signal qualité en direct |
+| 5c | Facture/signature/relances | Hors produit, point final — le client exporte le devis (Word) ou l'édite, et se débrouille au-delà |
 | 6 | Agents IA | Architecture réelle (framework d'orchestration), pas juste de la veille |
 | 7 | API Pappers | Auto-remplissage des mentions légales prestataire (SIRET) |
 | 8 | Réalisme du texte d'entraînement | Texte propre (validé en amont par l'utilisateur) |
