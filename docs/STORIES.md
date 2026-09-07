@@ -83,9 +83,9 @@ démonstration de modèle.
 
 ---
 
-# Épique A — Profil artisan
+## Épique A — Profil artisan
 
-## US-01 — Créer mon compte à partir de mon SIRET
+### US-01 — Créer mon compte à partir de mon SIRET
 
 > En tant qu'artisan, je veux créer mon compte en saisissant seulement mon
 > SIRET, pour ne pas retaper des informations légales que l'administration
@@ -120,7 +120,7 @@ abandon à l'inscription. L'API Pappers les restitue à partir du seul SIRET
 
 **Traçabilité.** C5, C14, C17 · `CADRAGE_MODELE.md` §6 · état : **à faire**.
 
-## US-02 — Déclarer mon régime de TVA et mon assurance décennale
+### US-02 — Déclarer mon régime de TVA et mon assurance décennale
 
 > En tant qu'artisan, je veux déclarer une fois pour toutes mon régime fiscal et
 > ma décennale, pour que tous mes devis sortent conformes sans que j'y pense.
@@ -156,7 +156,7 @@ un devis faux.
 **Traçabilité.** C14, C17 · `CADRAGE_MODELE.md` §6 · état : **à faire**
 (l'export applique aujourd'hui une TVA inconditionnelle).
 
-## US-03 — Déposer un devis existant pour en faire mon gabarit
+### US-03 — Déposer un devis existant pour en faire mon gabarit
 
 > En tant qu'artisan, je veux déposer un de mes anciens devis en PDF ou en
 > photo, pour que les devis générés ressemblent aux miens.
@@ -189,9 +189,9 @@ un VLM dans le projet en ferait un second projet (`CADRAGE_MODELE.md` §6).
 
 ---
 
-# Épique B — Capture vocale
+## Épique B — Capture vocale
 
-## US-04 — Dicter mon chantier sur place
+### US-04 — Dicter mon chantier sur place
 
 > En tant qu'artisan, je veux décrire mon chantier à la voix pendant que je le
 > visite, pour ne pas avoir à le ressaisir le soir.
@@ -227,7 +227,7 @@ le principe « 100 % local » affiché au jury.
 pas le STT local de production et sort l'audio de la machine — écart assumé et
 documenté dans le code, à résorber).
 
-## US-05 — Relire et corriger la transcription avant traitement
+### US-05 — Relire et corriger la transcription avant traitement
 
 > En tant qu'artisan, je veux relire le texte issu de ma dictée et le corriger
 > avant qu'il ne serve à quoi que ce soit, pour ne pas construire un devis sur
@@ -259,7 +259,7 @@ prompté (non fine-tuné)** reformule et ponctue ; il ne doit rien inventer.
 
 **Traçabilité.** C10, C14, C17 · `DISPOSITIF_AGENT.md` §1.4 · état : **à faire**.
 
-## US-06 — Enchaîner plusieurs enregistrements sur un même chantier
+### US-06 — Enchaîner plusieurs enregistrements sur un même chantier
 
 > En tant qu'artisan, je veux dicter pièce par pièce en me déplaçant, pour ne
 > pas devoir tout retenir avant de parler.
@@ -291,9 +291,9 @@ absente).
 
 ---
 
-# Épique C — Interroger
+## Épique C — Interroger
 
-## US-07 — Être questionné seulement sur ce qui manque
+### US-07 — Être questionné seulement sur ce qui manque
 
 **Contexte.** Karim a dicté « je refais le salon, peinture murs et plafond ».
 Il manque la surface. Un formulaire lui demanderait aussi l'adresse, la date, le
@@ -325,7 +325,7 @@ plutôt que d'interroger indéfiniment.
 état : **partiel** (branche `clarification` présente dans `app/pipeline.py` ;
 plafond à trois tours **non implémenté**, `<label>` absent du front).
 
-## US-08 — Voir mon chantier découpé en lots ordonnés
+### US-08 — Voir mon chantier découpé en lots ordonnés
 
 **Contexte.** Un artisan ne pense pas en « lignes de devis » mais en **lots**, et
 l'ordre des lots porte du métier : la préparation avant la sous-couche, la
@@ -355,9 +355,9 @@ couverts par `tests/test_referentiel.py`).
 
 ---
 
-# Épique D — Calculer
+## Épique D — Calculer
 
-## US-09 — Obtenir les quantités sans jamais faire le calcul moi-même
+### US-09 — Obtenir les quantités sans jamais faire le calcul moi-même
 
 **Contexte.** C'est le cœur de la frontière du projet : le modèle **décrit** la
 formule et ses opérandes (étape 5), le **code évalue** (étape 6). Un modèle qui
@@ -388,7 +388,7 @@ l'`intent` `quantitatif`, déclaré dans `app/schema.py` et annoncé dans le pro
 système, **n'a aucune branche dans `_router`** (`app/pipeline.py`) : anomalie
 ouverte, à corriger.
 
-## US-10 — Ne pas oublier les consommables
+### US-10 — Ne pas oublier les consommables
 
 **Contexte.** L'oubli type de l'artisan pressé : le ruban de masquage, les
 bâches, les rouleaux, la colle. Ce sont eux qui font l'écart entre un devis
@@ -413,7 +413,7 @@ crédible et un devis approximatif — d'où une capacité dédiée dans le cadr
 testés) ; **à faire** côté rendu (distinction non textuelle dans
 `app/static/index.html`).
 
-## US-11 — Être arrêté sur une quantité invraisemblable
+### US-11 — Être arrêté sur une quantité invraisemblable
 
 **Contexte.** `DISPOSITIF_AGENT.md` §3.1 pose la nuance exacte : « un chantier de
 400 m² n'est pas impossible, il est improbable. L'agent ne rejette pas, il demande
@@ -441,9 +441,9 @@ où le client reçoit le devis.
 
 ---
 
-# Épique E — Arbitrer
+## Épique E — Arbitrer
 
-## US-12 — Valider la structure avant de voir le moindre prix
+### US-12 — Valider la structure avant de voir le moindre prix
 
 **Contexte.** Position délibérée du dispositif : « on fait valider ce qui est
 stable, avant d'y accrocher ce qui est volatil » (§1.4, HITL-2). Valider un devis
@@ -471,7 +471,7 @@ n'a plus de rôle actif ici.
 appelle le catalogue immédiatement) ; l'étape de validation intermédiaire n'existe
 pas encore dans `app/pipeline.py`.
 
-## US-13 — Voir le devis chiffré à partir du catalogue, pas du modèle
+### US-13 — Voir le devis chiffré à partir du catalogue, pas du modèle
 
 **Contexte.** L'interdit structurel du projet : le schéma de sortie ne comporte
 **ni champ prix, ni champ référence produit**. « Le modèle ne peut pas halluciner
@@ -496,7 +496,7 @@ ce qu'il n'a pas la possibilité d'exprimer » (§3.2). Le prix vient du code, a
 état : **fait** (schéma sans champ prix dans `app/schema.py`, chiffrage catalogue
 et totaux couverts par `tests/test_devis.py`).
 
-## US-14 — Corriger une ligne et que ma correction fasse autorité
+### US-14 — Corriger une ligne et que ma correction fasse autorité
 
 **Contexte.** « L'artisan fait autorité, toujours. Sa correction est appliquée
 sans discussion et journalisée comme signal qualité » (§1.4). C'est le second des
@@ -526,7 +526,7 @@ produit **et** une source de données d'entraînement.
 `app/pipeline.py`) ; **à faire** côté front (bouton `✕` sans nom accessible,
 modale sans sémantique de dialogue dans `app/static/index.html`).
 
-## US-15 — Obtenir un devis conforme aux mentions obligatoires BTP
+### US-15 — Obtenir un devis conforme aux mentions obligatoires BTP
 
 **Contexte.** Un devis BTP non conforme n'est pas un devis : il est inopposable.
 `CADRAGE_MODELE.md` §6 fixe ce que le document doit porter. Le modèle *qualifie*
@@ -555,7 +555,7 @@ ici.
 mais **applique la TVA inconditionnellement** (pas de chemin 293 B) et **omet**
 délai d'exécution, client, adresse de chantier, RCS/APE-NAF et TVA intracom.
 
-## US-16 — Retrouver mon devis après un rechargement
+### US-16 — Retrouver mon devis après un rechargement
 
 **Contexte.** Un artisan travaille sur chantier : réseau instable, téléphone qui
 verrouille, page qui se recharge. Perdre la session, c'est perdre l'usage.
@@ -576,7 +576,7 @@ verrouille, page qui se recharge. Perdre la session, c'est perdre l'usage.
 `app/main.py` expose une unique `SESSION` de module : aucun isolement, aucune
 persistance au-delà du process.
 
-## US-17 — Repartir d'un devis pour un chantier voisin
+### US-17 — Repartir d'un devis pour un chantier voisin
 
 **Contexte.** Le même artisan refait souvent la même chose. Dupliquer un devis
 existant et n'en changer que les surfaces est le raccourci métier le plus
@@ -596,9 +596,9 @@ bas de backlog. état : **à faire**.
 
 ---
 
-# Épique F — Garde-fous
+## Épique F — Garde-fous
 
-## US-18 — Être averti sur un domaine réglementé, sans être bloqué
+### US-18 — Être averti sur un domaine réglementé, sans être bloqué
 
 **Contexte.** Posture assumée du projet : « L'agent **répond toujours**. Il ne
 tronque pas, ne refuse pas, ne moralise pas. Il ajoute une mention » (§3.3). Trois
@@ -629,7 +629,7 @@ mentions depuis `MENTIONS` indépendamment de la sortie du modèle) ; le front c
 la sévérité par **détection de chaîne** (`startsWith('⚠️')`) et la rend par la
 **couleur seule** — les deux sont à reprendre.
 
-## US-19 — Être redirigé quand ma demande sort du périmètre
+### US-19 — Être redirigé quand ma demande sort du périmètre
 
 **Contexte.** §3.3 énumère ce que l'agent ne traite pas : diagnostic de pathologie,
 main d'œuvre, dimensionnement structurel, conseil juridique ou financier. Un agent
@@ -652,7 +652,7 @@ limite.
 (aucune détection de périmètre dans `app/pipeline.py` ; la consigne existe
 seulement dans le prompt système de `app/llm.py`).
 
-## US-20 — Que l'application résiste à une tentative d'injection
+### US-20 — Que l'application résiste à une tentative d'injection
 
 **Contexte.** L'entrée est de la voix transcrite : elle peut contenir n'importe
 quoi, y compris une consigne adressée au modèle. §3.1 exige neutralisation **et**
@@ -677,7 +677,7 @@ visible.
 seule la longueur est contrôlée (`LONGUEUR_MAX_ENTREE` dans `app/pipeline.py`) ;
 détection d'injection, neutralisation et journalisation **absentes**.
 
-## US-21 — Pouvoir escalader quand l'agent échoue
+### US-21 — Pouvoir escalader quand l'agent échoue
 
 **Contexte.** HITL-4, la soupape : « un agent qui n'a pas de sortie de secours
 produit des réponses dégradées plutôt que d'admettre sa limite » (§1.4). Déclenchée
@@ -702,9 +702,9 @@ modèle** par message. À borner explicitement.
 
 ---
 
-# Épique G — Socle
+## Épique G — Socle
 
-## US-22 — Que l'API soit documentée et contractuelle
+### US-22 — Que l'API soit documentée et contractuelle
 
 **Contexte.** L'API est la frontière entre le front et le moteur ; elle est aussi
 l'artefact que le jury peut lire sans exécuter le produit. Documentée, elle prouve
@@ -724,7 +724,7 @@ la conception ; non documentée, elle ne prouve rien.
 les endpoints de `app/main.py` n'ont ni `response_model`, ni description, ni
 erreurs déclarées.
 
-## US-23 — Que l'accès soit authentifié
+### US-23 — Que l'accès soit authentifié
 
 **Contexte.** Un devis contient l'identité légale d'une entreprise et les
 coordonnées d'un client. L'application n'a aujourd'hui **aucune authentification**
@@ -743,7 +743,7 @@ et une session unique de module : deux visiteurs partagent le même devis.
 **Traçabilité.** C9, C17, C21 · état : **à faire** — manque direct, à traiter en
 priorité haute.
 
-## US-24 — Que l'exploitation soit observable
+### US-24 — Que l'exploitation soit observable
 
 **Contexte.** `DISPOSITIF_AGENT.md` §4.3 fournit déjà les huit métriques et leurs
 seuils. Une application qui les définit sans les mesurer ne les respecte pas : elle
@@ -766,7 +766,7 @@ les espère.
 **Traçabilité.** C11, C20 · `DISPOSITIF_AGENT.md` §4.3 · état : **à faire**
 (aucune journalisation applicative, aucun tableau de bord).
 
-## US-25 — Que les corrections alimentent la boucle qualité
+### US-25 — Que les corrections alimentent la boucle qualité
 
 **Contexte.** Les deux points de capture du signal qualité introduits par le pivot
 (HITL-0 relecture, HITL-2 correction) n'ont de valeur que s'ils **sortent** du
@@ -788,7 +788,7 @@ tout défaut constaté entre au jeu de test comme cas de non-régression.
 **Traçabilité.** C20 · `DISPOSITIF_AGENT.md` §4.2, §5.2 · état : **à faire** (les
 corrections sont journalisées en mémoire, jamais exportées).
 
-## US-26 — Que le produit s'installe et se relance sans moi
+### US-26 — Que le produit s'installe et se relance sans moi
 
 **Contexte.** Le jury doit pouvoir lancer le produit. Une procédure d'installation
 qui tient dans la tête de son auteur n'est pas une procédure.
@@ -811,13 +811,13 @@ donc dépendant du répertoire de lancement.
 
 ---
 
-# Ordre de traitement
+## Ordre de traitement
 
 Deux files distinctes, à ne pas confondre : ce qui fait exister la **démonstration**
 et ce qui fait exister la **certification**. Les mélanger, c'est arbitrer au hasard
 sous la pression du calendrier.
 
-## File 1 — Noyau démontrable
+### File 1 — Noyau démontrable
 
 L'objectif est un parcours continu qui tient debout devant un jury.
 
@@ -836,7 +836,7 @@ L'objectif est un parcours continu qui tient debout devant un jury.
 | 11 | US-04 (STT local) | Résorbe l'écart assumé : le prototype navigateur sort l'audio de la machine |
 | 12 | US-06 (contradictions) | Deux dictées qui se contredisent doivent être arbitrées, pas cumulées |
 
-## File 2 — Exigences de certification
+### File 2 — Exigences de certification
 
 Elles ne se voient pas à la démonstration, et elles se notent.
 
@@ -857,7 +857,7 @@ le reste à faire.
 
 US-17 reste hors des deux files : confort métier réel, aucun apport de preuve.
 
-## Ce que ce découpage ne couvre pas
+### Ce que ce découpage ne couvre pas
 
 Volontairement, et pour ne pas laisser croire à une couverture qu'il n'a pas :
 

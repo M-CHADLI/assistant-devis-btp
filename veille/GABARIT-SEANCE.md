@@ -1,5 +1,4 @@
-# Gabarit — séance de veille hebdomadaire
-
+> **Gabarit d'une séance de veille hebdomadaire.**
 > Copier ce fichier dans `veille/seances/AAAA-MM-JJ.md` au début de chaque
 > séance. Le remplir **pendant**, pas après : une séance reconstituée de mémoire
 > ne prouve rien.

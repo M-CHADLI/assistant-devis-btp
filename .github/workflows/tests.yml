@@ -45,6 +45,11 @@ jobs:
           BTP_DONNEES: ${{ runner.temp }}/donnees
         run: uv run --frozen pytest -q
 
+      - name: Vérifier l'accessibilité des documents
+        # Règles 1, 2 et 4 de docs/ACCESSIBILITE_DOCUMENTS.md : un seul titre de
+        # niveau 1, aucun saut de hiérarchie, aucun libellé de lien creux.
+        run: python3 tools/verifier_accessibilite_docs.py
+
       - name: Vérifier la syntaxe du front
         # Le front est un fichier unique sans build : node --check sur le
         # JavaScript extrait suffit à attraper une faute de frappe.

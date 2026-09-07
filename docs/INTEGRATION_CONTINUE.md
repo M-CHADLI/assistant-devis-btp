@@ -47,7 +47,7 @@ dépassé ne prouvent rien et consomment des minutes.
 ## Les étapes
 
 La chaîne comporte un seul travail, `pytest`, sur `ubuntu-latest`, plafonné à
-dix minutes.
+dix minutes. Six étapes.
 
 | # | Étape | Ce qu'elle fait |
 |---|---|---|
@@ -55,7 +55,8 @@ dix minutes.
 | 2 | Installer uv | `astral-sh/setup-uv@v5`, avec cache indexé sur `uv.lock`. |
 | 3 | Installer Python et les dépendances | `uv sync --frozen --all-groups`. |
 | 4 | Lancer la suite de tests | `uv run --frozen pytest -q`, avec `BTP_DONNEES` pointé sur un répertoire jetable. |
-| 5 | Vérifier la syntaxe du front | Extraction des blocs `<script>` de `app/static/index.html`, puis `node --check`. |
+| 5 | Vérifier l'accessibilité des documents | `tools/verifier_accessibilite_docs.py` : règles 1, 2 et 4 de `docs/ACCESSIBILITE_DOCUMENTS.md`. |
+| 6 | Vérifier la syntaxe du front | Extraction des blocs `<script>` de `app/static/index.html`, puis `node --check`. |
 
 ### Pourquoi `--frozen`
 
@@ -77,6 +78,16 @@ Sans cette variable il écrirait dans `donnees/` à la racine du dépôt. La poi
 sur un répertoire temporaire garantit qu'**aucun test n'écrit dans l'arbre
 versionné** — et fait échouer la chaîne si un jour l'un d'eux essaie.
 
+### Pourquoi un contrôle d'accessibilité documentaire
+
+Le référentiel réclame un format accessible dans huit compétences, et à chaque
+fois sur les **documents livrés**. Trois des neuf règles du projet se vérifient
+sans jugement humain ; les laisser à la relecture, c'est les perdre au premier
+document écrit dans l'urgence. L'étape les tient à ma place.
+
+Le contrôle ignore les blocs de code : un commentaire `# Règle 1` dans un
+exemple bash n'est pas un titre de niveau 1.
+
 ### Pourquoi une vérification du front
 
 Le front est un fichier unique, sans build, sans transpilation : rien ne
@@ -86,14 +97,16 @@ Ce n'est **pas** un linter — le projet n'en a pas et n'en veut pas.
 
 ## Reproduire la chaîne en local
 
-Les cinq étapes, à la main, dans l'ordre :
+Les six étapes, à la main, dans l'ordre :
 
 ```bash
 VIRTUAL_ENV=~/.venvs/the-project uv lock --check          # étape 3, le garde-fou
 BTP_DONNEES=/tmp/donnees \
   VIRTUAL_ENV=~/.venvs/the-project uv run --no-sync pytest -q   # étape 4
 
-python3 - <<'PY' > /tmp/front.js                          # étape 5
+python3 tools/verifier_accessibilite_docs.py              # étape 5
+
+python3 - <<'PY' > /tmp/front.js                          # étape 6
 import re, pathlib
 html = pathlib.Path("app/static/index.html").read_text(encoding="utf-8")
 print("\n".join(re.findall(r"<script>(.*?)</script>", html, re.S)))
@@ -120,6 +133,7 @@ dans `~/.nvm/versions/node/v22.22.2/bin/`.
 
 ## État constaté
 
-Les cinq étapes ont été exécutées à la main sur cette machine le 08/09/2026 :
-`uv lock --check` passe, la suite rend **62 tests verts**, et `node --check`
-accepte les 206 lignes de JavaScript extraites du front.
+Les six étapes ont été exécutées à la main sur cette machine le 08/09/2026 :
+`uv lock --check` passe, la suite rend **62 tests verts**, le contrôle
+d'accessibilité déclare **16 documents conformes**, et `node --check` accepte
+les 206 lignes de JavaScript extraites du front.
