@@ -1,0 +1,29 @@
+{
+  "titre": "Tâches",
+  "description": "Décomposition technique des stories des sprints en cours et suivant.",
+  "proprietes": {
+    "Tâche": { "title": {} },
+    "Clé": { "rich_text": {} },
+    "Story": { "rich_text": {} },
+    "Sprint": { "select": { "options": [
+      { "name": "S1", "color": "blue" }, { "name": "S2", "color": "blue" },
+      { "name": "S3", "color": "blue" }, { "name": "S4", "color": "blue" },
+      { "name": "S5", "color": "blue" }, { "name": "S6", "color": "blue" },
+      { "name": "S7", "color": "blue" }
+    ] } },
+    "Type": { "select": { "options": [
+      { "name": "Développement", "color": "blue" },
+      { "name": "Test", "color": "green" },
+      { "name": "Accessibilité", "color": "purple" },
+      { "name": "Documentation", "color": "gray" }
+    ] } },
+    "Estimation (h)": { "number": { "format": "number" } },
+    "État": { "select": { "options": [
+      { "name": "À faire", "color": "gray" },
+      { "name": "En cours", "color": "blue" },
+      { "name": "En revue", "color": "yellow" },
+      { "name": "Terminé", "color": "green" }
+    ] } },
+    "Fichier visé": { "rich_text": {} }
+  }
+}

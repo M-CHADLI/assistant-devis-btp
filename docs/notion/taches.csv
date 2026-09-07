@@ -1,0 +1,23 @@
+Clé,Tâche,Story,Sprint,Type,Estimation (h),État,Fichier visé
+T-001,Ajouter la branche quantitatif dans _router,US-09,S1,Développement,1,À faire,app/pipeline.py
+T-002,Test : un intent quantitatif ne lève plus ValueError,US-09,S1,Test,1,À faire,tests/test_pipeline.py
+T-003,Supprimer la reprise redondante entre appeler_modele et traiter_message,US-21,S1,Développement,1,À faire,app/llm.py · app/pipeline.py
+T-004,Journaliser le motif d'escalade et non le seul événement,US-21,S1,Développement,2,À faire,app/pipeline.py
+T-005,Test : au plus deux appels modèle par message,US-21,S1,Test,1,À faire,tests/test_pipeline.py
+T-006,Remplacer la SESSION de module par un registre de projets identifiés,US-16,S1,Développement,4,À faire,app/main.py
+T-007,Persister l'état projet sur disque local,US-16,S1,Développement,3,À faire,app/persistance.py
+T-008,Test : deux projets ne se voient pas,US-16,S1,Test,2,À faire,tests/test_api.py
+T-009,Résoudre index.html par chemin absolu depuis __file__,US-26,S1,Développement,1,À faire,app/main.py
+T-010,Corriger les cinq affirmations périmées de CLAUDE.md,—,S1,Documentation,1,À faire,CLAUDE.md
+T-011,Écran de relecture de la transcription avant traitement,US-05,S2,Développement,4,À faire,app/static/index.html
+T-012,Endpoint de validation de transcription et journalisation de l'écart,US-05,S2,Développement,3,À faire,app/main.py
+T-013,Textarea étiqueté redimensionnable à 200 % sans perte,US-05,S2,Accessibilité,2,À faire,app/static/index.html
+T-014,Séparer la construction du devis de son chiffrage,US-12,S2,Développement,4,À faire,app/devis.py
+T-015,Endpoint de validation de structure avant chiffrage,US-12,S2,Développement,2,À faire,app/main.py
+T-016,Test : aucun montant transmis avant validation,US-12,S2,Test,2,À faire,tests/test_api.py
+T-017,Modèle Artisan avec régime de TVA et décennale,US-02,S2,Développement,3,À faire,app/artisan.py
+T-018,Chemin franchise en base 293 B sans aucune ligne de TVA,US-02,S2,Développement,3,À faire,app/export.py
+T-019,Test : export en 293 B sans occurrence de TVA hors mention légale,US-02,S2,Test,2,À faire,tests/test_export.py
+T-020,Ajouter délai d'exécution client adresse de chantier RCS APE-NAF TVA intracom,US-15,S2,Développement,4,À faire,app/export.py
+T-021,Bloquer l'export si une donnée légale obligatoire manque,US-15,S2,Développement,2,À faire,app/export.py
+T-022,Test : chaque mention obligatoire présente dans le docx,US-15,S2,Test,3,À faire,tests/test_export.py

@@ -1,0 +1,55 @@
+{
+  "titre": "Backlog — Stories",
+  "description": "Les 26 stories de docs/STORIES.md. Source de vérité : le dépôt, pas Notion.",
+  "proprietes": {
+    "Titre": { "title": {} },
+    "Clé": { "rich_text": {} },
+    "Épique": { "select": { "options": [
+      { "name": "A — Profil artisan", "color": "purple" },
+      { "name": "B — Capture vocale", "color": "blue" },
+      { "name": "C — Interroger", "color": "green" },
+      { "name": "D — Calculer", "color": "yellow" },
+      { "name": "E — Arbitrer", "color": "orange" },
+      { "name": "F — Garde-fous", "color": "red" },
+      { "name": "G — Socle", "color": "gray" }
+    ] } },
+    "Type": { "select": { "options": [
+      { "name": "Story", "color": "green" },
+      { "name": "Anomalie", "color": "red" },
+      { "name": "Technique", "color": "gray" }
+    ] } },
+    "File": { "select": { "options": [
+      { "name": "Noyau démontrable", "color": "orange" },
+      { "name": "Certification", "color": "blue" },
+      { "name": "Hors file", "color": "gray" },
+      { "name": "Terminé", "color": "green" }
+    ] } },
+    "Rang": { "number": { "format": "number" } },
+    "Priorité": { "select": { "options": [
+      { "name": "Critique", "color": "red" },
+      { "name": "Haute", "color": "orange" },
+      { "name": "Moyenne", "color": "yellow" },
+      { "name": "Basse", "color": "gray" }
+    ] } },
+    "État": { "select": { "options": [
+      { "name": "À faire", "color": "gray" },
+      { "name": "En cours", "color": "blue" },
+      { "name": "En revue", "color": "yellow" },
+      { "name": "Terminé", "color": "green" }
+    ] } },
+    "Sprint": { "select": { "options": [
+      { "name": "S1", "color": "blue" }, { "name": "S2", "color": "blue" },
+      { "name": "S3", "color": "blue" }, { "name": "S4", "color": "blue" },
+      { "name": "S5", "color": "blue" }, { "name": "S6", "color": "blue" },
+      { "name": "S7", "color": "blue" }, { "name": "Backlog", "color": "gray" }
+    ] } },
+    "Points": { "number": { "format": "number" } },
+    "Compétences": { "multi_select": {} },
+    "Source": { "rich_text": {} },
+    "État du code": { "select": { "options": [
+      { "name": "fait", "color": "green" },
+      { "name": "partiel", "color": "yellow" },
+      { "name": "à faire", "color": "gray" }
+    ] } }
+  }
+}
