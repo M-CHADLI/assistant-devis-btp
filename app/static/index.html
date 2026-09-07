@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Démo — Assistant chantier BTP vocal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root { color-scheme: light dark; }
   body { font-family: system-ui, sans-serif; margin: 0; display: flex; height: 100vh; }
@@ -19,7 +20,7 @@
   .saisie { display: flex; gap: .5rem; padding-top: .8rem; }
   .saisie input { flex: 1; padding: .6rem; font-size: 1rem; }
   button { cursor: pointer; padding: .5rem .9rem; border: 1px solid #8886; border-radius: .4rem;
-           background: #80808014; }
+           background: #80808014; min-height:44px; min-width:44px; }
   button.principal { background: #2563eb; color: white; border: none; }
   table { width: 100%; border-collapse: collapse; font-size: .9rem; }
   td, th { text-align: left; padding: .35rem .3rem; border-bottom: 1px solid #8883; }
@@ -32,22 +33,31 @@
   .modale-fond { position: fixed; inset: 0; background: #0008; display: flex;
                  align-items: center; justify-content: center; z-index: 10; }
   .modale-fond.masquee { display: none; }
+  .a-confirmer { margin-top: .8rem; padding: .6rem; border: 1px solid #d97706;
+                 background: #d9770622; border-radius: .4rem; }
+  .a-confirmer ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+  .a-confirmer li { margin-bottom: .6rem; }
   .modale { background: Canvas; color: CanvasText; padding: 1.2rem; border-radius: .6rem;
             width: min(420px, 90vw); border: 1px solid #8886; }
   .modale input { width: 100%; padding: .5rem; margin: .6rem 0; box-sizing: border-box; }
   .modale .actions { display: flex; justify-content: flex-end; gap: .5rem; }
+  .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0; }
+  .lien-evitement { position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+  .lien-evitement:focus { position:static; left:0; top:0; width:auto; height:auto; }
+  :focus-visible { outline: 3px solid #0b5fff; outline-offset: 2px; }
 </style>
 </head>
 <body>
-
-<div class="panneau chat">
+<a href="#contenu" class="lien-evitement">Aller au contenu principal</a>
+<div class="panneau chat" id="contenu">
   <h1>🎙️ Assistant chantier — décris ton chantier</h1>
   <div class="barre-actions">
     <button id="btn-dicter">🎤 Dicter (prototype navigateur)</button>
     <button id="btn-reset">↺ Nouveau chantier</button>
   </div>
-  <div class="fil" id="fil"></div>
+  <div class="fil" id="fil" aria-live="polite" aria-atomic="false"></div>
   <div class="saisie">
+    <label for="entree" class="sr-only">Entrée texte du chantier</label>
     <input id="entree" type="text" placeholder="Je refais le salon, 22 m² au sol..." autofocus>
     <button class="principal" id="btn-envoyer">Envoyer</button>
   </div>
@@ -59,9 +69,11 @@
   <button class="principal" id="btn-export" style="margin-top:1rem">⬇️ Exporter en Word</button>
 </div>
 
-<div class="modale-fond masquee" id="modale-correction">
+<div class="modale-fond masquee" id="modale-correction" role="dialog" aria-modal="true" aria-labelledby="modale-titre" aria-hidden="true">
   <div class="modale">
+    <h2 id="modale-titre">Correction de ligne</h2>
     <p>Pourquoi corriges-tu cette ligne ?<br><small>(journalisé comme signal qualité)</small></p>
+    <label for="modale-input" class="sr-only">Description de la correction</label>
     <input id="modale-input" type="text" placeholder="ex : quantité surestimée, produit non retenu...">
     <div class="actions">
       <button id="modale-annuler">Annuler</button>
@@ -95,7 +107,7 @@ function rendreDevis(devis) {
       <td>${l.quantite} ${l.unite}</td>
       <td>${l.prix_unitaire_ht.toFixed(2)} €</td>
       <td>${l.prix_ht.toFixed(2)} €</td>
-      <td><button class="btn-supprimer" onclick="corrigerLigne(${i})">✕</button></td>
+      <td><button class="btn-supprimer" aria-label="Supprimer la ligne ${i + 1} : ${l.designation}" onclick="corrigerLigne(${i})"><span aria-hidden="true">✕</span></button></td>
     </tr>`;
   });
   html += '</table>';
@@ -108,7 +120,26 @@ function rendreDevis(devis) {
   html += `<div>Acompte 30% : ${devis.acompte_30_pct.toFixed(2)} €</div>`;
   html += '</div>';
   if (devis.mentions.length) {
-    html += `<p><strong>Mentions :</strong> ${devis.mentions.join(', ')}</p>`;
+    const LIBELLE_MENTION = {
+      forte: 'Réglementé — fais valider par un professionnel avant travaux',
+      simple: 'Vigilance — à vérifier avant de te lancer'
+    };
+    html += `<p><strong>Mentions :</strong> ${devis.mentions
+      .map(m => LIBELLE_MENTION[m] || m).join(' · ')}</p>`;
+  }
+  if ((devis.a_confirmer || []).length) {
+    html += '<div class="a-confirmer" role="group" aria-label="Quantités à confirmer">';
+    html += '<strong>Quantités inhabituelles — je ne les ai pas ajoutées :</strong><ul>';
+    devis.a_confirmer.forEach((a, i) => {
+      html += `<li>${a.dimension_valeur} (${a.dimension_type}) sur ${a.lot_code}
+        — habituellement entre ${a.borne_min} et ${a.borne_max}.
+        <button onclick="arbitrerQuantite(${i}, 'confirmer')"
+          aria-label="Confirmer ${a.dimension_valeur} ${a.dimension_type} sur ${a.lot_code}">C'est bien ça</button>
+        <button onclick="arbitrerQuantite(${i}, 'abandonner')"
+          aria-label="Abandonner ${a.dimension_valeur} ${a.dimension_type} sur ${a.lot_code}">Erreur de dictée</button>
+      </li>`;
+    });
+    html += '</ul></div>';
   }
   if (devis.corrections.length) {
     html += '<div class="corrections"><strong>Corrections artisan (signal qualité) :</strong><ul>';
@@ -123,18 +154,31 @@ function rendreDevis(devis) {
 const modaleFond = document.getElementById('modale-correction');
 const modaleInput = document.getElementById('modale-input');
 let indexLigneEnCorrection = null;
+let elementAvantModal = null;
+
+function ouvrirModal() {
+  elementAvantModal = document.activeElement;
+  modaleFond.classList.remove('masquee');
+  modaleFond.setAttribute('aria-hidden', 'false');
+  modaleInput.focus();
+}
+
+function fermerModal() {
+  modaleFond.classList.add('masquee');
+  modaleFond.setAttribute('aria-hidden', 'true');
+  if (elementAvantModal) elementAvantModal.focus();
+}
 
 function corrigerLigne(index) {
   indexLigneEnCorrection = index;
   modaleInput.value = '';
-  modaleFond.classList.remove('masquee');
-  modaleInput.focus();
+  ouvrirModal();
 }
 
 async function validerCorrection() {
   const description = modaleInput.value.trim();
   if (!description) { modaleInput.focus(); return; }
-  modaleFond.classList.add('masquee');
+  fermerModal();
   const resp = await fetch('/api/corriger', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({index: indexLigneEnCorrection, description})
@@ -145,8 +189,36 @@ async function validerCorrection() {
 }
 
 document.getElementById('modale-valider').onclick = validerCorrection;
-document.getElementById('modale-annuler').onclick = () => modaleFond.classList.add('masquee');
+document.getElementById('modale-annuler').onclick = fermerModal;
 modaleInput.addEventListener('keydown', e => { if (e.key === 'Enter') validerCorrection(); });
+
+// Gestion du focus trap et fermeture avec Échap
+modaleFond.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { fermerModal(); return; }
+  if (e.key === 'Tab') {
+    const focusable = modaleFond.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+});
+
+async function arbitrerQuantite(index, action) {
+  const resp = await fetch('/api/quantite', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({index, action})
+  });
+  if (!resp.ok) { ajouterMessage("Cette quantité n'est plus en attente.", 'assistant'); return; }
+  const data = await resp.json();
+  rendreDevis(data.devis);
+  ajouterMessage(action === 'confirmer'
+    ? 'Quantité confirmée et ajoutée au devis.'
+    : 'Quantité écartée.', 'assistant');
+}
 
 async function envoyer() {
   const texte = entree.value.trim();
@@ -162,6 +234,9 @@ async function envoyer() {
     let classe = 'assistant';
     if (m.startsWith('⚠️')) classe += ' mention-forte';
     else if (m.toLowerCase().includes('vigilance')) classe += ' mention-simple';
+    // Ajout du préfixe textuel
+    if (classe.includes('mention-forte')) m = 'Réglementé — ' + m;
+    else if (classe.includes('mention-simple')) m = 'Vigilance — ' + m;
     ajouterMessage(m, classe);
   });
   if (Object.keys(data.consommables_suggeres || {}).length) {
@@ -180,21 +255,17 @@ entree.addEventListener('keydown', e => { if (e.key === 'Enter') envoyer(); });
 document.getElementById('btn-reset').onclick = async () => {
   await fetch('/api/reset', {method: 'POST'});
   fil.innerHTML = '';
-  rendreDevis({lignes: [], total_ht: 0, ventilation_tva: {}, total_ttc: 0, acompte_30_pct: 0, mentions: [], corrections: []});
+  rendreDevis({lignes: [], total_ht: 0, ventilation_tva: {}, total_ttc: 0, acompte_30_pct: 0, mentions: [], corrections: [], a_confirmer: []});
 };
 
 document.getElementById('btn-export').onclick = () => {
   window.location.href = '/api/export';
 };
 
-// Resynchronisation au chargement : le devis vit côté serveur, un rechargement
-// de page ne doit pas donner l'impression qu'il a disparu.
+// Resynchronisation au chargement
 fetch('/api/devis').then(r => r.json()).then(data => rendreDevis(data.devis));
 
-// Dictée — prototype navigateur (Web Speech API), pas le STT local de production
-// (docs/CADRAGE_MODELE.md §2 prévoit un Whisper local sur la DGX Spark). Ici,
-// c'est un raccourci pour démontrer la capture vocale sans construire tout le
-// pipeline audio → serveur → Whisper dans cette session.
+// Dictée — prototype navigateur (Web Speech API)
 const btnDicter = document.getElementById('btn-dicter');
 const Reco = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!Reco) {
