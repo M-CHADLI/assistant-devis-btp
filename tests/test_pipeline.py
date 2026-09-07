@@ -142,3 +142,95 @@ def test_mention_ajoutee_par_le_code_meme_si_le_modele_l_oublie(faux):
     r = traiter_message(s, "remplace le tableau électrique")
     assert "forte" in r.mentions
     assert "forte" in s.devis.mentions
+
+
+# --- US-11 : bornes de plausibilité ---------------------------------------
+
+def test_quantite_invraisemblable_n_est_pas_ajoutee(faux):
+    """« 220 m² » pour « 22 m² » : une dictée avale un point décimal."""
+    faux(_sortie_devis(valeur=2200.0))
+    s = Session()
+    r = traiter_message(s, "deux mille deux cents metres carres de peinture")
+    assert s.devis.lignes == []
+    assert len(s.a_confirmer) == 1
+    assert s.a_confirmer[0].dimension_valeur == 2200.0
+    assert any("confirmé" in m for m in r.messages_assistant)
+
+
+def test_quantite_plausible_passe_sans_friction(faux):
+    faux(_sortie_devis(valeur=22.0))
+    s = Session()
+    traiter_message(s, "22 m2 de peinture")
+    assert len(s.devis.lignes) == 1
+    assert s.a_confirmer == []
+
+
+def test_l_artisan_peut_confirmer_une_quantite_hors_bornes(faux):
+    """L'artisan fait autorité : sa confirmation s'applique sans discussion."""
+    faux(_sortie_devis(valeur=2200.0))
+    s = Session()
+    traiter_message(s, "un très grand chantier")
+    assert pipeline.confirmer_quantite(s, 0) is True
+    assert len(s.devis.lignes) == 1
+    assert s.a_confirmer == []
+    assert "hors bornes confirmée" in s.corrections[0].description
+
+
+def test_l_artisan_peut_abandonner_une_quantite_hors_bornes(faux):
+    faux(_sortie_devis(valeur=2200.0))
+    s = Session()
+    traiter_message(s, "erreur de dictée")
+    assert pipeline.abandonner_quantite(s, 0) is True
+    assert s.devis.lignes == []
+    assert s.a_confirmer == []
+
+
+def test_confirmer_un_index_inexistant_ne_plante_pas(faux):
+    s = Session()
+    assert pipeline.confirmer_quantite(s, 0) is False
+    assert pipeline.abandonner_quantite(s, 3) is False
+
+
+def test_borne_serree_sur_le_tableau_electrique(faux):
+    """Un logement a un tableau, deux au plus — pas douze."""
+    faux(_sortie_devis(lot_code="ELEC_TABLEAU", valeur=12.0))
+    s = Session()
+    traiter_message(s, "douze tableaux électriques")
+    assert s.devis.lignes == []
+    assert s.a_confirmer[0].borne_max == 3.0
+
+
+# --- US-07 : plafond de clarification (HITL-1) -----------------------------
+
+def _sortie_clarification():
+    return {"intent": "clarification", "mention": None,
+            "payload": {"questions": ["Quelle surface ?"]}}
+
+
+def test_trois_tours_de_clarification_sont_permis(faux):
+    faux(*[_sortie_clarification()] * 3)
+    s = Session()
+    for _ in range(3):
+        r = traiter_message(s, "je veux refaire une pièce")
+        assert r.intent == "clarification"
+    assert s.tours_clarification == 3
+
+
+def test_au_quatrieme_tour_l_agent_pose_des_hypotheses_au_lieu_de_questionner(faux):
+    """Un agent qui questionne sans fin est un agent qui ne sait pas décider."""
+    faux(*[_sortie_clarification()] * 4)
+    s = Session()
+    for _ in range(3):
+        traiter_message(s, "je veux refaire une pièce")
+    r = traiter_message(s, "je ne sais pas")
+    assert r.intent == "hypotheses"
+    assert "Quelle surface ?" not in r.messages_assistant
+    assert any("TVA à 10" in m for m in r.messages_assistant)
+    assert len(r.messages_assistant) == 1 + len(pipeline.HYPOTHESES_PAR_DEFAUT)
+
+
+def test_le_compteur_de_clarification_ne_bouge_pas_sur_un_devis(faux):
+    faux(_sortie_devis())
+    s = Session()
+    traiter_message(s, "22 m2 de peinture")
+    assert s.tours_clarification == 0

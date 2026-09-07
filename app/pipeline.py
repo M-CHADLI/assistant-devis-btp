@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from app.devis import Devis, LotInconnu, ajouter_consommables, ajouter_ligne, consommables_par_defaut
 from app.llm import ModeleInjoignable, SortieModeleInvalide, appeler_modele
-from app.referentiel import REFERENTIEL, MENTIONS
+from app.referentiel import REFERENTIEL, MENTIONS, bornes, est_plausible
 from app.schema import PayloadClarification, PayloadConsommables, PayloadDevis, PayloadReponse
 
 LONGUEUR_MAX_ENTREE = 2000
@@ -23,6 +23,19 @@ LONGUEUR_MAX_ENTREE = 2000
 # quoi les deux se composaient et un message coûtait jusqu'à 4 appels
 # (docs/DISPOSITIF_AGENT.md §1.3 et §4.3, objectif de latence p95 < 30 s).
 MAX_APPELS_MODELE = 2
+
+# HITL-1 : au-delà de trois tours de clarification, on arrête d'interroger et
+# on pose des hypothèses par défaut *explicites* (docs/DISPOSITIF_AGENT.md §1.4,
+# docs/STORIES.md US-07). Un agent qui questionne sans fin est un agent qui ne
+# sait pas décider — sur un chantier, c'est intenable.
+MAX_TOURS_CLARIFICATION = 3
+
+HYPOTHESES_PAR_DEFAUT = [
+    "logement achevé depuis plus de deux ans, donc TVA à 10 %",
+    "hauteur sous plafond de 2,50 m",
+    "supports sains, sans reprise lourde",
+    "les surfaces que tu m'as données sont des surfaces à traiter, pas au sol",
+]
 
 
 @dataclass
@@ -43,6 +56,18 @@ class Correction:
 
 
 @dataclass
+class LigneEnAttente:
+    """Ligne mise en attente parce que sa quantité sort des bornes (US-11).
+
+    On ne rejette pas : l'artisan fait autorité, il peut confirmer."""
+    lot_code: str
+    dimension_type: str
+    dimension_valeur: float
+    borne_min: float
+    borne_max: float
+
+
+@dataclass
 class Session:
     historique: list[dict] = field(default_factory=list)
     devis: Devis = field(default_factory=Devis)
@@ -50,6 +75,8 @@ class Session:
     lots_presents: list[str] = field(default_factory=list)
     corrections: list[Correction] = field(default_factory=list)
     escalades: list[Escalade] = field(default_factory=list)
+    tours_clarification: int = 0
+    a_confirmer: list[LigneEnAttente] = field(default_factory=list)
 
 
 @dataclass
@@ -86,7 +113,17 @@ def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], 
 
     if intent == "clarification":
         p = PayloadClarification.model_validate(payload)
-        messages.extend(p.questions)
+        session.tours_clarification += 1
+        if session.tours_clarification > MAX_TOURS_CLARIFICATION:
+            # On a assez questionné : on annonce ce qu'on suppose, et on avance.
+            messages.append(
+                "Je ne te pose plus de questions. Je pars sur ces hypothèses, "
+                "dis-moi si l'une est fausse :"
+            )
+            messages.extend(f"— {h}" for h in HYPOTHESES_PAR_DEFAUT)
+            intent = "hypotheses"
+        else:
+            messages.extend(p.questions)
 
     elif intent in ("devis", "lots", "quantitatif"):
         p = PayloadDevis.model_validate(payload)
@@ -102,6 +139,18 @@ def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], 
             cle = (ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur)
             if cle in deja_presentes:
                 continue  # reconfirmation orale identique — idempotent, pas un doublon
+            if not est_plausible(ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur):
+                mini, maxi = bornes(ligne.lot_code, ligne.dimension.type)
+                session.a_confirmer.append(LigneEnAttente(
+                    ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur, mini, maxi))
+                messages.append(
+                    f"{ligne.dimension.valeur} {ligne.dimension.type} pour "
+                    f"« {REFERENTIEL[ligne.lot_code].nom} », c'est hors de ce que je vois "
+                    f"habituellement ({mini} à {maxi}). Je ne l'ajoute pas tant que tu ne "
+                    "me l'as pas confirmé — dictée mal comprise, ou chantier vraiment de "
+                    "cette taille ?"
+                )
+                continue
             ajouter_ligne(session.devis, ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur)
             deja_presentes.add(cle)
             lignes_nouvelles += 1
@@ -215,6 +264,36 @@ def traiter_message(session: Session, texte_utilisateur: str) -> ResultatTour:
             )
 
     return ResultatTour("escalade", [MESSAGE_ESCALADE], [], session.devis, {})
+
+
+def confirmer_quantite(session: Session, index: int) -> bool:
+    """L'artisan confirme une quantité hors bornes. Il fait autorité (CLAUDE.md) :
+    on l'applique sans discuter, et on garde la trace que la borne a été franchie."""
+    if not (0 <= index < len(session.a_confirmer)):
+        return False
+    attente = session.a_confirmer.pop(index)
+    ajouter_ligne(session.devis, attente.lot_code, attente.dimension_type,
+                  attente.dimension_valeur)
+    if attente.lot_code not in session.lots_presents:
+        session.lots_presents.append(attente.lot_code)
+    if attente.lot_code in MENTIONS:
+        session.devis.mentions.add(MENTIONS[attente.lot_code])
+    session.corrections.append(Correction(
+        horodatage=dt.datetime.now().isoformat(timespec="seconds"),
+        auteur="artisan",
+        description=(f"quantité hors bornes confirmée : {attente.dimension_valeur} "
+                     f"{attente.dimension_type} sur {attente.lot_code} "
+                     f"(bornes {attente.borne_min}–{attente.borne_max})"),
+    ))
+    return True
+
+
+def abandonner_quantite(session: Session, index: int) -> bool:
+    """L'artisan reconnaît une erreur de dictée : on jette la ligne en attente."""
+    if not (0 <= index < len(session.a_confirmer)):
+        return False
+    session.a_confirmer.pop(index)
+    return True
 
 
 def corriger_ligne(session: Session, index_ligne: int, description: str) -> None:

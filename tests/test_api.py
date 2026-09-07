@@ -98,3 +98,53 @@ def test_aucune_ligne_ne_porte_de_reference_produit_inventee(client):
     for ligne in corps["devis"]["lignes"]:
         assert ligne["prix_unitaire_ht"] > 0  # vient du catalogue, pas du modèle
     assert corps["devis"]["total_ht"] > 0
+
+
+def _client_hors_bornes(tmp_path, monkeypatch):
+    monkeypatch.setattr(main, "REGISTRE", Registre(racine=tmp_path))
+
+    def faux_modele(historique, message, timeout=60):
+        return {"intent": "devis", "mention": None,
+                "payload": {"pieces": ["salon"],
+                            "lignes": [{"lot_code": "PEINT_FINITION",
+                                        "dimension": {"type": "surface", "valeur": 2200.0}}]}}
+
+    monkeypatch.setattr(pipeline, "appeler_modele", faux_modele)
+    return TestClient(main.app)
+
+
+def test_une_quantite_hors_bornes_remonte_a_l_interface(tmp_path, monkeypatch):
+    c = _client_hors_bornes(tmp_path, monkeypatch)
+    corps = c.post("/api/message", json={"texte": "2200 m2"}).json()
+    assert corps["devis"]["lignes"] == []
+    assert len(corps["devis"]["a_confirmer"]) == 1
+    assert corps["devis"]["a_confirmer"][0]["dimension_valeur"] == 2200.0
+
+
+def test_l_artisan_confirme_par_l_api(tmp_path, monkeypatch):
+    c = _client_hors_bornes(tmp_path, monkeypatch)
+    c.post("/api/message", json={"texte": "2200 m2"})
+    corps = c.post("/api/quantite", json={"index": 0, "action": "confirmer"}).json()
+    assert len(corps["devis"]["lignes"]) == 1
+    assert corps["devis"]["a_confirmer"] == []
+
+
+def test_l_artisan_abandonne_par_l_api(tmp_path, monkeypatch):
+    c = _client_hors_bornes(tmp_path, monkeypatch)
+    c.post("/api/message", json={"texte": "2200 m2"})
+    corps = c.post("/api/quantite", json={"index": 0, "action": "abandonner"}).json()
+    assert corps["devis"]["lignes"] == []
+    assert corps["devis"]["a_confirmer"] == []
+
+
+def test_action_inconnue_est_refusee(tmp_path, monkeypatch):
+    c = _client_hors_bornes(tmp_path, monkeypatch)
+    c.post("/api/message", json={"texte": "2200 m2"})
+    assert c.post("/api/quantite", json={"index": 0, "action": "n_importe_quoi"}).status_code == 422
+    assert c.post("/api/quantite", json={"index": 9, "action": "confirmer"}).status_code == 404
+
+
+def test_l_attente_survit_a_un_rechargement(tmp_path, monkeypatch):
+    c = _client_hors_bornes(tmp_path, monkeypatch)
+    c.post("/api/message", json={"texte": "2200 m2"})
+    assert len(c.get("/api/devis").json()["devis"]["a_confirmer"]) == 1

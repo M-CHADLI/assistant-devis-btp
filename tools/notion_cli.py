@@ -24,14 +24,45 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 API = "https://api.notion.com/v1"
 
+# Le jeton est cherché dans l'environnement, puis dans le .env du dépôt (qui
+# est ignoré par git). Il n'est jamais affiché, jamais journalisé.
+FICHIER_ENV = Path(__file__).resolve().parent.parent / ".env"
+
+
+def _jeton() -> str:
+    jeton = os.environ.get("NOTION_TOKEN")
+    if jeton:
+        return jeton.strip().strip('"').strip("'")
+    if FICHIER_ENV.exists():
+        for ligne in FICHIER_ENV.read_text(encoding="utf-8", errors="ignore").splitlines():
+            ligne = ligne.strip()
+            # tolère « NOTION_TOKEN=... », « export NOTION_TOKEN=... » et
+            # « setx NOTION_TOKEN "..." » (le .env de ce poste mélange les formats)
+            for prefixe in ("export ", "setx "):
+                if ligne.startswith(prefixe):
+                    ligne = ligne[len(prefixe):]
+            if ligne.startswith("NOTION_TOKEN"):
+                valeur = ligne[len("NOTION_TOKEN"):].lstrip("= ").strip()
+                valeur = valeur.strip('"').strip("'")
+                if valeur:
+                    return valeur
+    sys.exit(
+        "NOTION_TOKEN introuvable.\n"
+        "  1. Crée une intégration interne sur https://www.notion.so/my-integrations\n"
+        "  2. Copie le « Internal Integration Secret » (il commence par ntn_)\n"
+        "  3. Ajoute la ligne suivante au fichier .env du dépôt (déjà ignoré par git) :\n"
+        "       NOTION_TOKEN=ntn_...\n"
+        "  4. Dans Notion, ouvre la page racine du projet → menu ⋯ → « Connexions »\n"
+        "     → ajoute ton intégration. Sans ce partage, l'API ne voit rien."
+    )
+
 
 def _appel(methode: str, chemin: str, corps: dict | None = None) -> dict:
-    jeton = os.environ.get("NOTION_TOKEN")
-    if not jeton:
-        sys.exit("NOTION_TOKEN absent de l'environnement.")
+    jeton = _jeton()
     donnees = json.dumps(corps).encode() if corps is not None else None
     requete = urllib.request.Request(
         f"{API}{chemin}",

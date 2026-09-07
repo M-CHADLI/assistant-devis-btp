@@ -72,6 +72,41 @@ MENTIONS: dict[str, str] = {
 }
 
 
+# --- Bornes de plausibilité (docs/DISPOSITIF_AGENT.md §3.2) ---
+#
+# Une dictée sur chantier produit des erreurs de saisie : « 220 m² » pour
+# « 22 m² », un point décimal avalé, une unité confondue. Le modèle n'a aucun
+# moyen de le savoir — le code, si. Ces bornes ne rejettent rien : elles
+# déclenchent une demande de confirmation à l'artisan (US-11).
+#
+# Elles décrivent un logement résidentiel, cible du chantier pilote. Un
+# artisan qui travaille sur un plateau de bureaux confirmera une fois.
+BORNES_PAR_UNITE: dict[str, tuple[float, float]] = {
+    "surface": (0.5, 400.0),   # m² — d'un WC à une grande maison
+    "longueur": (0.5, 300.0),  # ml — plinthes, gaines, canalisations
+    "unite": (1.0, 60.0),      # u  — points électriques, appareils sanitaires
+}
+
+# Bornes plus serrées là où l'unité générique est trop permissive.
+BORNES_PAR_LOT: dict[str, tuple[float, float]] = {
+    "ELEC_TABLEAU": (1.0, 3.0),      # un logement a un tableau, deux au plus
+    "PLOMB_APPAREIL": (1.0, 20.0),   # appareils sanitaires
+    "SOL_POSE_CARRELAGE": (0.5, 200.0),
+}
+
+
+def bornes(lot_code: str, type_dimension: str) -> tuple[float, float]:
+    """Bornes applicables à une dimension, du plus spécifique au plus général."""
+    if lot_code in BORNES_PAR_LOT:
+        return BORNES_PAR_LOT[lot_code]
+    return BORNES_PAR_UNITE.get(type_dimension, (0.0, float("inf")))
+
+
+def est_plausible(lot_code: str, type_dimension: str, valeur: float) -> bool:
+    mini, maxi = bornes(lot_code, type_dimension)
+    return mini <= valeur <= maxi
+
+
 def lots_du_corps_metier(corps_metier: str) -> list[Lot]:
     return sorted(
         (l for l in REFERENTIEL.values() if l.corps_metier == corps_metier),

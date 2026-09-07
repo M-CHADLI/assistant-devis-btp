@@ -19,7 +19,7 @@ from pathlib import Path
 
 from app.catalogue import Produit
 from app.devis import Devis, LigneChiffree
-from app.pipeline import Correction, Escalade, Session
+from app.pipeline import Correction, Escalade, LigneEnAttente, Session
 
 # Chemin absolu par défaut, dérivé de l'emplacement du paquet : l'application
 # doit démarrer depuis n'importe quel répertoire courant.
@@ -79,6 +79,11 @@ def serialiser_session(session: Session) -> dict:
                 for l in session.devis.lignes
             ],
         },
+        "tours_clarification": session.tours_clarification,
+        "a_confirmer": [{"lot_code": a.lot_code, "dimension_type": a.dimension_type,
+                         "dimension_valeur": a.dimension_valeur,
+                         "borne_min": a.borne_min, "borne_max": a.borne_max}
+                        for a in session.a_confirmer],
         "corrections": [{"horodatage": c.horodatage, "auteur": c.auteur,
                          "description": c.description} for c in session.corrections],
         "escalades": [{"horodatage": e.horodatage, "motif": e.motif,
@@ -105,6 +110,8 @@ def deserialiser_session(brut: dict) -> Session:
         lots_presents=brut.get("lots_presents", []),
         corrections=[Correction(**c) for c in brut.get("corrections", [])],
         escalades=[Escalade(**e) for e in brut.get("escalades", [])],
+        tours_clarification=brut.get("tours_clarification", 0),
+        a_confirmer=[LigneEnAttente(**a) for a in brut.get("a_confirmer", [])],
     )
 
 

@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from app.export import generer_docx
 from app.persistance import Registre
-from app.pipeline import Session, corriger_ligne, traiter_message
+from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
+                          corriger_ligne, traiter_message)
 
 app = FastAPI(title="Démo — Assistant chantier BTP vocal")
 
@@ -61,6 +62,14 @@ def _serialiser_devis(session: Session) -> dict:
         "total_ttc": session.devis.total_ttc,
         "acompte_30_pct": session.devis.acompte_30_pct,
         "mentions": sorted(session.devis.mentions),
+        # Lignes retenues parce que leur quantité sort des bornes (US-11) :
+        # l'artisan doit confirmer ou abandonner avant qu'elles entrent au devis.
+        "a_confirmer": [
+            {"lot_code": a.lot_code, "dimension_type": a.dimension_type,
+             "dimension_valeur": a.dimension_valeur,
+             "borne_min": a.borne_min, "borne_max": a.borne_max}
+            for a in session.a_confirmer
+        ],
         "corrections": [
             {"horodatage": c.horodatage, "auteur": c.auteur, "description": c.description}
             for c in session.corrections
@@ -111,6 +120,28 @@ class CorrectionEntrante(BaseModel):
 def api_corriger(corr: CorrectionEntrante, request: Request, response: Response) -> dict:
     projet_id, session = _projet(request)
     corriger_ligne(session, corr.index, corr.description)
+    REGISTRE.enregistrer(projet_id, session)
+    _poser_cookie(response, projet_id)
+    return {"projet_id": projet_id, "devis": _serialiser_devis(session)}
+
+
+class ArbitrageQuantite(BaseModel):
+    index: int
+    action: str  # "confirmer" | "abandonner"
+
+
+@app.post("/api/quantite")
+def api_quantite(arb: ArbitrageQuantite, request: Request, response: Response) -> dict:
+    """US-11 : l'artisan tranche sur une quantité jugée invraisemblable."""
+    projet_id, session = _projet(request)
+    if arb.action == "confirmer":
+        applique = confirmer_quantite(session, arb.index)
+    elif arb.action == "abandonner":
+        applique = abandonner_quantite(session, arb.index)
+    else:
+        raise HTTPException(status_code=422, detail="action attendue : confirmer | abandonner")
+    if not applique:
+        raise HTTPException(status_code=404, detail="aucune ligne en attente à cet index")
     REGISTRE.enregistrer(projet_id, session)
     _poser_cookie(response, projet_id)
     return {"projet_id": projet_id, "devis": _serialiser_devis(session)}
