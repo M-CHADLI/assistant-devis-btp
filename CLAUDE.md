@@ -4,11 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Nature du dépôt
 
-Dépôt de **cadrage / documentation** pour un projet de soutenance d'AI Engineer. Il ne contient
-aujourd'hui **aucun code** : uniquement des specs Markdown, des supports HTML et des images.
+Dépôt de **cadrage puis d'implémentation** pour un projet de soutenance d'AI Engineer.
 Toute la documentation est rédigée **en français** — conserver cette langue pour les nouveaux fichiers.
 
-Dépôt git, mais pas de système de build, de lint ou de tests. Ne pas inventer de telles commandes.
+Le code vit dans `app/` (FastAPI + moteur de devis déterministe, front mono-fichier dans
+`app/static/`), les tests dans `tests/`. Environnement géré par **uv** ; le venv est hors du dépôt
+(`~/.venvs/the-project`), donc `pip` n'y est pas installé — passer par
+`VIRTUAL_ENV=~/.venvs/the-project uv pip install …`.
+
+```bash
+VIRTUAL_ENV=~/.venvs/the-project uv run pytest      # la suite de tests
+VIRTUAL_ENV=~/.venvs/the-project uv run uvicorn app.main:app --reload
+```
+
+**Pas de linter configuré. Ne pas en inventer un.**
 
 ## Arborescence et statut des documents
 
@@ -19,6 +28,11 @@ README.md              porte d'entrée
 CLAUDE.md              ce fichier
 PLANNING.md            calendrier des 4 mois
 docs/                  la conception — fait autorité
+docs/STORIES.md        les 26 stories et l'ordre du backlog
+docs/notion/           schémas et CSV de la transposition Notion
+app/                   l'implémentation (FastAPI, moteur de devis, front)
+tests/                 la suite pytest
+tools/                 outillage hors produit (CLI Notion)
 veille/                livrables de veille
 reference/             référentiel de compétences
 archive/renoassistant/ conception précédente
@@ -30,6 +44,12 @@ archive/renoassistant/ conception précédente
 - **`docs/LIVRABLES.md`** — grille de contrôle de la couverture des cinq livrables attendus.
   **Ce n'est pas le projet** : le projet vaut par lui-même, cette grille ne fait que signaler
   les manques. Ne jamais dénaturer le cadrage pour cocher une case.
+- **`docs/STORIES.md`** — le découpage en 26 stories, sept épiques, deux files de priorité.
+  Chaque story porte un cas dégradé, des critères d'accessibilité **au même rang** que les
+  critères fonctionnels, et une ligne de traçabilité qui dit l'état du code **constaté**.
+  Sa mise à jour fait partie de la définition de fini.
+- **`docs/NOTION_BOARD.md`** — comment poser cette organisation sur Notion (thème JIRA) sans le
+  connecteur MCP, qui charge 42 outils pour six appels utiles.
 - **`docs/NOTES.md`** — bloc-notes des idées non encore arbitrées. Ce qui y est tranché remonte
   dans les documents de conception, et la note est retirée.
 - **`docs/SOURCES_DONNEES.md`** — ancienne conception *RenoAssistant*, **périmée en tant
@@ -83,13 +103,19 @@ capacités internes (celles-ci sont le découpage du dataset, pas de la présent
 | **2. Calculer** | Projet → matériaux et quantités | Quantitatif, Consommables oubliés |
 | **3. Arbitrer** | Chiffrage, puis accord client + artisan | Devis sans prix, Injection prix + promos |
 
-**Un seul interlocuteur au début, deux à la fin.** La scène finale réunit le client et *son*
-artisan (pas un partenaire LM), à distance en simultané. **L'artisan fait autorité, toujours** ;
-ses corrections sont journalisées comme signal qualité.
+**Un seul interlocuteur, du début à la fin : l'artisan.** Le pivot B2B vocal a supprimé la
+session à deux : à la validation de structure (HITL-2), « le client n'a plus de rôle actif »
+(`docs/DISPOSITIF_AGENT.md` §1.4). Le client final n'est **pas utilisateur** du produit — pas de
+compte, pas d'écran ; seules ses coordonnées sont saisies, parce que les mentions obligatoires
+BTP les exigent. **L'artisan fait autorité, toujours** ; ses corrections sont journalisées comme
+signal qualité.
 
 **Décisions de cadrage figées :**
-- Chantier pilote : **peinture et sols** uniquement (référentiel de 20-30 matériaux).
-- Canal de démo : **web uniquement**. Le SMS reste une capacité du modèle, non démontrée.
+- Chantier pilote : **quatre corps de métier** — peinture, sols, plomberie, électricité
+  (`PLANNING.md`, `docs/DISPOSITIF_AGENT.md` §3.3). Les deux derniers rendent les exemples
+  `mention forte` réels plutôt qu'hypothétiques.
+- Entrée du produit : **la voix** (dictée sur chantier, relecture systématique en HITL-0 avant
+  traitement). Canal de démo : **web uniquement**. Le SMS appartient à l'ancienne conception.
 - Protocole de preuve : **20b brut (bien promptté) vs 20b fine-tuné**. Le 120b est la démo, pas
   la preuve.
 - TVA, mentions obligatoires BTP et unités du secteur appartiennent au **référentiel métier** ;
