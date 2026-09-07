@@ -31,3 +31,6 @@ wandb/
 data/raw/
 *.dump
 *.sql
+
+# Devis persistés par le registre de projets (app/persistance.py)
+donnees/
