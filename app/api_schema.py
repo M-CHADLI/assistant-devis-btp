@@ -188,3 +188,71 @@ class SessionOuverte(BaseModel):
 
 class Erreur404(BaseModel):
     detail: str
+
+
+# --------------------------------------------------------------------------
+# Jeu de données catalogue (docs/CHAINE_DONNEES.md)
+# --------------------------------------------------------------------------
+
+class SourceDonnees(BaseModel):
+    """La provenance d'un lot de données, et sa licence.
+
+    Elle voyage avec le jeu de données parce qu'un jeu republié sans licence
+    n'est pas republiable : le destinataire ne sait pas ce qu'il a le droit
+    d'en faire."""
+    role: str = Field(description="fichier, api_rest ou scraping")
+    nom: str
+    licence: str
+    lignes_brutes: int
+
+
+class ProduitCatalogue(BaseModel):
+    """Un produit vendable, enrichi de ce que les sources publiques donnent.
+
+    Les deux champs de matière peuvent être `null` : la source ne couvre pas
+    tout, et `qualite_correspondance` dit à quel point le rapprochement est
+    solide. Un client de l'API qui les ignorerait prendrait un proxy pour une
+    mesure — c'est précisément ce que la chaîne refuse de laisser faire."""
+    reference: str
+    libelle: str
+    famille_code: str
+    marque: str
+    unite_vente: str
+    contenance: float | None = None
+    contenance_unite: str | None = None
+    prix_ht: float
+    taux_promo: float
+    prix_remise_ht: float
+    ean: str | None = None
+    date_maj: str
+    matiere: str
+    qualite_correspondance: str = Field(description="exacte, proxy ou absente")
+    facteur_kgco2e_par_kg: float | None = None
+    masse_volumique_kg_m3: float | None = None
+
+
+class FamilleSynthese(BaseModel):
+    """Une famille et sa fourchette de prix, remise déduite."""
+    code: str
+    matiere: str
+    qualite_correspondance: str
+    nombre_de_produits: int
+    prix_min: float | None = None
+    prix_max: float | None = None
+    prix_moyen: float | None = None
+
+
+class FamilleIncomplete(BaseModel):
+    """Un manque, exposé comme une donnée et non caché comme un défaut."""
+    code: str
+    matiere: str
+    qualite_correspondance: str
+    reserve: str | None = None
+    facteur_manquant: bool
+    densite_manquante: bool
+
+
+class Erreur503(BaseModel):
+    """La base du catalogue est un artefact reconstructible, donc absent d'un
+    dépôt fraîchement cloné. Le message porte la commande qui la fabrique."""
+    detail: str

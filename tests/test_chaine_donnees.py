@@ -18,7 +18,7 @@ import pytest
 
 from tools.donnees import agreger as ag
 from tools.donnees import importer as imp
-from tools.donnees import requetes as rq
+from app import catalogue_base as rq
 
 FAMILLE = "PEINTURE_FINITION"      # correspondance « proxy », densité absente
 FAMILLE_EXACTE = "SOL_PARQUET"     # correspondance « exacte », tout renseigné

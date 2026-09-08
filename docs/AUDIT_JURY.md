@@ -19,18 +19,20 @@
 > **relire avant de s'y fier**.
 
 **Convention.** ✅ couvert, preuve dans le dépôt · 🟡 partiel, il manque quelque
-chose de nommé · ❌ absent · ➖ écarté, avec motif assumé.
+chose de nommé · ❌ absent · ➖ écarté, avec motif assumé. La colonne ➖ est à
+zéro depuis que C5-34 est traité : le seul écart assumé du référentiel tenait à
+l'absence de jeu de données à exposer, et cette absence a cessé.
 
 ## Le compte
 
 | Livrable | Critères | ✅ | 🟡 | ❌ | ➖ |
 |---|---|---|---|---|---|
-| E1 — Données (C1-C5) | 28 | 17 | 8 | 2 | 1 |
+| E1 — Données (C1-C5) | 28 | 18 | 8 | 2 | 0 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 23 | 6 | 10 | 0 |
 | E4 — Application (C14-C19) | 36 | 19 | 8 | 9 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **81** | **31** | **22** | **1** |
+| **Total** | **135** | **82** | **31** | **22** | **0** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -142,11 +144,11 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 30 | Documentation technique couvrant tous les points de terminaison | 🟡 | FastAPI génère `/openapi.json` et `/docs` pour les **seize** points de terminaison existants, chacun avec `summary`, `tags` et modèle de sortie déclaré (`app/api_schema.py`). Aucun n'expose un *jeu de données* au sens de C5. |
+| 30 | Documentation technique couvrant tous les points de terminaison | 🟡 | FastAPI génère `/openapi.json` et `/docs` pour les **vingt et une** opérations existantes, chacune avec `summary`, `tags` et modèle de sortie déclaré (`app/api_schema.py`). Les cinq du groupe « Jeu de données » déclarent en plus leurs erreurs 404 et 503, et un test vérifie qu'elles figurent bien dans l'OpenAPI. |
 | 31 | Documentation des règles d'authentification/autorisation | ✅ | Les règles sont écrites au plus près du code qui les applique : docstring de `app/authentification.py` (un seul compte, empreinte scrypt en variable d'environnement, jeton HMAC de 12 h, 5 tentatives par fenêtre de 5 minutes, cookie `httponly`/`samesite=strict`), et tableau des variables d'environnement dans `README.md`. |
-| 32 | Documentation respectant un standard (OpenAPI) | ✅ | OpenAPI 3.1 servi automatiquement par FastAPI. Seul ✅ franc de E1. |
+| 32 | Documentation respectant un standard (OpenAPI) | ✅ | OpenAPI 3.1 servi automatiquement par FastAPI. |
 | 33 | API restreignant l'accès aux données par autorisation | ✅ | Depuis `0442fbe` : un appel sans jeton reçoit 401 **avant toute recherche de ressource**, `/openapi.json` compris. `tests/test_auth.py` (19 tests) et les deux premières étapes du parcours de bout en bout le vérifient. |
-| 34 | API fonctionnelle pour la mise à disposition du jeu de données | ➖ | **Écarté et assumé** : le projet n'a pas de jeu de données à exposer. La chose honnête est de dire que C5 sera porté par l'API du modèle (C9), pas d'inventer un endpoint de données factice. |
+| 34 | API fonctionnelle pour la mise à disposition du jeu de données | ✅ | Cinq points de terminaison sous le groupe « Jeu de données » : sources et licences, synthèse par famille, produits d'une famille, produit par référence, et **manques**. Derrière la même authentification que le reste. Le critère était écarté tant qu'il n'y avait rien à exposer ; la chaîne de données a produit ce quelque chose, l'écart n'avait plus lieu d'être. |
 
 ---
 

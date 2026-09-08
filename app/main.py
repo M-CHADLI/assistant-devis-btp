@@ -14,9 +14,12 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.api_schema import (Erreur401, Erreur404, Erreur409, MetriquesSortie,
-                            ProfilSortie, ReponseDevis, ReponseRelecture,
-                            ReponseTour, ReponseTourTranscrit, SessionOuverte)
+from app.api_schema import (Erreur401, Erreur404, Erreur409, Erreur503,
+                            FamilleIncomplete, FamilleSynthese, MetriquesSortie,
+                            ProduitCatalogue, ProfilSortie, ReponseDevis,
+                            ReponseRelecture, ReponseTour, ReponseTourTranscrit,
+                            SessionOuverte, SourceDonnees)
+from app import catalogue_base
 from app.authentification import (DUREE_JETON_S, MESSAGE_REFUS, NOM_COOKIE,
                                   Configuration, Refus, phrase_correcte)
 from app.export import MentionsIncompletes, generer_docx
@@ -421,6 +424,117 @@ def _serialiser_profil(session: Session) -> dict:
         "mentions_manquantes": champs_manquants(
             session.profil, session.client, session.delai_execution),
     }
+
+
+# --------------------------------------------------------------------------
+# Jeu de données catalogue (docs/CHAINE_DONNEES.md, référentiel C5)
+# --------------------------------------------------------------------------
+#
+# Ces cinq points de terminaison exposent le jeu de données produit par la
+# chaîne, en lecture seule et derrière la même authentification que le reste.
+# Ils ne servent pas le moteur de devis — celui-ci garde son catalogue de
+# démonstration — mais mettent le jeu à disposition d'un tiers, ce qui est
+# exactement ce que le jeu de données est fait pour.
+#
+# La connexion est ouverte par requête plutôt que gardée en module : SQLite
+# n'aime pas qu'une connexion traverse des fils d'exécution, et FastAPI en
+# utilise plusieurs pour les fonctions synchrones.
+
+
+def _base():
+    """Ouvre la base, ou refuse proprement si elle n'a pas été construite."""
+    try:
+        return catalogue_base.ouvrir()
+    except FileNotFoundError as absente:
+        raise HTTPException(status_code=503, detail=str(absente)) from absente
+
+
+@app.get("/api/catalogue/sources", response_model=list[SourceDonnees],
+         tags=["Jeu de données"],
+         summary="Provenance et licence de chaque lot de données",
+         responses={503: {"model": Erreur503, "description": "base non construite"}})
+def api_catalogue_sources() -> list[dict]:
+    """La traçabilité du jeu : trois sources, trois licences.
+
+    Exposée en premier et sans condition : un jeu de données dont on ignore
+    la provenance ne peut être réutilisé par personne."""
+    cx = _base()
+    try:
+        return catalogue_base.tracabilite(cx)
+    finally:
+        cx.close()
+
+
+@app.get("/api/catalogue/familles", response_model=list[FamilleSynthese],
+         tags=["Jeu de données"],
+         summary="Familles de produits, effectifs et fourchettes de prix",
+         responses={503: {"model": Erreur503, "description": "base non construite"}})
+def api_catalogue_familles() -> list[dict]:
+    """Une ligne par famille, y compris celles qui n'ont aucun produit — sinon
+    un trou de catalogue resterait invisible."""
+    cx = _base()
+    try:
+        return catalogue_base.synthese_par_famille(cx)
+    finally:
+        cx.close()
+
+
+@app.get("/api/catalogue/familles/{code}/produits",
+         response_model=list[ProduitCatalogue], tags=["Jeu de données"],
+         summary="Les produits d'une famille, du moins cher au plus cher",
+         responses={404: {"model": Erreur404, "description": "famille inconnue"},
+                    503: {"model": Erreur503, "description": "base non construite"}})
+def api_catalogue_produits(code: str) -> list[dict]:
+    """Classé sur le prix **remisé**, jamais sur le prix affiché.
+
+    Une famille inconnue est un 404, pas une liste vide : le client doit
+    pouvoir distinguer « cette famille n'existe pas » de « elle est vide »."""
+    cx = _base()
+    try:
+        connues = {f["code"] for f in catalogue_base.synthese_par_famille(cx)}
+        if code not in connues:
+            raise HTTPException(status_code=404, detail=f"famille inconnue : {code}")
+        return catalogue_base.produits_de_famille(cx, code)
+    finally:
+        cx.close()
+
+
+@app.get("/api/catalogue/produits/{reference}", response_model=ProduitCatalogue,
+         tags=["Jeu de données"], summary="Un produit par sa référence",
+         responses={404: {"model": Erreur404, "description": "référence inconnue"},
+                    503: {"model": Erreur503, "description": "base non construite"}})
+def api_catalogue_produit(reference: str) -> dict:
+    cx = _base()
+    try:
+        produit = catalogue_base.produit(cx, reference)
+        if produit is None:
+            raise HTTPException(status_code=404,
+                                detail=f"référence inconnue : {reference}")
+        return produit
+    finally:
+        cx.close()
+
+
+@app.get("/api/catalogue/manques", response_model=list[FamilleIncomplete],
+         tags=["Jeu de données"],
+         summary="Ce que l'enrichissement n'a pas su remplir, et pourquoi",
+         responses={503: {"model": Erreur503, "description": "base non construite"}})
+def api_catalogue_manques() -> list[dict]:
+    """Le point d'honnêteté du jeu de données.
+
+    Aucune source publique ne donne la masse volumique d'une peinture, et la
+    Base Carbone ne publie les produits céramiques qu'en ratios monétaires.
+    Ces trous sont exposés ici, avec leur motif, plutôt que comblés par des
+    valeurs plausibles qu'on ne pourrait plus distinguer de mesures."""
+    cx = _base()
+    try:
+        familles = catalogue_base.familles_incompletes(cx)
+        for famille in familles:      # SQLite rend les booléens en entiers
+            famille["facteur_manquant"] = bool(famille["facteur_manquant"])
+            famille["densite_manquante"] = bool(famille["densite_manquante"])
+        return familles
+    finally:
+        cx.close()
 
 
 @app.get("/api/profil", response_model=ProfilSortie, tags=["Profil"],

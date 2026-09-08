@@ -26,6 +26,11 @@ les données ne sortent pas de la machine.
 ├── CLAUDE.md                  consignes pour Claude Code
 ├── PLANNING.md                le calendrier des 4 mois
 │
+├── app/                       l'implémentation : API, moteur de devis, front
+├── tests/                     la suite pytest
+├── tools/                     outillage hors produit, dont la chaîne de données
+├── catalogue/                 sources, extraits bruts et jeu de données agrégé
+│
 ├── docs/                      la conception du projet — fait autorité
 ├── veille/                    livrables de veille (thématique à recadrer)
 ├── reference/                 référentiel de compétences, matière première
@@ -58,6 +63,7 @@ Variables d'environnement, toutes facultatives :
 | `BTP_CLE_SESSION` | Clé de signature des jetons de session | Tirée au hasard ; les jetons meurent au redémarrage |
 | `BTP_DONNEES` | Racine des projets persistés | `donnees/` à la racine du dépôt |
 | `BTP_SIGNAL_QUALITE` | Fichier du jeu de candidats d'entraînement (US-25) | `~/.local/share/the-project/signal_qualite.jsonl` |
+| `BTP_CATALOGUE_BASE` | Base du jeu de données catalogue | `catalogue/catalogue.sqlite3` |
 
 Pour produire une empreinte à coller dans l'environnement, sans jamais écrire la
 phrase nulle part :
@@ -66,6 +72,22 @@ phrase nulle part :
 VIRTUAL_ENV=~/.venvs/the-project uv run python -c \
   "from app.authentification import empreinte; import getpass; print(empreinte(getpass.getpass('Phrase : ')))"
 ```
+
+### Reconstruire le jeu de données catalogue
+
+La base du catalogue est un artefact **reconstructible**, donc absent du dépôt.
+Tant qu'elle n'existe pas, les cinq routes `/api/catalogue/…` répondent un code
+503 dont le message porte ces deux commandes :
+
+```bash
+VIRTUAL_ENV=~/.venvs/the-project uv run python -m tools.donnees.agreger
+VIRTUAL_ENV=~/.venvs/the-project uv run python -m tools.donnees.importer
+```
+
+Aucune des deux ne touche au réseau : elles repartent des extraits versionnés
+dans `catalogue/brut/`. La collecte elle-même (`extraire_api.py`,
+`extraire_scraping.py`) n'a besoin d'être relancée que pour rafraîchir ces
+extraits. Tout est décrit dans `docs/CHAINE_DONNEES.md`.
 
 **Attention au montage.** Ce dépôt est sur un montage OneDrive synchronisé : tout ce
 qui y est écrit part en ligne. C'est pourquoi l'export du signal qualité refuse une

@@ -71,7 +71,9 @@ extraire_scraping.py  →  catalogue/brut/scraping_masses_volumiques.json
 agreger.py            ←──────┘
                       →  catalogue/jeu_de_donnees.json
 importer.py           →  catalogue/catalogue.sqlite3
-requetes.py           →  l'accès en lecture de l'application
+                             │
+app/catalogue_base.py ←──────┘  le contrat de lecture, côté produit
+app/main.py           →  cinq points de terminaison « Jeu de données »
 ```
 
 Les trois extractions écrivent dans `catalogue/brut/`, et n'y écrivent **rien
@@ -196,9 +198,15 @@ tienne à l'exécution.
 ## 7. Les requêtes
 
 L'application ne parle pas SQL (langage de requête structuré) : elle appelle
-les fonctions de `tools/donnees/requetes.py`, qui portent chacune une requête
+les fonctions de `app/catalogue_base.py`, qui portent chacune une requête
 commentée. Le jour où la base passe de SQLite à PostgreSQL, c'est ce fichier
 qui change, et lui seul.
+
+Ce module est dans `app/` et non dans `tools/donnees/`, alors qu'il termine la
+chaîne. La raison tient en une phrase : `tools/` est de l'outillage hors
+produit, et ceci est le produit qui lit sa base. La chaîne écrit,
+l'application lit, la frontière passe là. `tools/donnees/requetes.py` en reste
+le point d'entrée en ligne de commande, et n'en est qu'un appelant.
 
 | Fonction | Ce qu'elle répond |
 | --- | --- |
@@ -213,6 +221,28 @@ qui change, et lui seul.
 Le classement se fait sur le prix **remisé**, jamais sur le prix affiché : un
 produit à 40 euros remisé de 30 % passe devant un produit à 32 euros sans
 promotion, et c'est celui-là que l'artisan doit voir en premier.
+
+### Mise à disposition par l'API
+
+Cinq points de terminaison exposent le jeu, en lecture seule, derrière la même
+authentification que le reste de l'application.
+
+| Point de terminaison | Ce qu'il rend |
+| --- | --- |
+| `GET /api/catalogue/sources` | Provenance et licence de chaque lot de données |
+| `GET /api/catalogue/familles` | Effectifs et fourchettes de prix, par famille |
+| `GET /api/catalogue/familles/{code}/produits` | Le rayon d'une famille |
+| `GET /api/catalogue/produits/{reference}` | Un produit précis |
+| `GET /api/catalogue/manques` | Ce qui n'a pas pu être rempli, et pourquoi |
+
+Une famille inconnue donne un code 404 et non une liste vide : le client doit
+pouvoir distinguer « cette famille n'existe pas » de « elle est vide », sans
+quoi une faute de frappe passe inaperçue.
+
+La base étant reconstructible, elle n'est pas versionnée. Sur un dépôt
+fraîchement cloné, ces cinq routes répondent donc un code 503 dont le message
+porte les deux commandes à lancer. C'est un état prévu, testé, et préférable à
+une base versionnée qui divergerait en silence de son jeu de données source.
 
 Aucune requête n'est construite par concaténation. Les valeurs passent par des
 paramètres liés, seule parade sûre à l'injection SQL — et la précaution n'est
@@ -230,7 +260,9 @@ référentiel métier. Les familles du dump simulé ne portent pas les mêmes co
 Brancher l'un sur l'autre demande une table de correspondance entre lots et
 familles, qui est une décision de conception, pas une opération de plomberie.
 La couture est nette : `resoudre_produit()` est le seul point d'entrée à
-réécrire, et `moins_cher_de_famille()` est la requête qui le remplacera.
+réécrire, et `moins_cher_de_famille()` est la requête qui le remplacera. Le jeu
+est en revanche mis à disposition d'un tiers par l'API, ce qui est exactement
+ce à quoi un jeu de données sert.
 
 **Elle ne calcule pas d'empreinte carbone.** Les facteurs d'émission sont
 collectés et joints parce que c'est la seule manière de rendre la chaîne
