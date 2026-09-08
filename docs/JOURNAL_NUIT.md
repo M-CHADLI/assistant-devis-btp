@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **09/09/2026**, commit `e2d4b7f`.
+Dernière mise à jour : **09/09/2026**, commit `d24dbc4`.
 
 ---
 
@@ -39,11 +39,12 @@ Dernière mise à jour : **09/09/2026**, commit `e2d4b7f`.
 
 ## État vérifié au 08/09/2026
 
-- **493 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+- **514 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
   `test_front` 55, `test_garde_fous` 52, `test_chaine_donnees` 43,
   `test_gabarit` 41, `test_pipeline` 33, `test_mlops` 33, `test_annuaire` 30,
   `test_api` 29, `test_boucle_qualite` 24, `test_duplication` 22,
-  `test_auth` 19, `test_api_catalogue` 19, `test_devis` 16, `test_export` 13,
+  `test_correspondance` 21, `test_auth` 19, `test_api_catalogue` 19,
+  `test_devis` 16, `test_export` 13,
   `test_transcription` 12, `test_persistance` 12, `test_packaging` 11,
   `test_observabilite` 11, `test_contrat_api` 10, `test_referentiel` 8.
 - **Vingt-cinq opérations d'API**, comptées sur l'OpenAPI (`app.openapi()`),
@@ -56,7 +57,7 @@ Dernière mise à jour : **09/09/2026**, commit `e2d4b7f`.
   - *partiel* : US-01 (tout est écrit et testé sauf l'appel réel, faute de
     clé d'annuaire), US-04 (dictée navigateur, transcription locale à faire),
     US-26 (chaînes écrites et image construite, aucun `remote` pour les
-    exécuter), US-27 (chaîne de données faite, pas branchée sur le devis),
+    exécuter), US-27 (chaîne branchée sur le devis, deux arbitrages métier en attente),
     US-28 (chaîne du modèle faite, entraînement non lancé), US-03 (tout est
     écrit et testé sauf l'appel réel, faute de clé d'OCR)
   - **La file de code est vide.** Ce qui reste au §« File de travail » ne
@@ -137,8 +138,10 @@ Dernière mise à jour : **09/09/2026**, commit `e2d4b7f`.
 | `9e39a10` | Journal remis à l'état vérifié après US-03 |
 | `c63600e` | Repartir d'un devis pour un chantier voisin (US-17) |
 | `e2d4b7f` | US-17 répercutée : stories, maquettes, modèle de données, audit |
+| `6adb257` | Journal remis à l'état vérifié après US-17 |
+| `d24dbc4` | Devis branché sur la base catalogue, sans deviner les correspondances (US-27) |
 
-**Rien n'est poussé.** **Cinquante-quatre commits cette nuit** (depuis `87cfb07`), soixante-trois sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
+**Rien n'est poussé.** **Cinquante-six commits cette nuit** (depuis `87cfb07`), soixante-cinq sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
 
 **L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
 82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
@@ -206,12 +209,25 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
    Avant toute exploitation réelle, le point RGPD du §« Ce qui manque » de
    `docs/RGPD.md` est un préalable : contrat de sous-traitance, localisation
    des traitements, rétention côté service.
-9. **Brancher le devis sur la base catalogue.** La chaîne de données alimente
-    l'API mais **pas encore le moteur de devis**, qui lit toujours le
-    dictionnaire de `app/catalogue.py`. La couture est `resoudre_produit()` →
-    `moins_cher_de_famille()`. Bloqué sur un arbitrage métier : les codes de lot
-    du référentiel et les familles du dump ne se recouvrent pas, et inventer
-    cette table de correspondance reviendrait à décider à votre place.
+9. **Rendre les deux arbitrages du catalogue.** Le branchement est fait
+    (`d24dbc4`) : `app/correspondance.py` déclare la table lot ↔ famille et
+    `resoudre_produit()` la consulte quand `BTP_CATALOGUE_SOURCE=base`. Le
+    journal disait ce chantier « bloqué sur un arbitrage métier » ; vérification
+    faite contre la base réelle, **onze lots sur treize s'apparient sans
+    ambiguïté**. Seuls deux ne le font pas, et ils sont déclarés
+    `arbitrage_requis`, donc **inertes** :
+    - `PLOMB_APPAREIL` → `PLOMBERIE_ROBINETTERIE` : le lot pose un lavabo, la
+      famille ne contient que des mitigeurs. Chiffre-t-on l'appareil, la
+      robinetterie, les deux ?
+    - `ELEC_TABLEAU` → `ELECTRICITE_TABLEAU` : le lot pose un tableau équipé, la
+      famille ne contient que des disjoncteurs, le moins cher à 8,49 €. Un devis
+      qui annonce un tableau à ce prix est faux, et il le serait en silence.
+
+    Ces deux réponses vous appartiennent : décider ce qu'on vend n'est pas un
+    travail de programmation. Tant qu'elles manquent, le défaut reste `simule` —
+    et le jour où elles arrivent,
+    `test_il_reste_des_arbitrages_et_ils_sont_nommes` tombe, ce qui rappelle de
+    rebasculer le défaut sur `base`.
 10. **Partager les rituels, pas seulement les écrire.** `docs/RITUELS.md` existe
     désormais (objectifs, modalités, parties prenantes, définition de fini), mais
     C16-117 reste 🟡 volontairement : le critère demande de *partager* avec les
@@ -337,3 +353,31 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
   (faire échouer une inscription parce qu'un tiers est en panne serait le mauvais
   arbitrage) ; un champ prérempli qu'on enregistre sans y toucher garde l'origine
   `annuaire` et reste écrasable — **accepter sans relire n'est pas décider**.
+- **Le catalogue branché alors que la file le disait bloqué.** L'entrée nº 9
+  affirmait que « les codes de lot du référentiel et les familles du dump ne se
+  recouvrent pas ». Vérifié contre la base réelle : **onze sur treize se
+  recouvrent sans ambiguïté**. L'affirmation était fausse, et elle bloquait un
+  chantier faisable. Le choix a été de câbler les onze certains et de laisser les
+  deux incertains **inertes**, plutôt que de tout suspendre à un arbitrage qui ne
+  concerne que deux lots.
+- **Trois états dans la table de correspondance, pas deux.** Une entrée
+  `arbitrage_requis` ne rend aucune famille : c'est la propriété de sûreté du
+  module, et elle a son test. Deux états — présent ou absent — auraient forcé à
+  choisir entre effacer la connaissance de la paire douteuse et l'utiliser.
+- **La source de prix est explicite, jamais implicite-si-présente.** La base est
+  un artefact reconstructible et non versionné ; brancher dessus « si elle est
+  là » ferait chiffrer le même chantier différemment sur deux machines, sans que
+  rien ne le dise. D'où `BTP_CATALOGUE_SOURCE`, et d'où `Produit.origine`, qui
+  voyage avec le prix pour qu'une ligne reste explicable après coup.
+- **Repli sur le catalogue simulé, jamais d'erreur**, dans trois cas : arbitrage
+  en attente, base absente, famille vide. Un prix simulé assumé vaut mieux qu'un
+  prix réel pris dans la mauvaise famille — et mieux qu'un 500 sur un dépôt
+  fraîchement cloné.
+- **Le moins cher de la famille** comme règle de choix : hypothèse de
+  démonstration, pas règle métier. Un artisan choisit une gamme, une
+  disponibilité, parfois un fournisseur imposé. La règle est écrite dans
+  `docs/CHAINE_DONNEES.md` §8 plutôt que devinée dans le code.
+- **Connexion SQLite ouverte et fermée par appel.** FastAPI sert dans un
+  threadpool ; une connexion partagée entre threads produit une panne rare et
+  difficile à reproduire. Le coût d'ouverture est négligeable devant un appel au
+  modèle.
