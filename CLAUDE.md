@@ -17,6 +17,11 @@ VIRTUAL_ENV=~/.venvs/the-project uv run pytest      # la suite de tests
 VIRTUAL_ENV=~/.venvs/the-project uv run uvicorn app.main:app --reload
 ```
 
+Le produit s'empaquette aussi en image OCI (`Dockerfile`) : `docker build -t
+assistant-devis-btp:local .` puis `docker run --rm -p 8000:8000
+assistant-devis-btp:local`. L'image embarque la base catalogue et ne refait
+aucune collecte — voir `docs/LIVRAISON_CONTINUE.md`.
+
 **Pas de linter configuré. Ne pas en inventer un.**
 
 ## Arborescence et statut des documents

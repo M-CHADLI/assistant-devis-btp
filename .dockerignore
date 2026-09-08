@@ -1,0 +1,26 @@
+# Ce qui n'a rien à faire dans le contexte de construction. Chaque ligne évite
+# soit une fuite (données clients, secrets), soit un cache invalidé pour rien.
+.git/
+.github/
+.venv/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+
+# Données d'exploitation : devis et coordonnées clients ne sortent jamais du
+# poste, encore moins dans une image que l'on pourrait publier.
+donnees/
+.env
+.env.*
+
+# Artefacts reconstruits pendant la construction, ou inutiles à l'exécution.
+catalogue/catalogue.sqlite3
+catalogue/sources/
+catalogue/brut/
+archive/
+veille/
+reference/
+docs/
+tests/
+PLANNING.md
+CLAUDE.md

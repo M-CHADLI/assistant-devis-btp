@@ -25,6 +25,7 @@ les données ne sortent pas de la machine.
 ├── README.md                  ← vous êtes ici
 ├── CLAUDE.md                  consignes pour Claude Code
 ├── PLANNING.md                le calendrier des 4 mois
+├── Dockerfile                 empaquetage du produit en image OCI
 │
 ├── app/                       l'implémentation : API, moteur de devis, front
 ├── tests/                     la suite pytest
@@ -49,6 +50,14 @@ L'environnement est géré par **uv**, le venv vit hors du dépôt
 ```bash
 VIRTUAL_ENV=~/.venvs/the-project uv run pytest                       # la suite de tests
 VIRTUAL_ENV=~/.venvs/the-project uv run uvicorn app.main:app --reload
+```
+
+Sans installer Python ni uv, l'image fait la même chose et embarque la base
+catalogue :
+
+```bash
+docker build -t assistant-devis-btp:local .
+docker run --rm -p 8000:8000 -v btp-donnees:/donnees assistant-devis-btp:local
 ```
 
 Puis ouvrir `http://localhost:8000`. L'application demande une **phrase de passe** :

@@ -30,9 +30,9 @@ l'absence de jeu de données à exposer, et cette absence a cessé.
 | E1 — Données (C1-C5) | 28 | 18 | 8 | 2 | 0 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 23 | 6 | 10 | 0 |
-| E4 — Application (C14-C19) | 36 | 19 | 8 | 9 | 0 |
+| E4 — Application (C14-C19) | 36 | 22 | 9 | 5 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **82** | **31** | **22** | **0** |
+| **Total** | **135** | **85** | **32** | **18** | **0** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -354,10 +354,10 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 139 | Documentation couvrant étapes, tâches, déclencheurs | ❌ | Absente. |
-| 140 | Fichiers de configuration reconnus et exécutés | ❌ | Absents. |
-| 141 | Étape de packaging intégrée et sans erreur | ❌ | Aucun packaging (pas de Dockerfile, pas de build). |
-| 142 | Étape de livraison intégrée après validation du packaging | ❌ | Absente. |
+| 139 | Documentation couvrant étapes, tâches, déclencheurs | ✅ | `docs/LIVRAISON_CONTINUE.md` : l'artefact et les quatre décisions qui le façonnent, les quatre déclencheurs, les deux tâches et leurs six étapes, la reproduction locale, et trois limites assumées. |
+| 140 | Fichiers de configuration reconnus et exécutés | 🟡 | `Dockerfile`, `.dockerignore` et `.github/workflows/livraison.yml` sont écrits et **valides** : l'image se construit, démarre et répond en local (vérifié le 08/09/2026). Le workflow, lui, n'a jamais été exécuté par GitHub Actions — voir constat nº 1. |
+| 141 | Étape de packaging intégrée et sans erreur | ✅ | Image OCI en deux étapes, dépendances figées par `uv.lock`, base catalogue construite à la construction et non au démarrage, utilisateur non privilégié (UID 10001), sonde de santé sur le seul chemin ouvert. Construite en local : 212 Mo, démarrage vert, `/` en 200 et `/api/catalogue/familles` en 401. |
+| 142 | Étape de livraison intégrée après validation du packaging | ✅ | La tâche `publication` porte `needs: empaquetage` et `if: github.event_name == 'push'` : elle ne peut ni précéder l'épreuve, ni publier une pull request. Publication sur GHCR, étiquetage par branche, version sémantique et SHA long. |
 | 143 | Sources versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
 
 ---
@@ -409,12 +409,14 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 11. ~~**Chaîne de données** : collecte multi-sources, agrégation, base, requêtes.~~ **Fait** : `tools/donnees/` et `docs/CHAINE_DONNEES.md`. E1 passe de 14 ❌ à 2, C2 et C3 sont fermés, C4-21 à C4-25 avancent. Le moteur de devis n'est pas encore branché sur la base : c'est une décision de conception, nommée au §8 du document.
 
+12. ~~**Empaquetage et livraison continue** : le produit ne s'installe qu'en connaissant la commande.~~ **Fait** : `Dockerfile`, `.dockerignore`, `.github/workflows/livraison.yml` et `docs/LIVRAISON_CONTINUE.md`. C19 passe de 5 ❌ à 1 (le dernier étant le dépôt distant). L'image est construite, démarrée et interrogée en local ; ce qui n'est pas vérifié, c'est l'exécution du workflow — comme pour l'intégration continue, et pour la même raison.
+
 **Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
 protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
 mi-chemin), et la chaîne MLOps de C13 (sept) — le reste est du rituel à tenir,
-pas du travail à inventer. Les cinq gisements documentaires de la liste
-ci-dessus sont fermés, et E1, qui était le plus gros trou du référentiel, n'en
-est plus un.
+pas du travail à inventer. Les six gisements documentaires de la liste
+ci-dessus sont fermés, E1 n'est plus le plus gros trou du référentiel, et C13
+est désormais le seul gisement de ❌ qui ne dépende pas d'un dépôt distant.
 
 ---
 

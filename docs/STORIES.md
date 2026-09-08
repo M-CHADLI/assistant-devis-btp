@@ -975,9 +975,19 @@ qui tient dans la tête de son auteur n'est pas une procédure.
 **Traçabilité.** C18, C19 · état : **partiel** — `pyproject.toml` et `uv.lock`
 figent les dépendances, `.github/workflows/tests.yml` exécute la suite à chaque
 modification et `app/main.py` résout `static/index.html` depuis son propre
-emplacement (lancement indépendant du répertoire courant). **Reste** : aucun
-`remote` git n'est configuré, donc la chaîne ne s'exécute nulle part et rien
-n'est observable par un tiers.
+emplacement (lancement indépendant du répertoire courant). Depuis le
+08/09/2026, le produit s'empaquette : `Dockerfile` en deux étapes construit une
+image de 212 Mo qui embarque la base catalogue et tourne sous un utilisateur non
+privilégié, `.github/workflows/livraison.yml` la construit, la fait démarrer,
+vérifie qu'elle répond 200 sur l'accueil et **401** sur une route de catalogue,
+puis la publie sur GHCR — et seulement après cette épreuve. Le scénario nominal
+tient donc en deux commandes (`docker build`, `docker run`), sans installer ni
+Python ni uv. Vérifié en local le 08/09/2026 ; documenté dans
+`docs/LIVRAISON_CONTINUE.md` ; gardé par `tests/test_packaging.py` (11 tests sur
+les invariants de l'image : pas de root, pas de secret figé, `donnees/` et
+`.env` hors du contexte de construction). **Reste** : aucun `remote` git n'est
+configuré, donc les deux chaînes ne s'exécutent nulle part et rien n'est
+observable par un tiers.
 
 ### US-27 — Que le catalogue vienne de vraies sources, trous compris
 
