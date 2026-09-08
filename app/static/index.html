@@ -414,9 +414,13 @@ const zoneRelecture = document.getElementById('relecture');
 const texteRelecture = document.getElementById('relecture-texte');
 const alerteRelecture = document.getElementById('relecture-alerte');
 let propositionCourante = '';
+// La dictée avant remise en forme : elle part avec la validation, pour que le
+// signal qualité porte l'entrée d'origine et pas seulement la proposition (US-25).
+let bruteCourante = '';
 
 function montrerRelecture(data) {
   propositionCourante = data.propose;
+  bruteCourante = data.brut || '';
   texteRelecture.value = data.propose;
   if (data.alerte) {
     alerteRelecture.textContent = data.alerte;
@@ -433,6 +437,7 @@ function cacherRelecture() {
   zoneRelecture.hidden = true;
   texteRelecture.value = '';
   propositionCourante = '';
+  bruteCourante = '';
 }
 
 async function relireDictee(brut) {
@@ -449,7 +454,7 @@ document.getElementById('btn-valider-dictee').onclick = async () => {
   ajouterMessage(texte, 'user');
   const resp = await fetch('/api/transcription/valider', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({propose: propositionCourante, texte})
+    body: JSON.stringify({propose: propositionCourante, brut: bruteCourante, texte})
   });
   cacherRelecture();
   rendreTour(await resp.json());

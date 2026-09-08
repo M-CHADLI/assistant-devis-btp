@@ -95,9 +95,20 @@ def _profil_depuis_dict(brut: dict) -> ProfilArtisan:
     )
 
 
+def _correction_depuis_dict(brut: dict) -> Correction:
+    """Relit une correction. Les projets écrits avant la version 4 n'ont pas le
+    triplet : on ne l'invente pas, `app.boucle_qualite` les comptera incomplets."""
+    return Correction(
+        horodatage=brut.get("horodatage", ""), auteur=brut.get("auteur", "artisan"),
+        description=brut.get("description", ""), origine=brut.get("origine", ""),
+        entree=brut.get("entree", ""), sortie_modele=brut.get("sortie_modele", ""),
+        corrige=brut.get("corrige", ""),
+    )
+
+
 def serialiser_session(session: Session) -> dict:
     return {
-        "version": 3,
+        "version": 4,
         "historique": session.historique,
         "pieces": session.pieces,
         "lots_presents": session.lots_presents,
@@ -122,8 +133,12 @@ def serialiser_session(session: Session) -> dict:
                          "dimension_valeur": a.dimension_valeur,
                          "borne_min": a.borne_min, "borne_max": a.borne_max}
                         for a in session.a_confirmer],
+        # Version 4 : le triplet du signal qualité (US-25). Sans lui, une
+        # correction relue du disque n'est plus exportable.
         "corrections": [{"horodatage": c.horodatage, "auteur": c.auteur,
-                         "description": c.description} for c in session.corrections],
+                         "description": c.description, "origine": c.origine,
+                         "entree": c.entree, "sortie_modele": c.sortie_modele,
+                         "corrige": c.corrige} for c in session.corrections],
         "escalades": [{"horodatage": e.horodatage, "motif": e.motif,
                        "detail": e.detail} for e in session.escalades],
         "profil": _profil_en_dict(session.profil),
@@ -156,7 +171,7 @@ def deserialiser_session(brut: dict) -> Session:
         devis=devis,
         pieces=brut.get("pieces", []),
         lots_presents=brut.get("lots_presents", []),
-        corrections=[Correction(**c) for c in brut.get("corrections", [])],
+        corrections=[_correction_depuis_dict(c) for c in brut.get("corrections", [])],
         escalades=[Escalade(**e) for e in brut.get("escalades", [])],
         tours_clarification=brut.get("tours_clarification", 0),
         a_confirmer=[LigneEnAttente(**a) for a in brut.get("a_confirmer", [])],

@@ -121,7 +121,8 @@ def _serialiser_devis(session: Session) -> dict:
             for a in session.a_confirmer
         ],
         "corrections": [
-            {"horodatage": c.horodatage, "auteur": c.auteur, "description": c.description}
+            {"horodatage": c.horodatage, "auteur": c.auteur,
+             "description": c.description, "origine": c.origine}
             for c in session.corrections
         ],
     }
@@ -200,6 +201,9 @@ class DicteeEntrante(BaseModel):
 
 class TranscriptionValidee(BaseModel):
     propose: str = ""
+    # La dictée avant remise en forme : c'est l'« entrée d'origine » du triplet
+    # exporté au réentraînement (docs/STORIES.md US-25).
+    brut: str = ""
     texte: str
 
 
@@ -228,7 +232,8 @@ def api_transcription_valider(validee: TranscriptionValidee, request: Request,
                               response: Response) -> dict:
     """L'artisan a relu : on journalise ce qu'il a corrigé, puis on traite."""
     projet_id, session = _projet(request)
-    texte = valider_transcription(session, validee.propose, validee.texte)
+    texte = valider_transcription(session, validee.propose, validee.texte,
+                                  brut=validee.brut)
     resultat = traiter_message(session, texte)
     REGISTRE.enregistrer(projet_id, session)
     _poser_cookie(response, projet_id)

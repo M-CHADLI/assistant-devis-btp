@@ -58,9 +58,21 @@ class Escalade:
 
 @dataclass
 class Correction:
+    """Une correction d'artisan, gardée sous une forme réutilisable (US-25).
+
+    `description` reste le texte lisible à l'écran ; le triplet
+    `entree` / `sortie_modele` / `corrige` est ce qui fait d'une correction un
+    candidat d'entraînement (docs/DISPOSITIF_AGENT.md §5.2). Les trois champs
+    sont optionnels parce que les projets écrits avant la version 4 du format
+    n'en ont pas : `app.boucle_qualite` les compte comme incomplets plutôt que
+    de les exporter amputés."""
     horodatage: str
     auteur: str  # "artisan"
     description: str
+    origine: str = ""  # "transcription" | "quantite_hors_bornes" | "ligne_devis"
+    entree: str = ""  # ce que l'artisan a fourni
+    sortie_modele: str = ""  # ce que la chaîne a produit
+    corrige: str = ""  # ce que l'artisan a retenu
 
 
 @dataclass
@@ -374,7 +386,17 @@ def valider_structure(session: Session) -> bool:
     return True
 
 
-def valider_transcription(session: Session, propose: str, corrige: str) -> str:
+def _derniere_dictee(session: Session) -> str:
+    """Le dernier message de l'artisan — l'« entrée d'origine » d'une correction
+    portée sur ce que le modèle en a fait (US-25)."""
+    for tour in reversed(session.historique):
+        if tour.get("role") == "user":
+            return str(tour.get("content", ""))
+    return ""
+
+
+def valider_transcription(session: Session, propose: str, corrige: str,
+                          brut: str = "") -> str:
     """HITL-0 : l'artisan relit sa dictée et la valide (docs/STORIES.md US-05).
 
     Rien ne s'exécute avant cet appel — c'est ici que le pipeline démarre. Si
@@ -382,14 +404,23 @@ def valider_transcription(session: Session, propose: str, corrige: str) -> str:
     correction de devis : c'est le **premier point de capture du signal qualité**
     (docs/DISPOSITIF_AGENT.md §5.2), celui qui dit ce que la chaîne dictée +
     reformulation a mal entendu.
+
+    `brut` est la dictée avant remise en forme. Quand l'appelant ne la fournit
+    pas, la proposition en tient lieu : c'est moins précis, mais le triplet reste
+    complet et le candidat exportable (US-25).
     """
     retenu = (corrige or "").strip()
-    if retenu != (propose or "").strip():
+    propose_net = (propose or "").strip()
+    if retenu != propose_net:
         session.corrections.append(Correction(
             horodatage=dt.datetime.now().isoformat(timespec="seconds"),
             auteur="artisan",
             description=(f"transcription corrigée avant traitement : "
-                         f"« {(propose or '').strip()[:200]} » → « {retenu[:200]} »"),
+                         f"« {propose_net[:200]} » → « {retenu[:200]} »"),
+            origine="transcription",
+            entree=(brut or "").strip() or propose_net,
+            sortie_modele=propose_net,
+            corrige=retenu,
         ))
         JOURNAL.enregistrer("correction_artisan", origine="transcription")
     return retenu
@@ -408,12 +439,21 @@ def confirmer_quantite(session: Session, index: int) -> bool:
         session.lots_presents.append(attente.lot_code)
     if attente.lot_code in MENTIONS:
         session.devis.mentions.add(MENTIONS[attente.lot_code])
+    mesure = (f"{attente.lot_code} : {attente.dimension_valeur} "
+              f"{attente.dimension_type}")
     session.corrections.append(Correction(
         horodatage=dt.datetime.now().isoformat(timespec="seconds"),
         auteur="artisan",
         description=(f"quantité hors bornes confirmée : {attente.dimension_valeur} "
                      f"{attente.dimension_type} sur {attente.lot_code} "
                      f"(bornes {attente.borne_min}–{attente.borne_max})"),
+        origine="quantite_hors_bornes",
+        entree=_derniere_dictee(session),
+        sortie_modele=mesure,
+        # L'artisan confirme : la sortie du modèle est la version retenue. Le
+        # signal ne porte donc pas sur le modèle mais sur les bornes du
+        # référentiel, qui ont crié à tort — c'est `origine` qui le dit.
+        corrige=mesure,
     ))
     JOURNAL.enregistrer("correction_artisan", origine="quantite_hors_bornes",
                         lot_code=attente.lot_code)
@@ -430,10 +470,19 @@ def abandonner_quantite(session: Session, index: int) -> bool:
 
 def corriger_ligne(session: Session, index_ligne: int, description: str) -> None:
     """HITL-2 : l'artisan corrige. Appliqué sans discussion, journalisé (§5.2)."""
+    retiree = ""
     if 0 <= index_ligne < len(session.devis.lignes):
-        session.devis.lignes.pop(index_ligne)
+        ligne = session.devis.lignes.pop(index_ligne)
+        # Ce qu'on garde de la ligne : ce que le modèle a décrit, jamais son
+        # prix — le prix vient du catalogue, pas du modèle (CLAUDE.md).
+        retiree = (f"{ligne.lot_code} : {ligne.nom_lot} — "
+                   f"{ligne.quantite_technique} {ligne.unite_technique}".strip())
     session.corrections.append(
         Correction(horodatage=dt.datetime.now().isoformat(timespec="seconds"),
-                   auteur="artisan", description=description)
+                   auteur="artisan", description=description,
+                   origine="ligne_devis",
+                   entree=_derniere_dictee(session),
+                   sortie_modele=retiree,
+                   corrige=description.strip())
     )
     JOURNAL.enregistrer("correction_artisan", origine="ligne_devis")

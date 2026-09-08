@@ -49,6 +49,9 @@ class CorrectionSortie(BaseModel):
     horodatage: str
     auteur: str
     description: str
+    # D'où vient la correction — le triplet d'entraînement, lui, ne sort pas par
+    # l'API : il ne quitte pas la machine (docs/STORIES.md US-25).
+    origine: str = ""
 
 
 class DevisSortie(BaseModel):

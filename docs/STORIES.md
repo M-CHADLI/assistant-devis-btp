@@ -876,8 +876,27 @@ tout défaut constaté entre au jeu de test comme cas de non-régression.
 - Le jeu de test **ne rétrécit jamais** : un cas ajouté n'est pas retiré.
 - Aucun export ne quitte la machine.
 
-**Traçabilité.** C20 · `DISPOSITIF_AGENT.md` §4.2, §5.2 · état : **à faire** (les
-corrections sont journalisées en mémoire, jamais exportées).
+**Traçabilité.** C20 · `DISPOSITIF_AGENT.md` §4.2, §5.2 · état : **fait**
+(`app/boucle_qualite.py`, CLI `tools/exporter_signal_qualite.py`,
+`tests/test_boucle_qualite.py`). Les trois points de capture — relecture de dictée,
+quantité hors bornes confirmée, correction de ligne — écrivent désormais le triplet
+*entrée d'origine / sortie modèle / version corrigée* dans `Correction`, persisté en
+version 4 du format de projet. L'export est en ajout seul et dédoublonné par empreinte
+du triplet : le jeu ne rétrécit jamais, y compris si le projet source est supprimé.
+
+Deux limites, dites plutôt que masquées : les corrections écrites avant la version 4
+n'ont pas de triplet — elles sont **comptées comme incomplètes**, jamais exportées
+amputées ; et la confirmation d'une quantité hors bornes produit un candidat dont la
+version corrigée est identique à la sortie modèle, parce que le signal y porte sur les
+bornes du référentiel, pas sur le modèle — c'est `origine` qui le dit.
+
+**Point relevé au passage.** Ce dépôt est sur un montage `fuse.rclone` synchronisé vers
+OneDrive : y écrire le jeu le ferait *sortir de la machine*. La destination par défaut
+est donc hors du dépôt (`~/.local/share/the-project/`, variable `BTP_SIGNAL_QUALITE`), et
+`verifier_destination()` refuse URL, chemin UNC et montage synchronisé ou distant — refus
+vérifié avant toute écriture. **Reste à arbitrer :** `donnees/` (les projets persistés, qui
+portent dictées et coordonnées clients) est lui aussi dans le dépôt, donc synchronisé.
+Le déplacer est une décision de cadrage, pas un correctif silencieux.
 
 ### US-26 — Que le produit s'installe et se relance sans moi
 
