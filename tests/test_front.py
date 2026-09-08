@@ -171,3 +171,39 @@ def test_l_echec_de_lecture_du_journal_est_annonce(metriques):
 
 def test_l_assistant_donne_acces_au_tableau_de_bord(html):
     assert 'href="/metriques"' in html
+
+
+# --------------------------------------------------------------------------
+# US-23 — le panneau de connexion
+# --------------------------------------------------------------------------
+
+def test_le_panneau_de_connexion_est_un_formulaire(html):
+    """Un vrai <form> : la touche Entrée le soumet, ce qui compte pour qui
+    navigue au clavier (RGAA 4.1, critère 11.9)."""
+    assert '<form class="connexion" id="connexion"' in html
+    assert 'type="submit"' in html
+
+
+def test_l_erreur_de_connexion_est_annoncee(html):
+    """L'échec est porté par role="alert" et par du texte, jamais par la seule
+    couleur (RGAA 4.1, critère 3.1)."""
+    assert 'id="connexion-erreur" role="alert"' in html
+    assert "Phrase de passe refusée" in html
+
+
+def test_le_champ_de_phrase_est_etiquete_et_masque(html):
+    assert 'for="connexion-phrase"' in html
+    assert 'id="connexion-phrase"' in html and 'type="password"' in html
+    assert 'autocomplete="current-password"' in html
+
+
+def test_le_401_ramene_au_formulaire_quel_que_soit_l_appel(html):
+    """L'interception est posée sur fetch lui-même : un appel ajouté plus tard
+    ne peut pas oublier de la faire (US-23)."""
+    assert "window.fetch = async" in html
+    assert "reponse.status === 401" in html
+
+
+def test_la_limite_de_tentatives_est_expliquee_a_l_ecran(html):
+    assert "resp.status === 429" in html
+    assert "Trop de tentatives" in html

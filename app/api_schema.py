@@ -152,5 +152,16 @@ class Erreur409(BaseModel):
     detail: DetailBlocage | str
 
 
+class Erreur401(BaseModel):
+    """Le message est le même pour toutes les causes de refus : ni « phrase
+    incorrecte », ni « projet inconnu » (docs/STORIES.md US-23, OWASP A01)."""
+    detail: str
+
+
+class SessionOuverte(BaseModel):
+    ouverte: bool
+    duree_s: int
+
+
 class Erreur404(BaseModel):
     detail: str

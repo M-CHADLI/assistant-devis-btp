@@ -36,13 +36,50 @@ les données ne sortent pas de la machine.
 Un document qui n'est plus la cible descend dans `archive/`, il ne reste pas à la
 racine « au cas où ».
 
+## Lancer l'application
+
+L'environnement est géré par **uv**, le venv vit hors du dépôt
+(`~/.venvs/the-project`) et `pip` n'y est pas installé.
+
+```bash
+VIRTUAL_ENV=~/.venvs/the-project uv run pytest                       # la suite de tests
+VIRTUAL_ENV=~/.venvs/the-project uv run uvicorn app.main:app --reload
+```
+
+Puis ouvrir `http://localhost:8000`. L'application demande une **phrase de passe** :
+si `BTP_MOT_DE_PASSE` n'est pas configurée, le serveur en tire une au hasard et
+l'affiche sur sa console au démarrage.
+
+Variables d'environnement, toutes facultatives :
+
+| Variable | Effet | À défaut |
+|---|---|---|
+| `BTP_MOT_DE_PASSE` | Empreinte scrypt de la phrase de passe. Jamais la phrase en clair. | Une phrase est tirée au hasard et affichée sur la console |
+| `BTP_CLE_SESSION` | Clé de signature des jetons de session | Tirée au hasard ; les jetons meurent au redémarrage |
+| `BTP_DONNEES` | Racine des projets persistés | `donnees/` à la racine du dépôt |
+| `BTP_SIGNAL_QUALITE` | Fichier du jeu de candidats d'entraînement (US-25) | `~/.local/share/the-project/signal_qualite.jsonl` |
+
+Pour produire une empreinte à coller dans l'environnement, sans jamais écrire la
+phrase nulle part :
+
+```bash
+VIRTUAL_ENV=~/.venvs/the-project uv run python -c \
+  "from app.authentification import empreinte; import getpass; print(empreinte(getpass.getpass('Phrase : ')))"
+```
+
+**Attention au montage.** Ce dépôt est sur un montage OneDrive synchronisé : tout ce
+qui y est écrit part en ligne. C'est pourquoi l'export du signal qualité refuse une
+destination dans le dépôt et vise le disque local par défaut.
+
 ## État d'avancement
 
-Le cadrage est figé, **aucun code n'est écrit**. Les décisions actées :
+Le cadrage est figé et **l'implémentation est engagée** : FastAPI, moteur de devis
+déterministe, front mono-fichier, suite de tests. `docs/STORIES.md` porte l'état
+constaté story par story — c'est lui qui fait foi, pas cette section.
 
-- Chantier pilote **peinture et sols** (référentiel de 20-30 matériaux)
-- Canal de démonstration **web uniquement**
+Les décisions actées :
+
+- Chantier pilote **quatre corps de métier** : peinture, sols, plomberie, électricité
+- Entrée du produit **la voix**, canal de démonstration **web uniquement**
 - Preuve : **20b brut bien promptté vs 20b fine-tuné** — le 120b est la démo
 - Frontière **modèle / code** stricte : aucun montant n'est produit par le modèle
-
-Prochain jalon : le **référentiel métier** (août), chaque valeur sourcée.

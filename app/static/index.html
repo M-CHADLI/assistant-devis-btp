@@ -63,10 +63,37 @@
   .relecture label { display: block; font-size: .85rem; margin-bottom: .3rem; }
   .relecture textarea { width: 100%; box-sizing: border-box; font: inherit;
                padding: .5rem; resize: vertical; }
+  .connexion { max-width: 26rem; margin: 3rem auto; border: 1px solid #2563eb;
+               border-radius: .4rem; padding: 1.2rem; }
+  .connexion h1 { font-size: 1.1rem; margin: 0 0 .6rem; }
+  .connexion p { font-size: .9rem; }
+  .connexion label { display: block; margin: .8rem 0 .3rem; }
+  .connexion input { width: 100%; box-sizing: border-box; font: inherit;
+               padding: .5rem; }
 </style>
 </head>
 <body>
 <a href="#contenu" class="lien-evitement">Aller au contenu principal</a>
+
+<!-- US-23 : rien n'est accessible sans session ouverte. Le formulaire est un
+     vrai <form> pour que la touche Entrée le soumette, et l'erreur est annoncée
+     par role="alert" plutôt que par la seule couleur (RGAA 4.1, critère 3.1). -->
+<form class="connexion" id="connexion" hidden aria-labelledby="connexion-titre">
+  <h1 id="connexion-titre">🔒 Ouvrir une session</h1>
+  <p>Un devis porte l'identité de ton entreprise et les coordonnées de ton client.
+     Saisis ta phrase de passe pour y accéder.</p>
+  <p class="alerte" id="connexion-erreur" role="alert" hidden></p>
+  <label for="connexion-phrase">Phrase de passe</label>
+  <input type="password" id="connexion-phrase" autocomplete="current-password"
+         aria-describedby="connexion-aide">
+  <p id="connexion-aide" style="font-size:.8rem;color:#555">
+     Si aucune phrase n'a été configurée, le serveur en a affiché une sur sa
+     console au démarrage.</p>
+  <div class="barre-actions" style="margin-top:.8rem">
+    <button class="principal" type="submit" id="btn-connexion">Entrer</button>
+  </div>
+</form>
+
 <div class="panneau chat" id="contenu">
   <h1>🎙️ Assistant chantier — décris ton chantier</h1>
   <div class="barre-actions">
@@ -586,18 +613,96 @@ formProfil.addEventListener('submit', async (e) => {
   fetch('/api/devis').then(r => r.json()).then(d => rendreDevis(d.devis));
 });
 
-fetch('/api/profil').then(r => r.json()).then(remplirProfil);
+// ---------------------------------------------------------------------------
+// Session (US-23)
+//
+// L'interception du 401 est posée sur fetch lui-même, et pas sur chaque appel :
+// un appel ajouté plus tard ne peut pas oublier de la faire. Une session qui
+// expire en pleine saisie ramène donc au formulaire, d'où qu'elle expire.
+// ---------------------------------------------------------------------------
+const panneauConnexion = document.getElementById('connexion');
+const erreurConnexion = document.getElementById('connexion-erreur');
+const champPhrase = document.getElementById('connexion-phrase');
+const panneaux = Array.from(document.querySelectorAll('.panneau'));
+const lienEvitement = document.querySelector('.lien-evitement');
+
+class NonAuthentifie extends Error {}
+
+const fetchNu = window.fetch.bind(window);
+window.fetch = async (url, options) => {
+  const reponse = await fetchNu(url, options);
+  if (reponse.status === 401) {
+    montrerConnexion();
+    throw new NonAuthentifie('session fermée');
+  }
+  return reponse;
+};
+
+// Une session expirée n'est pas un incident à afficher deux fois : le panneau
+// est déjà revenu, on tait le rejet correspondant.
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason instanceof NonAuthentifie) e.preventDefault();
+});
+
+function montrerConnexion(message) {
+  panneaux.forEach(p => { p.hidden = true; });
+  if (lienEvitement) lienEvitement.hidden = true;
+  panneauConnexion.hidden = false;
+  if (message) {
+    erreurConnexion.textContent = message;
+    erreurConnexion.hidden = false;
+  } else {
+    erreurConnexion.hidden = true;
+    erreurConnexion.textContent = '';
+  }
+  champPhrase.focus();
+}
+
+function montrerApplication() {
+  panneauConnexion.hidden = true;
+  panneaux.forEach(p => { p.hidden = false; });
+  if (lienEvitement) lienEvitement.hidden = false;
+  champPhrase.value = '';
+  document.getElementById('entree').focus();
+}
+
+panneauConnexion.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phrase = champPhrase.value;
+  if (!phrase) { montrerConnexion('Saisis ta phrase de passe.'); return; }
+  const resp = await fetchNu('/api/session', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({phrase})
+  });
+  if (resp.status === 429) {
+    montrerConnexion("Trop de tentatives. Attends quelques minutes avant de réessayer.");
+    return;
+  }
+  if (!resp.ok) {
+    montrerConnexion("Phrase de passe refusée. Vérifie-la et réessaie.");
+    return;
+  }
+  montrerApplication();
+  await demarrer();
+});
 
 // Resynchronisation au chargement. US-16 : si un projet est retrouvé, le focus
 // va sur le titre du devis — sinon l'artisan repart en tête de document et doit
 // tout retraverser à la tabulation.
-fetch('/api/devis').then(r => r.json()).then(data => {
+async function demarrer() {
+  const resp = await fetchNu('/api/devis');
+  if (resp.status === 401) { montrerConnexion(); return; }
+  montrerApplication();
+  fetch('/api/profil').then(r => r.json()).then(remplirProfil);
+  const data = await resp.json();
   rendreDevis(data.devis);
   if ((data.devis.lignes || []).length) {
     ajouterMessage('Projet retrouvé : ton devis en cours a été rechargé.', 'assistant');
     document.getElementById('titre-devis').focus();
   }
-});
+}
+
+demarrer();
 
 // Dictée — prototype navigateur (Web Speech API)
 const btnDicter = document.getElementById('btn-dicter');

@@ -817,8 +817,22 @@ et une session unique de module : deux visiteurs partagent le même devis.
 - Aucun secret n'est en dur dans le dépôt ; les jetons ont une durée de vie bornée.
 - Les mesures OWASP retenues sont listées et justifiées, une par une.
 
-**Traçabilité.** C9, C17, C21 · état : **à faire** — manque direct, à traiter en
-priorité haute.
+**Traçabilité.** C9, C17, C21 · `DISPOSITIF_AGENT.md` §3.4 · état : **fait**
+(`app/authentification.py`, middleware et `/api/session` dans `app/main.py`, panneau
+de connexion dans `app/static/index.html`, `tests/test_auth.py`). Une phrase de passe
+s'échange contre un jeton signé HMAC-SHA256 valable 12 heures, en cookie `httponly`
+`samesite=strict`. Le contrôle est un **filtre par liste blanche** : seules la page
+d'accueil et l'ouverture de session sont ouvertes — `/docs` et `/openapi.json`
+comprises dans le fermé. Un test balaie **toutes** les routes déclarées et échoue si
+l'une d'elles répond autre chose que 401 sans jeton : un endpoint ajouté demain est
+protégé sans que personne n'y pense.
+
+Aucune phrase par défaut n'existe dans le dépôt : à défaut de `BTP_MOT_DE_PASSE`, le
+serveur en tire une au hasard au démarrage et l'affiche sur sa console. Il n'y a donc
+pas de « mode sans authentification » à activer par erreur — les tests eux-mêmes
+ouvrent une vraie session. Les six mesures OWASP retenues sont justifiées une par une
+dans `DISPOSITIF_AGENT.md` §3.4, avec ce que le dispositif ne fait pas : ni comptes
+multiples, ni rotation de clé, ni révocation avant échéance.
 
 ### US-24 — Que l'exploitation soit observable
 

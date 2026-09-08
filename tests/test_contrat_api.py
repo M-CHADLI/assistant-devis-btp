@@ -14,6 +14,8 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
+from tests.conftest import authentifier
+
 from app import main
 from app.api_schema import DevisSortie, LigneStructure
 
@@ -24,7 +26,9 @@ SOURCE_MAIN = Path(main.__file__).read_text(encoding="utf-8")
 def client(tmp_path, monkeypatch):
     from app.persistance import Registre
     monkeypatch.setattr(main, "REGISTRE", Registre(racine=tmp_path))
-    return TestClient(main.app)
+    c = TestClient(main.app)
+    authentifier(c)
+    return c
 
 
 def _operations(schema: dict) -> dict[tuple[str, str], dict]:

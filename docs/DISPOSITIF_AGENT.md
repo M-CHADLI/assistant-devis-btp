@@ -300,6 +300,43 @@ Sans exemples explicites de ce comportement dans le dataset, il refusera de faç
 typiquement pendant la démonstration. Les cas sensibles doivent donc figurer au dataset avec le
 comportement voulu.
 
+### 3.4 Contrôle d'accès
+
+Un devis porte l'identité légale d'une entreprise et les coordonnées d'un client :
+l'application est fermée par défaut. **Un seul compte**, celui de l'artisan — il n'y a
+pas d'annuaire d'utilisateurs à ce stade, et cette simplicité supprime au passage toute
+énumération de comptes. Implémentation : `app/authentification.py`, tests
+`tests/test_auth.py` (docs/STORIES.md US-23).
+
+Le principe de fonctionnement tient en trois points :
+
+1. Une phrase de passe est échangée contre un **jeton signé** à durée de vie bornée,
+   déposé en cookie.
+2. La vérification est un **filtre par liste blanche** posé avant toute recherche de
+   ressource : seules la page d'accueil et l'ouverture de session sont ouvertes. Un
+   endpoint ajouté demain est donc protégé sans que personne n'y pense — c'est cette
+   propriété qui est testée, route par route, pas un échantillon.
+3. Aucune phrase par défaut n'existe. Si l'environnement n'en configure pas, le serveur
+   en tire une au hasard au démarrage et l'affiche sur sa console : l'application reste
+   démontrable, sans qu'aucun secret n'entre au dépôt, et **sans qu'un « mode sans
+   authentification » existe quelque part dans le code**.
+
+**Mesures OWASP retenues** (Top 10 2021), une par une et avec leur raison :
+
+| Risque | Mesure retenue | Pourquoi celle-là |
+|---|---|---|
+| A01 Broken Access Control | Contrôle du jeton **avant** toute recherche de ressource ; message de refus unique | Un 404 sur un projet inexistant dirait qu'un autre existe |
+| A02 Cryptographic Failures | `scrypt` (n=2¹⁴, r=8, p=1) avec sel de 16 octets ; jeton en HMAC-SHA256 ; comparaisons en temps constant | Le coût mémoire de scrypt rend le dictionnaire cher même sur matériel dédié ; le sel annule les tables précalculées |
+| A05 Security Misconfiguration | Cookie `httponly`, `samesite=strict`, `secure` en HTTPS ; clé de signature tirée au démarrage à défaut de configuration | Une clé par défaut oubliée en production est le scénario classique ; ici son absence invalide les jetons, elle ne les affaiblit pas |
+| A07 Authentication Failures | Durée de vie de 12 h inscrite **dans** la partie signée ; 5 tentatives par fenêtre de 5 min et par adresse | Une échéance côté client se retouche ; dans la signature, non |
+| A09 Logging Failures | Échecs journalisés dans `app/observabilite.py`, **sans la phrase essayée** | Un journal n'est pas un coffre |
+| CSRF (hors Top 10) | `samesite=strict` et API strictement JSON | Un formulaire tiers ne peut pas déclencher l'API |
+
+**Ce que le dispositif ne fait pas**, dit franchement : pas de comptes multiples, pas de
+rotation de clé, pas de révocation d'un jeton avant son échéance. Un artisan, une machine,
+une journée de chantier. Ces manques deviendront réels le jour où US-01 (création de compte)
+sera traitée ; ils ne le sont pas aujourd'hui.
+
 ---
 
 ## 4. Plan d'évaluation

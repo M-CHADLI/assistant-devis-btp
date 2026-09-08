@@ -8,6 +8,8 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.conftest import authentifier
+
 from app import main, pipeline
 from app.persistance import Registre
 
@@ -23,7 +25,9 @@ def client(tmp_path, monkeypatch):
                                         "dimension": {"type": "surface", "valeur": 22.0}}]}}
 
     monkeypatch.setattr(pipeline, "appeler_modele", faux_modele)
-    return TestClient(main.app)
+    c = TestClient(main.app)
+    authentifier(c)
+    return c
 
 
 def test_page_d_accueil_se_sert_sans_dependre_du_repertoire_courant(client, monkeypatch,
@@ -117,6 +121,7 @@ def test_le_devis_survit_a_un_rechargement(client):
 def test_deux_navigateurs_ne_partagent_pas_leur_devis(client, tmp_path, monkeypatch):
     """Le défaut corrigé : SESSION unique au niveau du module."""
     autre = TestClient(main.app)  # cookies séparés = autre navigateur
+    authentifier(autre)
     client.post("/api/message", json={"texte": "22 m2 de peinture"})
     assert len(client.get("/api/devis").json()["devis"]["lignes"]) == 1
     assert autre.get("/api/devis").json()["devis"]["lignes"] == []
@@ -212,7 +217,9 @@ def _client_hors_bornes(tmp_path, monkeypatch):
                                         "dimension": {"type": "surface", "valeur": 2200.0}}]}}
 
     monkeypatch.setattr(pipeline, "appeler_modele", faux_modele)
-    return TestClient(main.app)
+    c = TestClient(main.app)
+    authentifier(c)
+    return c
 
 
 def test_une_quantite_hors_bornes_remonte_a_l_interface(tmp_path, monkeypatch):

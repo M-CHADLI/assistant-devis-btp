@@ -11,12 +11,14 @@ import datetime as dt
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.api_schema import (Erreur404, Erreur409, MetriquesSortie, ProfilSortie,
-                            ReponseDevis, ReponseRelecture, ReponseTour,
-                            ReponseTourTranscrit)
+from app.api_schema import (Erreur401, Erreur404, Erreur409, MetriquesSortie,
+                            ProfilSortie, ReponseDevis, ReponseRelecture,
+                            ReponseTour, ReponseTourTranscrit, SessionOuverte)
+from app.authentification import (DUREE_JETON_S, MESSAGE_REFUS, NOM_COOKIE,
+                                  Configuration, Refus, phrase_correcte)
 from app.export import MentionsIncompletes, generer_docx
 from app.observabilite import JOURNAL, agreger
 from app.persistance import Registre
@@ -39,6 +41,79 @@ app = FastAPI(
 )
 
 REGISTRE = Registre()
+
+# --------------------------------------------------------------------------
+# Authentification (docs/STORIES.md US-23)
+# --------------------------------------------------------------------------
+
+AUTH = Configuration()
+
+if AUTH.phrase_engendree:
+    # Aucune phrase configurée : on en tire une et on l'affiche ici, une fois.
+    # Elle ne va ni au disque, ni au journal, ni au dépôt — et il n'existe aucun
+    # « mode sans authentification » à activer par erreur à sa place.
+    print("\n  Authentification — phrase de passe de cette session :\n"
+          f"      {AUTH.phrase_engendree}\n"
+          "  (tirée au hasard car BTP_MOT_DE_PASSE est absent ; elle change à "
+          "chaque redémarrage)\n", flush=True)
+
+# Les deux seules portes ouvertes : la page d'accueil, qui doit pouvoir afficher
+# le formulaire, et l'ouverture de session elle-même. Tout le reste est fermé —
+# y compris `/docs` et `/openapi.json`, qui décrivent l'API.
+CHEMINS_LIBRES = frozenset({"/", "/api/session"})
+
+
+@app.middleware("http")
+async def exiger_authentification(request: Request, call_next):
+    """Contrôle d'accès **avant** toute recherche de ressource (OWASP A01).
+
+    Un filtre par liste blanche, pas par liste noire : un endpoint ajouté demain
+    est protégé sans que personne n'y pense. C'est la propriété qui compte, et
+    un test la vérifie route par route."""
+    if request.url.path not in CHEMINS_LIBRES:
+        try:
+            AUTH.verifier(request.cookies.get(NOM_COOKIE))
+        except Refus:
+            # Message unique : jeton absent, périmé, falsifié ou projet inexistant
+            # se ressemblent de l'extérieur — rien ne fuit sur ce qui existe.
+            return JSONResponse(status_code=401, content={"detail": MESSAGE_REFUS})
+    return await call_next(request)
+
+
+class OuvertureSession(BaseModel):
+    phrase: str
+
+
+@app.post("/api/session", response_model=SessionOuverte, tags=["Accès"],
+          summary="Ouvrir une session avec la phrase de passe",
+          responses={401: {"model": Erreur401, "description": "phrase incorrecte"},
+                     429: {"model": Erreur401,
+                           "description": "trop de tentatives, réessayer plus tard"}})
+def api_session(ouverture: OuvertureSession, request: Request,
+                response: Response) -> dict:
+    """Échange la phrase de passe contre un jeton signé, à durée de vie bornée.
+
+    La phrase n'est comparée qu'à son empreinte scrypt, en temps constant, et
+    n'est jamais journalisée (docs/STORIES.md US-23)."""
+    origine = request.client.host if request.client else "inconnu"
+    if not AUTH.tentative_permise(origine):
+        raise HTTPException(status_code=429,
+                            detail="trop de tentatives — réessaie dans quelques minutes")
+    if not phrase_correcte(ouverture.phrase, AUTH.empreinte):
+        AUTH.enregistrer_echec(origine)
+        raise HTTPException(status_code=401, detail=MESSAGE_REFUS)
+    AUTH.oublier(origine)
+    response.set_cookie(NOM_COOKIE, AUTH.emettre(), httponly=True,
+                        samesite="strict", max_age=DUREE_JETON_S,
+                        secure=request.url.scheme == "https")
+    return {"ouverte": True, "duree_s": DUREE_JETON_S}
+
+
+@app.delete("/api/session", response_model=SessionOuverte, tags=["Accès"],
+            summary="Fermer la session")
+def api_session_fermer(response: Response) -> dict:
+    response.delete_cookie(NOM_COOKIE, httponly=True, samesite="strict")
+    return {"ouverte": False, "duree_s": 0}
 
 # Chemin absolu dérivé du paquet : uvicorn doit pouvoir être lancé depuis
 # n'importe quel répertoire courant sans casser la page d'accueil.
