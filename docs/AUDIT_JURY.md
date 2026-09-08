@@ -30,9 +30,9 @@ l'absence de jeu de données à exposer, et cette absence a cessé.
 | E1 — Données (C1-C5) | 28 | 18 | 8 | 2 | 0 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 27 | 8 | 4 | 0 |
-| E4 — Application (C14-C19) | 36 | 22 | 9 | 5 | 0 |
+| E4 — Application (C14-C19) | 36 | 23 | 9 | 4 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **89** | **34** | **12** | **0** |
+| **Total** | **135** | **90** | **34** | **11** | **0** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -301,8 +301,8 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 | 109 | Spécifications techniques : architecture, dépendances, environnement d'exécution | ✅ | `CADRAGE_MODELE.md` (frontière modèle/code, schéma de sortie), `pyproject.toml` (dépendances épinglées, Python ≥ 3.14), contraintes matérielles argumentées. |
 | 110 | Services et prestataires éco-responsables favorisés | 🟡 | Le critère éco-responsable est désormais **instruit** : `docs/BENCHMARK_STT.md` §6 compare ce que chaque fournisseur publie, calcule l'ordre de grandeur local et conclut que le local est la seule option dont l'empreinte soit mesurable par le projet. Reste 🟡 tant qu'aucune consommation n'est **relevée** et qu'aucun prestataire n'est effectivement retenu. |
 | 111 | Flux de données représentés par un diagramme de flux | 🟡 | `CONTEXTE_COMPLET_PROJET.md` porte un schéma ASCII du flux. Ce n'est pas un **diagramme de flux de données** au sens formel (DFD niveau 0/1). |
-| 112 | Preuve de concept accessible et fonctionnelle en pré-production | 🟡 | La preuve de concept **fonctionne en local et c'est vérifié**, pas supposé : `tools/parcours_bout_en_bout.py` déroule 24 étapes contre le serveur réel et `gpt-oss:20b`, du 401 sans jeton jusqu'à la fermeture, en écrivant un vrai `.docx`. Il n'y a toujours pas d'environnement de pré-production. |
-| 113 | Conclusion de la preuve de concept permettant une décision | ❌ | Non rédigée. |
+| 112 | Preuve de concept accessible et fonctionnelle en pré-production | 🟡 | La preuve de concept **fonctionne en local et c'est vérifié**, pas supposé : `tools/parcours_bout_en_bout.py` déroule 24 étapes contre le serveur réel et `gpt-oss:20b`, du 401 sans jeton jusqu'à la fermeture, en écrivant un vrai `.docx`. Rejoué **cinq fois de suite** le 08/09/2026, 24/24 à chaque exécution. Il n'y a toujours pas d'environnement de pré-production. |
+| 113 | Conclusion de la preuve de concept permettant une décision | ✅ | `docs/CONCLUSION_POC.md`, adossé à **cinq exécutions** de `tools/parcours_bout_en_bout.py` relevées le 08/09/2026 (21 appels à `gpt-oss:20b`, 24/24 étapes à chaque fois). Il conclut sur trois décisions datées et **nomme le seul seuil franchi dans le mauvais sens** : 71,4 % de JSON valide contre 98 % visés. Il dit aussi ce que l'échantillon ne permet pas de conclure. |
 
 ### C16 — Conduite agile
 
@@ -415,14 +415,15 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 13. ~~**Chaîne MLOps** : la chaîne du modèle, écrite avant l'entraînement pour pouvoir en porter la trace.~~ **Fait** : `tools/mlops/`, `mlops/pipeline.toml`, `mlops/lora.toml`, `.github/workflows/modele.yml` et `docs/CHAINE_MLOPS.md`. C13 passe de 7 ❌ à 1 (le dépôt distant). L'étape de test des données tourne et réussit ; les trois autres se déclarent `ignoré` en nommant leur prérequis manquant.
 
+14. ~~**Conclusion de la preuve de concept.**~~ **Fait** : `docs/CONCLUSION_POC.md`, adossé à cinq exécutions relevées, pas à un souvenir. C15-113 fermé. Le relevé qui compte : **71,4 % de JSON valide** sur `gpt-oss:20b` brut, contre 98 % visés — la valeur de référence du fine-tuning existe désormais, et elle est datée.
+
 **Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
 protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
 mi-chemin), et **écrire le dataset à la main** — le reste est du rituel à
 tenir, pas du travail à inventer. Les six gisements documentaires de la liste
 ci-dessus sont fermés, et il ne reste plus de gisement de ❌ : les douze
-restants sont **neuf dépendances au dépôt distant** et trois constats isolés
-(C7-43 l'accessibilité des sources de veille, C15-113 la conclusion de la
-preuve de concept, C16-117 les rituels à partager).
+restants sont **neuf dépendances au dépôt distant** et deux constats isolés
+(C7-43 l'accessibilité des sources de veille, C16-117 les rituels à partager).
 Ce qui bloque le projet n'est plus de l'outillage, c'est de la matière — les
 2000 exemples que personne ne peut écrire à ma place.
 

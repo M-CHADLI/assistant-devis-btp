@@ -41,6 +41,7 @@ docs/BENCHMARK_STT.md  le banc d'essai reconnaissance vocale — instruit, non t
 docs/RGPD.md           registre des traitements et procédures de tri
 docs/CHAINE_DONNEES.md la chaîne de collecte, nettoyage et mise en base du catalogue
 docs/CHAINE_MLOPS.md   la chaîne du modèle : test des données, préparation, entraînement
+docs/CONCLUSION_POC.md ce que la preuve de concept a établi, et ce qu'elle décide
 app/                   l'implémentation (FastAPI, moteur de devis, front)
 tests/                 la suite pytest
 tools/                 outillage hors produit (CLI Notion, chaînes données et modèle)
@@ -92,6 +93,12 @@ archive/renoassistant/ conception précédente
   `qualite_correspondance` dit `exacte`, `proxy` ou `absente` — ne jamais laisser l'aval prendre
   un proxy pour une mesure. La chaîne **n'alimente pas encore** `app/catalogue.py` : la couture
   est décrite au §8 du document.
+- **`docs/CONCLUSION_POC.md`** — la conclusion de la preuve de concept, adossée à cinq
+  exécutions de `tools/parcours_bout_en_bout.py` relevées le 08/09/2026. **Le chiffre à
+  connaître** : `gpt-oss:20b` brut produit du JSON conforme dans **71,4 %** des cas (15 sur
+  21 appels), contre 98 % visés — c'est la valeur de référence contre laquelle se mesurera le
+  fine-tuning. Le reste tient : 0 prix inventé, latence p95 de 12,8 s, 24 étapes sur 24 aux
+  cinq exécutions. Ne pas rejouer ces chiffres de mémoire : les relever à nouveau.
 - **`docs/CHAINE_MLOPS.md`** — la chaîne du modèle : `donnees` → `preparation` →
   `entrainement` → `validation`, déclarées dans `mlops/pipeline.toml` et exécutées par
   `tools/mlops/executer.py` (`uv run python -m tools.mlops.executer`).

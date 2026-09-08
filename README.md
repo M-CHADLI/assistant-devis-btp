@@ -119,6 +119,10 @@ VIRTUAL_ENV=~/.venvs/the-project uv run uvicorn app.main:app --port 8199 &
 VIRTUAL_ENV=~/.venvs/the-project uv run python tools/parcours_bout_en_bout.py
 ```
 
+Rejoué cinq fois de suite le 08/09/2026 : **24/24 à chaque exécution**, 21 appels à
+`gpt-oss:20b`. Ce qu'on en a conclu — et le taux de JSON valide relevé, qui n'est pas
+bon — est dans `docs/CONCLUSION_POC.md`.
+
 Vingt-quatre étapes : application fermée sans jeton, profil, relecture de dictée
 (HITL-0), tour modèle, absence de prix avant validation (HITL-2), chiffrage,
 export, recalcul de chaque ligne, contradiction entre deux dictées, forme des
