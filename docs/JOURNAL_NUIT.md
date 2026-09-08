@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **08/09/2026**, commit `8270c9f`.
+Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
 
 ---
 
@@ -39,16 +39,22 @@ Dernière mise à jour : **08/09/2026**, commit `8270c9f`.
 
 ## État vérifié au 08/09/2026
 
-- **245 tests, tous verts.** Répartition : `test_garde_fous` 52, `test_api` 29,
-  `test_boucle_qualite` 24, `test_front` 24, `test_pipeline` 23, `test_auth` 19,
-  `test_devis` 12, `test_transcription` 12, `test_export` 11,
-  `test_observabilite` 11, `test_persistance` 11, `test_contrat_api` 9,
-  `test_referentiel` 8.
-- **Stories : 16 faites, 7 partielles, 3 à faire** (compté depuis les lignes de
+- **265 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+  `test_garde_fous` 52, `test_pipeline` 33, `test_front` 30, `test_api` 29,
+  `test_boucle_qualite` 24, `test_auth` 19, `test_export` 13,
+  `test_transcription` 12, `test_persistance` 12, `test_devis` 12,
+  `test_observabilite` 11, `test_contrat_api` 10, `test_referentiel` 8.
+- **Stories : 21 faites, 2 partielles, 3 à faire** (compté depuis les lignes de
   traçabilité de `docs/STORIES.md`, pas depuis un tableau recopié).
-  - *fait* : US-02, 05, 08, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 23, 24, 25
-  - *partiel* : US-04, 06, 07, 09, 14, 18, 26
+  - *fait* : US-02, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20,
+    21, 22, 23, 24, 25
+  - *partiel* : US-04 (dictée navigateur, transcription locale à faire),
+    US-26 (chaîne d'intégration écrite, aucun `remote` pour l'exécuter)
   - *à faire* : US-01, 03, 17
+- **Le parcours de bout en bout passe 24/24** contre le serveur réel et
+  `gpt-oss:20b` : 4 lignes de devis, 620,81 € TTC, `.docx` de 37 579 octets.
+  `tools/parcours_bout_en_bout.py` — c'est la seule preuve que la chaîne complète
+  fonctionne, la suite pytest neutralisant le modèle.
 - L'application démarre depuis n'importe quel répertoire et **exige désormais une
   authentification** : seuls `/` et `POST /api/session` sont ouverts, tout le
   reste répond 401 sans jeton — y compris `/docs` et `/openapi.json`.
@@ -56,7 +62,8 @@ Dernière mise à jour : **08/09/2026**, commit `8270c9f`.
   une fois au démarrage** ; elle change à chaque redémarrage.
 - Le JavaScript du front passe `node --check`
   (node en `~/.nvm/versions/node/v22.22.2/bin`, pas dans le PATH par défaut).
-- `tools/verifier_accessibilite_docs.py` : **17 documents conformes**.
+- `tools/verifier_accessibilite_docs.py` : **18 documents conformes**
+  (`veille/seances/` est entré dans le corpus contrôlé le 08/09).
 - Ollama répond sur `localhost:11434` et sert `gpt-oss:20b`.
 
 ## Fait cette nuit
@@ -83,8 +90,12 @@ Dernière mise à jour : **08/09/2026**, commit `8270c9f`.
 | `807171b` | Signal qualité exportable, jamais hors de la machine (US-25) |
 | `0442fbe` | Authentification, application fermée par défaut (US-23) |
 | `8270c9f` | Escalade demandée par l'artisan lui-même (US-21) |
+| `75d5e05` | Sévérité des mentions publiée comme donnée, plus devinée dans le texte (US-18) |
+| `f9867a9` | Deux dictées qui se contredisent : ni addition, ni arbitrage silencieux (US-06) |
+| `29e3dd7` | Parcours de bout en bout étendu à 24 étapes + piège `BTP_MOT_DE_PASSE` documenté |
+| `445a8b8` | Première séance de veille C6, et correction du flux qu'elle prend en défaut |
 
-**Rien n'est poussé.** Vingt commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
+**Rien n'est poussé.** Vingt-quatre commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
 
 ---
 
@@ -96,9 +107,13 @@ listées ci-dessous. Nouvelle file :
 1. **Transposer sur Notion** — les CSV de `docs/notion/` sont à jour de cette
    nuit. Bloqué sur `NOTION_TOKEN` + partage de la page racine avec l'intégration
    (menu `⋯` → Connexions). Sans ce partage l'API rend une liste vide, pas une erreur.
-2. **Séances de veille** (C6) : `veille/seances/` est **vide** et le référentiel
-   exige une trace hebdomadaire. Quatre séances à écrire d'après
-   `veille/GABARIT-SEANCE.md`, thématique Unsloth / fine-tuning MoE.
+2. ~~**Séances de veille** (C6)~~ — **faite en partie**. La séance du 08/09 est
+   écrite (`veille/seances/2026-09-08.md`), six sources, cinq items, un verdict
+   chacun, et ses trois suites exécutées. **Ce qui reste appartient à
+   l'utilisateur** : le référentiel demande une *récurrence*, or une seule séance
+   existe et elle a été préparée avec l'assistant, pas tenue seul un vendredi.
+   Antidater trois séances de plus fabriquerait la preuve au lieu de la produire —
+   non fait délibérément. Le rituel doit maintenant tourner pour de vrai.
 3. **RGPD** (C4-26/27/28) : registre des traitements et procédures de tri des
    données. `donnees/` contient des noms et adresses de clients — voir l'alerte
    plus bas.
@@ -106,7 +121,12 @@ listées ci-dessous. Nouvelle file :
    C17-121) : deux livrables attendus, absents du dépôt.
 5. **Benchmark STT** avec colonne éco-responsabilité (C7, C15-110, C17-126).
    Dépend de l'arbitrage Gladia contre Whisper local, qui appartient à l'utilisateur.
-6. **Stories partielles** : US-04, US-06, US-07, US-09, US-14, US-18, US-26.
+   Protocole amendé le 08/09 (`PLANNING.md`, séance de veille item 5) : la mesure
+   se fait sur **un corpus maison** d'une dizaine de dictées de chantier réelles,
+   les classements publics ne servant qu'au pré-tri — ils mesurent des corpus de
+   lecture, pas une dictée bruitée en français avec unités du bâtiment.
+6. **Stories partielles** : US-04 (moitié transcription locale) et US-26
+   (bloquée sur l'absence de `remote`). US-06, 07, 09, 14 et 18 sont closes.
 7. **Fragilité des tests** : `tests/test_devis.py` recopie en dur des valeurs du
    référentiel et du catalogue (taux de chute 0,05, rendement 0,1, contenance 10,
    prix 34,90, promo 0,10). Le jour où une valeur métier bouge, le test casse
