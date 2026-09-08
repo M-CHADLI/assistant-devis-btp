@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from app.devis import Devis, LotInconnu, ajouter_consommables, ajouter_ligne, consommables_par_defaut
 from app.llm import ModeleInjoignable, SortieModeleInvalide, appeler_modele
+from app.profil import Client, ProfilArtisan
 from app.referentiel import REFERENTIEL, MENTIONS, bornes, est_plausible
 from app.schema import PayloadClarification, PayloadConsommables, PayloadDevis, PayloadReponse
 
@@ -77,6 +78,11 @@ class Session:
     escalades: list[Escalade] = field(default_factory=list)
     tours_clarification: int = 0
     a_confirmer: list[LigneEnAttente] = field(default_factory=list)
+    # Mentions légales du devis : déclarées une fois, reportées sur chaque
+    # export (docs/STORIES.md US-02 et US-15). Le modèle n'y touche jamais.
+    profil: ProfilArtisan = field(default_factory=ProfilArtisan)
+    client: Client = field(default_factory=Client)
+    delai_execution: str = ""
 
 
 @dataclass

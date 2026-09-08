@@ -83,13 +83,56 @@ def test_correction_retire_la_ligne_et_laisse_une_trace(client):
     assert corps["devis"]["corrections"][0]["auteur"] == "artisan"
 
 
+PROFIL_COMPLET = {
+    "raison_sociale": "Karim Rénovation SARL", "siret": "81234567800017",
+    "adresse": "12 rue des Lilas, 69003 Lyon", "rcs": "RCS Lyon 812 345 678",
+    "ape_naf": "4334Z", "tva_intracommunautaire": "FR40812345678",
+    "regime_tva": "reel",
+    "decennale": {"assureur": "AXA", "numero_contrat": "DEC-99812",
+                  "couverture_geographique": "France métropolitaine",
+                  "valide_jusqu_au": "2027-06-30"},
+    "client_nom": "Mme Dupont",
+    "client_adresse_chantier": "4 impasse du Parc, 69100 Villeurbanne",
+    "delai_execution": "3 semaines",
+}
+
+
+def test_export_refuse_tant_que_les_mentions_legales_manquent(client):
+    """US-15 — cas dégradé : mieux vaut pas de devis qu'un devis non conforme."""
+    client.post("/api/message", json={"texte": "22 m2 de peinture"})
+    r = client.get("/api/export")
+    assert r.status_code == 409
+    detail = r.json()["detail"]
+    assert "votre numéro SIRET" in detail["manquantes"]
+
+
 def test_export_rend_un_docx(client):
+    client.post("/api/profil", json=PROFIL_COMPLET)
     client.post("/api/message", json={"texte": "22 m2 de peinture"})
     r = client.get("/api/export")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith(
         "application/vnd.openxmlformats-officedocument")
     assert r.content[:2] == b"PK"  # un .docx est une archive zip
+
+
+def test_le_profil_se_relit_et_signale_ce_qui_manque(client):
+    vide = client.get("/api/profil").json()
+    assert "votre numéro SIRET" in vide["mentions_manquantes"]
+
+    ecrit = client.post("/api/profil", json=PROFIL_COMPLET).json()
+    assert ecrit["mentions_manquantes"] == []
+    assert client.get("/api/profil").json()["siret"] == "81234567800017"
+
+
+def test_le_regime_de_tva_du_profil_se_lit_dans_le_devis(client):
+    franchise = dict(PROFIL_COMPLET, regime_tva="franchise_293b",
+                     tva_intracommunautaire="")
+    client.post("/api/profil", json=franchise)
+    corps = client.post("/api/message", json={"texte": "22 m2 de peinture"}).json()
+    assert corps["devis"]["franchise_tva"] is True
+    assert corps["devis"]["mentions_manquantes"] == []
+    assert client.get("/api/export").status_code == 200
 
 
 def test_aucune_ligne_ne_porte_de_reference_produit_inventee(client):

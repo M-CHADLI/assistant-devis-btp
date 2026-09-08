@@ -45,6 +45,17 @@
   .lien-evitement { position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
   .lien-evitement:focus { position:static; left:0; top:0; width:auto; height:auto; }
   :focus-visible { outline: 3px solid #0b5fff; outline-offset: 2px; }
+  .alerte { padding: .6rem; border: 1px solid #d97706; background: #d9770622;
+            border-radius: .4rem; margin: 0 0 .8rem; font-size: .9rem; }
+  .alerte ul { margin: .3rem 0 0; padding-left: 1.2rem; }
+  .profil fieldset { border: 1px solid #8886; border-radius: .4rem; margin: 0 0 .8rem; padding: .6rem .8rem; }
+  .profil legend { font-weight: bold; padding: 0 .3rem; }
+  .profil label { display: block; margin-top: .5rem; font-size: .85rem; }
+  .profil input[type=text], .profil input[type=date] { width: 100%; padding: .4rem;
+            box-sizing: border-box; font-size: .9rem; }
+  .profil .radio { display: flex; align-items: baseline; gap: .4rem; margin-top: .4rem; }
+  .profil .radio label { margin: 0; font-size: .9rem; }
+  .consequence { margin: .5rem 0 0; font-size: .85rem; font-style: italic; }
 </style>
 </head>
 <body>
@@ -65,6 +76,69 @@
 
 <div class="panneau devis-panneau">
   <h1>📋 Devis en cours</h1>
+
+  <p class="alerte" id="alerte-mentions" role="status" tabindex="-1" hidden></p>
+
+  <button id="btn-profil" aria-expanded="false" aria-controls="profil-form">
+    🧾 Profil et mentions légales
+  </button>
+
+  <form class="profil" id="profil-form" hidden>
+    <fieldset>
+      <legend>Votre entreprise</legend>
+      <label for="p-raison">Raison sociale</label>
+      <input type="text" id="p-raison" name="raison_sociale" autocomplete="organization">
+      <label for="p-siret">Numéro SIRET</label>
+      <input type="text" id="p-siret" name="siret" inputmode="numeric">
+      <label for="p-adresse">Adresse de l'entreprise</label>
+      <input type="text" id="p-adresse" name="adresse" autocomplete="street-address">
+      <label for="p-rcs">RCS ou répertoire des métiers</label>
+      <input type="text" id="p-rcs" name="rcs">
+      <label for="p-ape">Code APE / NAF</label>
+      <input type="text" id="p-ape" name="ape_naf">
+    </fieldset>
+
+    <fieldset>
+      <legend>Régime de TVA</legend>
+      <div class="radio">
+        <input type="radio" id="p-reel" name="regime_tva" value="reel" checked>
+        <label for="p-reel">Régime réel — je facture la TVA</label>
+      </div>
+      <div class="radio">
+        <input type="radio" id="p-franchise" name="regime_tva" value="franchise_293b">
+        <label for="p-franchise">Franchise en base (art. 293 B du CGI)</label>
+      </div>
+      <p class="consequence" id="consequence-tva" role="status"></p>
+      <label for="p-tvaintra" id="label-tvaintra">Numéro de TVA intracommunautaire</label>
+      <input type="text" id="p-tvaintra" name="tva_intracommunautaire">
+    </fieldset>
+
+    <fieldset>
+      <legend>Assurance décennale</legend>
+      <label for="p-assureur">Assureur</label>
+      <input type="text" id="p-assureur" name="assureur">
+      <label for="p-contrat">Numéro de contrat</label>
+      <input type="text" id="p-contrat" name="numero_contrat">
+      <label for="p-couverture">Couverture géographique</label>
+      <input type="text" id="p-couverture" name="couverture_geographique">
+      <label for="p-echeance">Valable jusqu'au</label>
+      <input type="date" id="p-echeance" name="valide_jusqu_au">
+    </fieldset>
+
+    <fieldset>
+      <legend>Ce chantier</legend>
+      <label for="p-client">Nom du client</label>
+      <input type="text" id="p-client" name="client_nom">
+      <label for="p-chantier">Adresse du chantier</label>
+      <input type="text" id="p-chantier" name="client_adresse_chantier">
+      <label for="p-delai">Délai d'exécution des travaux</label>
+      <input type="text" id="p-delai" name="delai_execution" placeholder="ex : 3 semaines">
+    </fieldset>
+
+    <button type="submit" class="principal">Enregistrer le profil</button>
+    <p class="consequence" id="profil-retour" role="status"></p>
+  </form>
+
   <div id="devis-corps"><p class="vide">Rien encore — décris ton chantier à gauche.</p></div>
   <button class="principal" id="btn-export" style="margin-top:1rem">⬇️ Exporter en Word</button>
 </div>
@@ -95,12 +169,24 @@ function ajouterMessage(texte, classe) {
   fil.scrollTop = fil.scrollHeight;
 }
 
+function rendreAlerteMentions(devis) {
+  const zone = document.getElementById('alerte-mentions');
+  const manquantes = devis.mentions_manquantes || [];
+  if (!manquantes.length) { zone.hidden = true; zone.innerHTML = ''; return; }
+  zone.hidden = false;
+  zone.innerHTML = '<strong>Mentions obligatoires manquantes — le devis ne peut pas être émis :</strong><ul>'
+    + manquantes.map(m => `<li>${m}</li>`).join('') + '</ul>';
+}
+
 function rendreDevis(devis) {
+  rendreAlerteMentions(devis);
   if (!devis.lignes.length) {
     devisCorps.innerHTML = '<p class="vide">Rien encore — décris ton chantier à gauche.</p>';
     return;
   }
-  let html = '<table><tr><th>Poste</th><th>Qté</th><th>PU HT</th><th>Total HT</th><th></th></tr>';
+  const franchise = devis.franchise_tva === true;
+  const suffixe = franchise ? '' : ' HT';
+  let html = `<table><tr><th>Poste</th><th>Qté</th><th>PU${suffixe}</th><th>Total${suffixe}</th><th></th></tr>`;
   devis.lignes.forEach((l, i) => {
     html += `<tr>
       <td>${l.designation}${l.origine === 'consommable' ? ' <small>(consommable)</small>' : ''}</td>
@@ -112,12 +198,19 @@ function rendreDevis(devis) {
   });
   html += '</table>';
   html += '<div class="totaux">';
-  html += `<div>Total HT : ${devis.total_ht.toFixed(2)} €</div>`;
-  for (const [taux, montant] of Object.entries(devis.ventilation_tva)) {
-    html += `<div>TVA ${taux}% : ${montant.toFixed(2)} €</div>`;
+  if (franchise) {
+    // Art. 293 B du CGI : aucune TVA affichée, seulement la mention légale.
+    html += `<div class="fort">Total : ${devis.total_ht.toFixed(2)} €</div>`;
+    html += `<div>Acompte 30% : ${(devis.total_ht * 0.3).toFixed(2)} €</div>`;
+    html += '<div>TVA non applicable, art. 293 B du CGI</div>';
+  } else {
+    html += `<div>Total HT : ${devis.total_ht.toFixed(2)} €</div>`;
+    for (const [taux, montant] of Object.entries(devis.ventilation_tva)) {
+      html += `<div>TVA ${taux}% : ${montant.toFixed(2)} €</div>`;
+    }
+    html += `<div class="fort">Total TTC : ${devis.total_ttc.toFixed(2)} €</div>`;
+    html += `<div>Acompte 30% : ${devis.acompte_30_pct.toFixed(2)} €</div>`;
   }
-  html += `<div class="fort">Total TTC : ${devis.total_ttc.toFixed(2)} €</div>`;
-  html += `<div>Acompte 30% : ${devis.acompte_30_pct.toFixed(2)} €</div>`;
   html += '</div>';
   if (devis.mentions.length) {
     const LIBELLE_MENTION = {
@@ -258,9 +351,112 @@ document.getElementById('btn-reset').onclick = async () => {
   rendreDevis({lignes: [], total_ht: 0, ventilation_tva: {}, total_ttc: 0, acompte_30_pct: 0, mentions: [], corrections: [], a_confirmer: []});
 };
 
-document.getElementById('btn-export').onclick = () => {
-  window.location.href = '/api/export';
+document.getElementById('btn-export').onclick = async () => {
+  const resp = await fetch('/api/export');
+  if (resp.status === 409) {
+    // Cas dégradé US-15 : on n'émet pas un devis non conforme, on dit quoi remplir.
+    const detail = (await resp.json()).detail;
+    rendreAlerteMentions({mentions_manquantes: detail.manquantes});
+    ouvrirProfil();
+    document.getElementById('alerte-mentions').focus();
+    return;
+  }
+  if (!resp.ok) { ajouterMessage("L'export a échoué. Réessaie.", 'assistant'); return; }
+  const url = URL.createObjectURL(await resp.blob());
+  const lien = document.createElement('a');
+  lien.href = url;
+  lien.download = 'devis.docx';
+  lien.click();
+  URL.revokeObjectURL(url);
 };
+
+// --- Profil et mentions légales (US-02, US-15) ------------------------------
+const formProfil = document.getElementById('profil-form');
+const btnProfil = document.getElementById('btn-profil');
+
+function ouvrirProfil() {
+  formProfil.hidden = false;
+  btnProfil.setAttribute('aria-expanded', 'true');
+}
+
+btnProfil.onclick = () => {
+  const ouvert = formProfil.hidden;
+  formProfil.hidden = !ouvert;
+  btnProfil.setAttribute('aria-expanded', String(ouvert));
+};
+
+function annoncerConsequenceTVA() {
+  const franchise = document.getElementById('p-franchise').checked;
+  document.getElementById('consequence-tva').textContent = franchise
+    ? "Vos devis ne porteront aucune TVA : ni taux, ni total TTC — seulement la mention « TVA non applicable, art. 293 B du CGI »."
+    : "Vos devis ventilent la TVA par taux et affichent un total TTC.";
+  // Un artisan en franchise n'a pas nécessairement de numéro intracommunautaire.
+  document.getElementById('label-tvaintra').textContent = franchise
+    ? "Numéro de TVA intracommunautaire (facultatif en franchise)"
+    : "Numéro de TVA intracommunautaire";
+}
+
+for (const id of ['p-reel', 'p-franchise']) {
+  document.getElementById(id).addEventListener('change', annoncerConsequenceTVA);
+}
+
+function remplirProfil(p) {
+  const mettre = (id, valeur) => { document.getElementById(id).value = valeur || ''; };
+  mettre('p-raison', p.raison_sociale);
+  mettre('p-siret', p.siret);
+  mettre('p-adresse', p.adresse);
+  mettre('p-rcs', p.rcs);
+  mettre('p-ape', p.ape_naf);
+  mettre('p-tvaintra', p.tva_intracommunautaire);
+  mettre('p-assureur', p.decennale.assureur);
+  mettre('p-contrat', p.decennale.numero_contrat);
+  mettre('p-couverture', p.decennale.couverture_geographique);
+  mettre('p-echeance', p.decennale.valide_jusqu_au);
+  mettre('p-client', p.client_nom);
+  mettre('p-chantier', p.client_adresse_chantier);
+  mettre('p-delai', p.delai_execution);
+  document.getElementById(
+    p.regime_tva === 'franchise_293b' ? 'p-franchise' : 'p-reel').checked = true;
+  annoncerConsequenceTVA();
+  rendreAlerteMentions({mentions_manquantes: p.mentions_manquantes});
+  if (p.decennale_perimee) {
+    document.getElementById('profil-retour').textContent =
+      "Attention : votre assurance décennale est expirée. Le devis reste émis, mais la date affichée sera fausse.";
+  }
+}
+
+function lireProfil() {
+  const lu = (id) => document.getElementById(id).value.trim();
+  return {
+    raison_sociale: lu('p-raison'), siret: lu('p-siret'), adresse: lu('p-adresse'),
+    rcs: lu('p-rcs'), ape_naf: lu('p-ape'), tva_intracommunautaire: lu('p-tvaintra'),
+    regime_tva: document.getElementById('p-franchise').checked ? 'franchise_293b' : 'reel',
+    decennale: {
+      assureur: lu('p-assureur'), numero_contrat: lu('p-contrat'),
+      couverture_geographique: lu('p-couverture'),
+      valide_jusqu_au: lu('p-echeance') || null,
+    },
+    client_nom: lu('p-client'), client_adresse_chantier: lu('p-chantier'),
+    delai_execution: lu('p-delai'),
+  };
+}
+
+formProfil.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const resp = await fetch('/api/profil', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(lireProfil()),
+  });
+  const p = await resp.json();
+  remplirProfil(p);
+  document.getElementById('profil-retour').textContent = (p.mentions_manquantes.length)
+    ? `Profil enregistré. Il manque encore ${p.mentions_manquantes.length} mention(s) obligatoire(s).`
+    : "Profil enregistré. Toutes les mentions obligatoires sont là.";
+  // Le régime de TVA change l'affichage du devis : on le rafraîchit.
+  fetch('/api/devis').then(r => r.json()).then(d => rendreDevis(d.devis));
+});
+
+fetch('/api/profil').then(r => r.json()).then(remplirProfil);
 
 // Resynchronisation au chargement
 fetch('/api/devis').then(r => r.json()).then(data => rendreDevis(data.devis));

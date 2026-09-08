@@ -11,6 +11,7 @@ schéma qu'il faudrait migrer à chaque évolution du devis.
 """
 from __future__ import annotations
 
+import datetime as dt
 import json
 import os
 import re
@@ -20,6 +21,7 @@ from pathlib import Path
 from app.catalogue import Produit
 from app.devis import Devis, LigneChiffree
 from app.pipeline import Correction, Escalade, LigneEnAttente, Session
+from app.profil import Client, Decennale, ProfilArtisan, RegimeTVA
 
 # Chemin absolu par défaut, dérivé de l'emplacement du paquet : l'application
 # doit démarrer depuis n'importe quel répertoire courant.
@@ -60,9 +62,42 @@ def _produit_en_dict(p: Produit | None) -> dict | None:
             "contenance": p.contenance}
 
 
+def _profil_en_dict(p: ProfilArtisan) -> dict:
+    d = p.decennale
+    return {
+        "raison_sociale": p.raison_sociale, "siret": p.siret, "adresse": p.adresse,
+        "rcs": p.rcs, "ape_naf": p.ape_naf,
+        "tva_intracommunautaire": p.tva_intracommunautaire,
+        "regime_tva": str(p.regime_tva),
+        "decennale": {
+            "assureur": d.assureur, "numero_contrat": d.numero_contrat,
+            "couverture_geographique": d.couverture_geographique,
+            # Date sérialisée en ISO : json ne sait pas écrire un datetime.date.
+            "valide_jusqu_au": d.valide_jusqu_au.isoformat() if d.valide_jusqu_au else None,
+        },
+    }
+
+
+def _profil_depuis_dict(brut: dict) -> ProfilArtisan:
+    d = brut.get("decennale", {})
+    echeance = d.get("valide_jusqu_au")
+    return ProfilArtisan(
+        raison_sociale=brut.get("raison_sociale", ""), siret=brut.get("siret", ""),
+        adresse=brut.get("adresse", ""), rcs=brut.get("rcs", ""),
+        ape_naf=brut.get("ape_naf", ""),
+        tva_intracommunautaire=brut.get("tva_intracommunautaire", ""),
+        regime_tva=RegimeTVA(brut.get("regime_tva", RegimeTVA.REEL)),
+        decennale=Decennale(
+            assureur=d.get("assureur", ""), numero_contrat=d.get("numero_contrat", ""),
+            couverture_geographique=d.get("couverture_geographique", ""),
+            valide_jusqu_au=dt.date.fromisoformat(echeance) if echeance else None,
+        ),
+    )
+
+
 def serialiser_session(session: Session) -> dict:
     return {
-        "version": 1,
+        "version": 2,
         "historique": session.historique,
         "pieces": session.pieces,
         "lots_presents": session.lots_presents,
@@ -88,6 +123,10 @@ def serialiser_session(session: Session) -> dict:
                          "description": c.description} for c in session.corrections],
         "escalades": [{"horodatage": e.horodatage, "motif": e.motif,
                        "detail": e.detail} for e in session.escalades],
+        "profil": _profil_en_dict(session.profil),
+        "client": {"nom": session.client.nom,
+                   "adresse_chantier": session.client.adresse_chantier},
+        "delai_execution": session.delai_execution,
     }
 
 
@@ -112,6 +151,11 @@ def deserialiser_session(brut: dict) -> Session:
         escalades=[Escalade(**e) for e in brut.get("escalades", [])],
         tours_clarification=brut.get("tours_clarification", 0),
         a_confirmer=[LigneEnAttente(**a) for a in brut.get("a_confirmer", [])],
+        # Les projets écrits en version 1 n'ont pas ces clés : un profil vide
+        # est le bon repli, l'export les réclamera au premier essai.
+        profil=_profil_depuis_dict(brut.get("profil", {})),
+        client=Client(**brut.get("client", {})),
+        delai_execution=brut.get("delai_execution", ""),
     )
 
 

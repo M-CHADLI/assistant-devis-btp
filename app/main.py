@@ -7,16 +7,18 @@ module était partagée par tous les visiteurs et perdue à chaque redémarrage.
 """
 from __future__ import annotations
 
+import datetime as dt
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from app.export import generer_docx
+from app.export import MentionsIncompletes, generer_docx
 from app.persistance import Registre
 from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
                           corriger_ligne, traiter_message)
+from app.profil import Client, RegimeTVA, champs_manquants
 
 app = FastAPI(title="Démo — Assistant chantier BTP vocal")
 
@@ -62,6 +64,12 @@ def _serialiser_devis(session: Session) -> dict:
         "total_ttc": session.devis.total_ttc,
         "acompte_30_pct": session.devis.acompte_30_pct,
         "mentions": sorted(session.devis.mentions),
+        # En franchise (art. 293 B), le front masque tout ce qui touche à la
+        # TVA : un devis d'auto-entrepreneur qui en affiche une est faux.
+        "franchise_tva": session.profil.en_franchise,
+        # Ce qui manque encore pour que l'export soit légalement recevable.
+        "mentions_manquantes": champs_manquants(
+            session.profil, session.client, session.delai_execution),
         # Lignes retenues parce que leur quantité sort des bornes (US-11) :
         # l'artisan doit confirmer ou abandonner avant qu'elles entrent au devis.
         "a_confirmer": [
@@ -157,10 +165,94 @@ def api_reset(request: Request, response: Response) -> dict:
     return {"projet_id": projet_id, "devis": _serialiser_devis(session)}
 
 
+class DecennaleEntrante(BaseModel):
+    assureur: str = ""
+    numero_contrat: str = ""
+    couverture_geographique: str = ""
+    valide_jusqu_au: dt.date | None = None
+
+
+class ProfilEntrant(BaseModel):
+    """Les mentions légales, déclarées par l'artisan — jamais par le modèle."""
+    raison_sociale: str = ""
+    siret: str = ""
+    adresse: str = ""
+    rcs: str = ""
+    ape_naf: str = ""
+    tva_intracommunautaire: str = ""
+    regime_tva: RegimeTVA = RegimeTVA.REEL
+    decennale: DecennaleEntrante = DecennaleEntrante()
+    client_nom: str = ""
+    client_adresse_chantier: str = ""
+    delai_execution: str = ""
+
+
+def _serialiser_profil(session: Session) -> dict:
+    p, d = session.profil, session.profil.decennale
+    return {
+        "raison_sociale": p.raison_sociale, "siret": p.siret, "adresse": p.adresse,
+        "rcs": p.rcs, "ape_naf": p.ape_naf,
+        "tva_intracommunautaire": p.tva_intracommunautaire,
+        "regime_tva": str(p.regime_tva),
+        "decennale": {
+            "assureur": d.assureur, "numero_contrat": d.numero_contrat,
+            "couverture_geographique": d.couverture_geographique,
+            "valide_jusqu_au": d.valide_jusqu_au.isoformat() if d.valide_jusqu_au else None,
+        },
+        "decennale_perimee": d.perimee(),
+        "client_nom": session.client.nom,
+        "client_adresse_chantier": session.client.adresse_chantier,
+        "delai_execution": session.delai_execution,
+        "mentions_manquantes": champs_manquants(
+            session.profil, session.client, session.delai_execution),
+    }
+
+
+@app.get("/api/profil")
+def api_profil_lire(request: Request, response: Response) -> dict:
+    projet_id, session = _projet(request)
+    _poser_cookie(response, projet_id)
+    return _serialiser_profil(session)
+
+
+@app.post("/api/profil")
+def api_profil_ecrire(entrant: ProfilEntrant, request: Request,
+                       response: Response) -> dict:
+    """US-02 — le régime de TVA est un attribut du profil, pas une case par devis."""
+    projet_id, session = _projet(request)
+    p = session.profil
+    p.raison_sociale = entrant.raison_sociale
+    p.siret = entrant.siret
+    p.adresse = entrant.adresse
+    p.rcs = entrant.rcs
+    p.ape_naf = entrant.ape_naf
+    p.tva_intracommunautaire = entrant.tva_intracommunautaire
+    p.regime_tva = entrant.regime_tva
+    p.decennale.assureur = entrant.decennale.assureur
+    p.decennale.numero_contrat = entrant.decennale.numero_contrat
+    p.decennale.couverture_geographique = entrant.decennale.couverture_geographique
+    p.decennale.valide_jusqu_au = entrant.decennale.valide_jusqu_au
+    session.client = Client(nom=entrant.client_nom,
+                            adresse_chantier=entrant.client_adresse_chantier)
+    session.delai_execution = entrant.delai_execution
+    REGISTRE.enregistrer(projet_id, session)
+    _poser_cookie(response, projet_id)
+    return _serialiser_profil(session)
+
+
 @app.get("/api/export")
 def api_export(request: Request) -> Response:
     _, session = _projet(request)
-    contenu = generer_docx(session.devis, session.pieces)
+    try:
+        contenu = generer_docx(session.devis, session.pieces, session.profil,
+                               session.client, session.delai_execution)
+    except MentionsIncompletes as exc:
+        # 409 et non 400 : la requête est correcte, c'est l'état du projet qui
+        # ne permet pas encore un document légalement recevable (US-15, dégradé).
+        raise HTTPException(status_code=409, detail={
+            "message": "Il manque des mentions obligatoires pour émettre ce devis.",
+            "manquantes": exc.manquants,
+        }) from exc
     return Response(
         content=contenu,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",

@@ -1,7 +1,21 @@
-"""Export du devis en .docx — reprend les mentions obligatoires BTP
-(docs/CADRAGE_MODELE.md §6). Le SIRET/RCS/décennale sont des placeholders ici :
-en production ils viennent du profil artisan, auto-remplis via l'API Pappers,
-jamais produits par le modèle.
+"""Export du devis en .docx, avec les mentions obligatoires BTP.
+
+Deux règles gouvernent ce module (docs/CADRAGE_MODELE.md §6, docs/STORIES.md
+US-15) :
+
+1. **Une donnée légale manquante bloque l'export.** Produire un document
+   incomplet serait produire un devis inopposable — pire qu'un refus, parce que
+   l'artisan l'enverrait sans le savoir. L'appelant vérifie
+   `app.profil.champs_manquants` avant d'appeler ici ; `generer_docx` lève
+   `MentionsIncompletes` si on l'a oublié.
+2. **En franchise en base (art. 293 B du CGI), le document ne porte aucune
+   TVA** — ni colonne, ni ventilation, ni total TTC — seulement la mention
+   légale. Ce n'est pas un détail d'affichage : un devis d'auto-entrepreneur qui
+   affiche une TVA est faux.
+
+La structure passe par `add_heading` et un vrai tableau à ligne d'en-tête :
+l'export vers PDF produit alors un document balisé, exigence d'accessibilité du
+projet (docs/ACCESSIBILITE_DOCUMENTS.md).
 """
 from __future__ import annotations
 
@@ -12,53 +26,99 @@ from docx import Document
 from docx.shared import Pt
 
 from app.devis import Devis
-
-PLACEHOLDER_ARTISAN = {
-    "raison_sociale": "[Raison sociale artisan — à renseigner]",
-    "siret": "[SIRET — auto-rempli via API Pappers]",
-    "assurance_decennale": "[Assureur et n° de contrat décennale]",
-}
+from app.profil import MENTION_293B, Client, ProfilArtisan, champs_manquants
 
 
-def generer_docx(devis: Devis, pieces: list[str]) -> bytes:
+class MentionsIncompletes(Exception):
+    """Il manque des mentions légales : le document ne peut pas être produit."""
+
+    def __init__(self, manquants: list[str]):
+        self.manquants = manquants
+        super().__init__("mentions légales manquantes : " + ", ".join(manquants))
+
+
+def generer_docx(devis: Devis, pieces: list[str], profil: ProfilArtisan,
+                  client: Client, delai_execution: str,
+                  aujourd_hui: dt.date | None = None) -> bytes:
+    manquants = champs_manquants(profil, client, delai_execution)
+    if manquants:
+        raise MentionsIncompletes(manquants)
+
+    jour = aujourd_hui or dt.date.today()
+    franchise = profil.en_franchise
     doc = Document()
 
     titre = doc.add_heading("Devis", level=1)
     titre.runs[0].font.size = Pt(20)
 
-    doc.add_paragraph(f"N° de devis : DEV-{dt.date.today():%Y%m%d}-001")
-    doc.add_paragraph(f"Date d'émission : {dt.date.today():%d/%m/%Y}")
-    doc.add_paragraph(f"Date de validité : {dt.date.today() + dt.timedelta(days=30):%d/%m/%Y}")
-    doc.add_paragraph(f"Prestataire : {PLACEHOLDER_ARTISAN['raison_sociale']}")
-    doc.add_paragraph(f"SIRET : {PLACEHOLDER_ARTISAN['siret']}")
-    doc.add_paragraph(f"Assurance décennale : {PLACEHOLDER_ARTISAN['assurance_decennale']}")
+    doc.add_heading("Identification", level=2)
+    doc.add_paragraph(f"N° de devis : DEV-{jour:%Y%m%d}-001")
+    doc.add_paragraph(f"Date d'émission : {jour:%d/%m/%Y}")
+    doc.add_paragraph(f"Date de validité : {jour + dt.timedelta(days=30):%d/%m/%Y}")
+
+    doc.add_heading("Prestataire", level=2)
+    doc.add_paragraph(f"Raison sociale : {profil.raison_sociale}")
+    doc.add_paragraph(f"Adresse : {profil.adresse}")
+    doc.add_paragraph(f"SIRET : {profil.siret}")
+    doc.add_paragraph(f"RCS : {profil.rcs}")
+    doc.add_paragraph(f"Code APE/NAF : {profil.ape_naf}")
+    if not franchise:
+        doc.add_paragraph(f"N° de TVA intracommunautaire : {profil.tva_intracommunautaire}")
+    decennale = profil.decennale
+    doc.add_paragraph(
+        f"Assurance décennale : {decennale.assureur}, contrat "
+        f"{decennale.numero_contrat} — couverture : {decennale.couverture_geographique}"
+    )
+    if decennale.perimee(jour):
+        # On signale sans bloquer : l'artisan reste maître de l'émission
+        # (docs/STORIES.md US-02, scénario 3).
+        doc.add_paragraph(
+            f"Attention : attestation décennale expirée depuis le "
+            f"{decennale.valide_jusqu_au:%d/%m/%Y}."
+        )
+
+    doc.add_heading("Client et chantier", level=2)
+    doc.add_paragraph(f"Client : {client.nom}")
+    doc.add_paragraph(f"Adresse du chantier : {client.adresse_chantier}")
     if pieces:
-        doc.add_paragraph(f"Chantier : {', '.join(pieces)}")
+        doc.add_paragraph(f"Pièces concernées : {', '.join(pieces)}")
+    doc.add_paragraph(f"Délai d'exécution : {delai_execution}")
 
     doc.add_heading("Détail des postes", level=2)
-    table = doc.add_table(rows=1, cols=5)
+    colonnes = (["Poste", "Quantité", "Prix unitaire", "Total"] if franchise
+                else ["Poste", "Quantité", "Prix unitaire HT", "TVA", "Total HT"])
+    table = doc.add_table(rows=1, cols=len(colonnes))
     table.style = "Light Grid Accent 1"
-    hdr = table.rows[0].cells
-    for i, texte in enumerate(["Poste", "Quantité", "Prix unitaire HT", "TVA", "Total HT"]):
-        hdr[i].text = texte
+    for i, texte in enumerate(colonnes):
+        table.rows[0].cells[i].text = texte
 
     for ligne in devis.lignes:
-        row = table.add_row().cells
-        row[0].text = ligne.produit.designation if ligne.produit else ligne.nom_lot
-        row[1].text = f"{ligne.quantite_achat} {ligne.produit.unite_vente if ligne.produit else ''}"
-        row[2].text = f"{ligne.prix_unitaire_ht:.2f} €"
-        row[3].text = f"{ligne.taux_tva} %"
-        row[4].text = f"{ligne.prix_ht:.2f} €"
+        cellules = table.add_row().cells
+        unite = ligne.produit.unite_vente if ligne.produit else ""
+        valeurs = [
+            ligne.produit.designation if ligne.produit else ligne.nom_lot,
+            f"{ligne.quantite_achat} {unite}".strip(),
+            f"{ligne.prix_unitaire_ht:.2f} €",
+        ]
+        if not franchise:
+            valeurs.append(f"{ligne.taux_tva} %")
+        valeurs.append(f"{ligne.prix_ht:.2f} €")
+        for i, valeur in enumerate(valeurs):
+            cellules[i].text = valeur
 
-    doc.add_heading("Ventilation TVA", level=2)
-    for taux, montant in devis.ventilation_tva.items():
-        doc.add_paragraph(f"TVA à {taux} % : {montant:.2f} €")
-
-    doc.add_paragraph()
-    doc.add_paragraph(f"Total HT : {devis.total_ht:.2f} €").runs[0].bold = True
-    doc.add_paragraph(f"Total TVA : {devis.total_tva:.2f} €")
-    doc.add_paragraph(f"Total TTC : {devis.total_ttc:.2f} €").runs[0].bold = True
-    doc.add_paragraph(f"Acompte demandé (30 %) : {devis.acompte_30_pct:.2f} €")
+    doc.add_heading("Montants", level=2)
+    if franchise:
+        doc.add_paragraph(f"Total : {devis.total_ht:.2f} €").runs[0].bold = True
+        doc.add_paragraph(MENTION_293B)
+        acompte = round(devis.total_ht * 0.30, 2)
+    else:
+        for taux, montant in devis.ventilation_tva.items():
+            doc.add_paragraph(f"TVA à {taux} % : {montant:.2f} €")
+        doc.add_paragraph(f"Total HT : {devis.total_ht:.2f} €").runs[0].bold = True
+        doc.add_paragraph(f"Total TVA : {devis.total_tva:.2f} €")
+        doc.add_paragraph(f"Total TTC : {devis.total_ttc:.2f} €").runs[0].bold = True
+        acompte = devis.acompte_30_pct
+    doc.add_paragraph(f"Acompte demandé (30 %) : {acompte:.2f} €")
 
     if devis.mentions:
         doc.add_heading("Mentions particulières", level=2)
@@ -70,7 +130,7 @@ def generer_docx(devis: Devis, pieces: list[str]) -> bytes:
             doc.add_paragraph("Points de vigilance signalés sur certains postes — "
                                "voir échanges avec l'artisan.")
 
-    doc.add_paragraph()
+    doc.add_heading("Accord du client", level=2)
     doc.add_paragraph("Bon pour accord (date et signature) : _______________________")
 
     buffer = io.BytesIO()

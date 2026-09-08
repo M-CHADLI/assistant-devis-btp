@@ -153,8 +153,17 @@ un devis faux.
   le changement de régime déclenche un message de conséquence explicite
   (« vos devis ne feront plus apparaître de TVA ») lisible par lecteur d'écran.
 
-**Traçabilité.** C14, C17 · `CADRAGE_MODELE.md` §6 · état : **à faire**
-(l'export applique aujourd'hui une TVA inconditionnelle).
+**Traçabilité.** C14, C17 · `CADRAGE_MODELE.md` §6 · état : **fait** —
+`app/profil.py` porte le régime (`RegimeTVA`) et la décennale (avec échéance et
+`perimee()`), `GET`/`POST /api/profil` les exposent, la persistance passe en
+version 2 (les projets version 1 se relisent avec un profil vide).
+`tests/test_export.py::test_en_franchise_aucune_tva_hors_mention_legale` lit le
+texte du `.docx` produit et exige zéro occurrence de « TVA » hors mention légale.
+Le formulaire du front groupe le régime dans un `<fieldset>`/`<legend>` et
+annonce la conséquence du changement dans une région `role="status"`
+(`tests/test_front.py`). **Reste** : la décennale périmée est signalée dans le
+document et au retour du formulaire, mais aucune alerte n'est levée à l'approche
+de l'échéance.
 
 ### US-03 — Déposer un devis existant pour en faire mon gabarit
 
@@ -550,10 +559,16 @@ ici.
 - *Accessibilité* — l'export bureautique conserve une structure de titres et un
   tableau balisé (tagged), pas une mise en page par tabulations.
 
-**Traçabilité.** C13, C14 · `CADRAGE_MODELE.md` §6 · état : **partiel** —
-`app/export.py` produit un `.docx` avec ventilation TVA, acompte 30 % et mentions,
-mais **applique la TVA inconditionnellement** (pas de chemin 293 B) et **omet**
-délai d'exécution, client, adresse de chantier, RCS/APE-NAF et TVA intracom.
+**Traçabilité.** C13, C14 · `CADRAGE_MODELE.md` §6 · état : **fait** —
+`app/export.py` porte désormais délai d'exécution, identité et adresse de
+chantier du client, RCS, APE/NAF, TVA intracommunautaire et décennale, et
+bascule sur le chemin 293 B (ni colonne TVA, ni ventilation, ni total TTC).
+`champs_manquants()` liste ce qui manque ; `generer_docx` lève
+`MentionsIncompletes` et `GET /api/export` répond **409** avec la liste, que le
+front affiche dans une région `role="status"` en ouvrant le formulaire de profil
+— un devis non conforme n'est jamais produit. Les sections sont écrites en
+`Heading 1`/`Heading 2` et le tableau porte une ligne d'en-tête, pour que
+l'export PDF balisé reste possible.
 
 ### US-16 — Retrouver mon devis après un rechargement
 
