@@ -52,3 +52,6 @@ T-050,Créer le compte artisan à partir du seul SIRET (API Pappers),US-01,S6,D�
 T-051,Publier la sévérité d'une mention comme donnée (niveau + texte),US-18,S5,Développement,2,Terminé,app/api_schema.py
 T-052,Classer la mention sur niveau au lieu d'inspecter la chaîne,US-18,S5,Développement,1,Terminé,app/static/index.html
 T-053,Test : la détection de chaîne ne peut pas revenir,US-18,S5,Test,1,Terminé,tests/test_front.py
+T-054,Détecter une contradiction entre deux dictées sur un même poste,US-06,S5,Développement,3,Terminé,app/pipeline.py
+T-055,Arbitrage à l'écran : retenir la nouvelle valeur ou garder l'ancienne,US-06,S5,Développement,2,Terminé,app/static/index.html
+T-056,"Tests : ni addition, ni arbitrage silencieux, arbitrage journalisé",US-06,S5,Test,2,Terminé,tests/test_pipeline.py

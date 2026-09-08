@@ -79,14 +79,24 @@ class Correction:
 
 @dataclass
 class LigneEnAttente:
-    """Ligne mise en attente parce que sa quantité sort des bornes (US-11).
+    """Ligne retenue tant que l'artisan n'a pas tranché.
 
-    On ne rejette pas : l'artisan fait autorité, il peut confirmer."""
+    Deux motifs, deux histoires différentes :
+
+    - `hors_bornes` (US-11) — la quantité sort des bornes du référentiel. On ne
+      rejette pas : l'artisan fait autorité, il peut confirmer.
+    - `contradiction` (US-06) — une dictée ultérieure donne une autre valeur
+      pour le même poste (« 22 m² » puis « en fait 25 »). Additionner les deux
+      fabriquerait 47 m² de peinture ; choisir seul serait un arbitrage
+      silencieux. On demande, en rappelant la valeur déjà au devis.
+    """
     lot_code: str
     dimension_type: str
     dimension_valeur: float
     borne_min: float
     borne_max: float
+    motif: str = "hors_bornes"
+    valeur_existante: float | None = None
 
 
 @dataclass
@@ -138,6 +148,34 @@ def _valider_entree(texte: str) -> str | None:
     return None
 
 
+def _nombre(valeur: float) -> str:
+    """22.0 se dit « 22 » ; 22.5 se dit « 22.5 ». Un devis lu à voix haute ne
+    prononce pas les zéros inutiles."""
+    return f"{valeur:g}"
+
+
+def _valeur_deja_au_devis(session: Session, lot_code: str,
+                          dimension_type: str) -> float | None:
+    """La valeur déjà portée au devis pour ce poste, si elle existe.
+
+    Sert à repérer une contradiction entre deux dictées (US-06, scénario 3).
+    La comparaison porte sur la **dimension d'origine**, pas sur la quantité
+    technique : c'est ce que l'artisan a dit, et donc ce qu'il reconnaîtra.
+    """
+    for ligne in session.devis.lignes:
+        if (ligne.lot_code == lot_code
+                and ligne.dimension_type == dimension_type
+                and ligne.dimension_valeur is not None):
+            return ligne.dimension_valeur
+    return None
+
+
+def _deja_en_attente(session: Session, cle: tuple[str, str, float]) -> bool:
+    """Une même contradiction redite ne s'empile pas : elle est déjà posée."""
+    return any((a.lot_code, a.dimension_type, a.dimension_valeur) == cle
+               for a in session.a_confirmer)
+
+
 def _router(session: Session, sortie: dict,
             ) -> tuple[str, list[str], list[dict[str, str]], dict[str, list[str]]]:
     """Route une sortie modèle déjà parsée en JSON vers le bon traitement.
@@ -181,6 +219,20 @@ def _router(session: Session, sortie: dict,
             cle = (ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur)
             if cle in deja_presentes:
                 continue  # reconfirmation orale identique — idempotent, pas un doublon
+            existante = _valeur_deja_au_devis(session, ligne.lot_code,
+                                              ligne.dimension.type)
+            if existante is not None and not _deja_en_attente(session, cle):
+                session.a_confirmer.append(LigneEnAttente(
+                    ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur,
+                    *bornes(ligne.lot_code, ligne.dimension.type),
+                    motif="contradiction", valeur_existante=existante))
+                messages.append(
+                    f"Tu m'avais dit {_nombre(existante)} {ligne.dimension.type} pour "
+                    f"« {REFERENTIEL[ligne.lot_code].nom} », et là "
+                    f"{_nombre(ligne.dimension.valeur)}. Je ne les additionne pas et je "
+                    "ne choisis pas à ta place : laquelle je retiens ?"
+                )
+                continue
             if not est_plausible(ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur):
                 mini, maxi = bornes(ligne.lot_code, ligne.dimension.type)
                 session.a_confirmer.append(LigneEnAttente(
@@ -440,12 +492,48 @@ def valider_transcription(session: Session, propose: str, corrige: str,
     return retenu
 
 
+def _remplacer_valeur(session: Session, attente: LigneEnAttente) -> None:
+    """Retire du devis les lignes que la valeur retenue périme, et garde la
+    trace de l'arbitrage : c'est un signal qualité, pas un simple ménage."""
+    gardees, retirees = [], []
+    for ligne in session.devis.lignes:
+        if (ligne.lot_code == attente.lot_code
+                and ligne.dimension_type == attente.dimension_type
+                and ligne.origine == "modèle"):
+            retirees.append(ligne)
+        else:
+            gardees.append(ligne)
+    if not retirees:
+        return
+    session.devis.lignes = gardees
+    ancienne = ", ".join(f"{_nombre(l.dimension_valeur or 0)} {l.dimension_type}"
+                         for l in retirees)
+    retenue = f"{_nombre(attente.dimension_valeur)} {attente.dimension_type}"
+    session.corrections.append(Correction(
+        horodatage=dt.datetime.now().isoformat(timespec="seconds"),
+        auteur="artisan",
+        description=(f"contradiction entre deux dictées sur {attente.lot_code} : "
+                     f"{ancienne} remplacé par {retenue}"),
+        origine="contradiction_dictee",
+        entree=_derniere_dictee(session),
+        sortie_modele=ancienne,
+        corrige=retenue,
+    ))
+    JOURNAL.enregistrer("correction_artisan", origine="contradiction_dictee",
+                        lot_code=attente.lot_code)
+
+
 def confirmer_quantite(session: Session, index: int) -> bool:
     """L'artisan confirme une quantité hors bornes. Il fait autorité (CLAUDE.md) :
     on l'applique sans discuter, et on garde la trace que la borne a été franchie."""
     if not (0 <= index < len(session.a_confirmer)):
         return False
     attente = session.a_confirmer.pop(index)
+    if attente.motif == "contradiction":
+        # L'artisan retient la nouvelle valeur : l'ancienne ligne s'en va. Sans
+        # ce retrait, « en fait 25 » ajouterait 25 m² aux 22 déjà là — le devis
+        # ferait 47 m² d'une pièce qui n'en fait que 25 (US-06).
+        _remplacer_valeur(session, attente)
     ajouter_ligne(session.devis, attente.lot_code, attente.dimension_type,
                   attente.dimension_valeur,
                   chiffrer_maintenant=session.structure_validee)
@@ -475,7 +563,11 @@ def confirmer_quantite(session: Session, index: int) -> bool:
 
 
 def abandonner_quantite(session: Session, index: int) -> bool:
-    """L'artisan reconnaît une erreur de dictée : on jette la ligne en attente."""
+    """L'artisan écarte la ligne en attente.
+
+    Hors bornes, c'est reconnaître une erreur de dictée. Contradiction, c'est
+    garder la valeur déjà au devis : dans les deux cas le devis ne bouge pas,
+    donc rien à défaire."""
     if not (0 <= index < len(session.a_confirmer)):
         return False
     session.a_confirmer.pop(index)

@@ -295,15 +295,25 @@ function rendreDevis(devis) {
     // role="alert" : la demande de confirmation doit être entendue tout de
     // suite, et l'entrée de saisie la référence en aria-describedby (US-11).
     html += '<div class="a-confirmer" id="zone-a-confirmer" role="alert" aria-label="Quantités à confirmer">';
-    html += '<strong>Quantités inhabituelles — je ne les ai pas ajoutées :</strong><ul>';
+    html += '<strong>À trancher — je n\'ai rien ajouté :</strong><ul>';
     devis.a_confirmer.forEach((a, i) => {
       const nom = a.lot_nom || a.lot_code;
+      // Deux motifs, deux questions. Une contradiction (US-06) n'est pas une
+      // quantité invraisemblable : l'artisan choisit entre deux valeurs qu'il a
+      // dictées lui-même, et les deux doivent être devant lui.
+      const contradiction = a.motif === 'contradiction';
+      const explication = contradiction
+        ? `au lieu de ${a.valeur_existante} déjà au devis.`
+        : `— habituellement entre ${a.borne_min} et ${a.borne_max}.`;
+      const garder = contradiction ? 'Retenir cette valeur' : "C'est bien ça";
+      const jeter = contradiction
+        ? `Garder ${a.valeur_existante}` : 'Erreur de dictée';
       html += `<li>${a.dimension_valeur} (${a.dimension_type}) sur ${nom}
-        — habituellement entre ${a.borne_min} et ${a.borne_max}.
+        ${explication}
         <button onclick="arbitrerQuantite(${i}, 'confirmer')"
-          aria-label="Confirmer ${a.dimension_valeur} ${a.dimension_type} sur ${nom}">C'est bien ça</button>
+          aria-label="${garder} : ${a.dimension_valeur} ${a.dimension_type} sur ${nom}">${garder}</button>
         <button onclick="arbitrerQuantite(${i}, 'abandonner')"
-          aria-label="Abandonner ${a.dimension_valeur} ${a.dimension_type} sur ${nom}">Erreur de dictée</button>
+          aria-label="${jeter}, sur ${nom}">${jeter}</button>
       </li>`;
     });
     html += '</ul></div>';

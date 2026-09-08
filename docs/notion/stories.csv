@@ -4,7 +4,7 @@ US-02,Déclarer mon régime de TVA et mon assurance décennale,A — Profil arti
 US-03,Déposer un devis existant pour en faire mon gabarit,A — Profil artisan,Story,Certification,6,Basse,À faire,S6,5,C8 · C14,CADRAGE_MODELE.md §6,à faire
 US-04,Dicter mon chantier sur place,B — Capture vocale,Story,Noyau démontrable,11,Haute,En cours,S5,8,C10 · C14 · C17,CADRAGE_MODELE.md §2,partiel
 US-05,Relire et corriger la transcription avant traitement,B — Capture vocale,Story,Noyau démontrable,4,Critique,Terminé,S2,5,C10 · C14 · C17,DISPOSITIF_AGENT.md §1.4 (HITL-0),fait
-US-06,Enchaîner plusieurs enregistrements sur un même chantier,B — Capture vocale,Story,Noyau démontrable,12,Moyenne,En cours,S5,3,C14 · C17,CADRAGE_MODELE.md §2,partiel
+US-06,Enchaîner plusieurs enregistrements sur un même chantier,B — Capture vocale,Story,Noyau démontrable,12,Moyenne,Terminé,S5,3,C14 · C17,CADRAGE_MODELE.md §2,fait
 US-07,Être questionné seulement sur ce qui manque,C — Interroger,Story,Noyau démontrable,9,Haute,Terminé,S3,5,C13 · C14 · C17,DISPOSITIF_AGENT.md §1.4 (HITL-1),fait
 US-08,Voir mon chantier découpé en lots ordonnés,C — Interroger,Story,Terminé,0,Haute,Terminé,S1,3,C13 · C14,CADRAGE_MODELE.md §4,fait
 US-09,Obtenir les quantités sans jamais faire le calcul moi-même,D — Calculer,Story,Noyau démontrable,1,Critique,Terminé,S1,2,C13 · C14,DISPOSITIF_AGENT.md §1.2 étapes 5-6,fait

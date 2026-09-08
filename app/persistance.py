@@ -131,7 +131,12 @@ def serialiser_session(session: Session) -> dict:
         "tours_clarification": session.tours_clarification,
         "a_confirmer": [{"lot_code": a.lot_code, "dimension_type": a.dimension_type,
                          "dimension_valeur": a.dimension_valeur,
-                         "borne_min": a.borne_min, "borne_max": a.borne_max}
+                         "borne_min": a.borne_min, "borne_max": a.borne_max,
+                         # Sans le motif, une contradiction relue du disque
+                         # redeviendrait une simple quantité hors bornes, et la
+                         # valeur qu'elle remplace serait perdue (US-06).
+                         "motif": a.motif,
+                         "valeur_existante": a.valeur_existante}
                         for a in session.a_confirmer],
         # Version 4 : le triplet du signal qualité (US-25). Sans lui, une
         # correction relue du disque n'est plus exportable.

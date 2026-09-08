@@ -135,3 +135,18 @@ def test_un_projet_version_2_se_relit_comme_deja_chiffre():
     session = deserialiser_session(v2)
     assert session.structure_validee is True
     assert session.devis.total_ht == 104.7
+
+
+def test_une_contradiction_survit_au_rechargement(tmp_path):
+    """US-06 — relue du disque sans son motif, elle redeviendrait une quantité
+    hors bornes, et la valeur qu'elle remplace serait perdue."""
+    from app.pipeline import LigneEnAttente
+    registre = Registre(racine=tmp_path)
+    projet_id, session = registre.creer()
+    session.a_confirmer.append(LigneEnAttente(
+        "PEINT_FINITION", "surface", 25.0, 0.5, 400.0,
+        motif="contradiction", valeur_existante=22.0))
+    registre.enregistrer(projet_id, session)
+    relu = deserialiser_session(serialiser_session(session))
+    assert relu.a_confirmer[0].motif == "contradiction"
+    assert relu.a_confirmer[0].valeur_existante == 22.0

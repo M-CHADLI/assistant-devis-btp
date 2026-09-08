@@ -245,3 +245,11 @@ def test_une_mention_forte_est_annoncee_immediatement(html):
     interrompt la lecture, role=status attend une pause."""
     bloc = html[html.index("(data.mentions || []).forEach"):]
     assert "'alert' : 'status'" in bloc[:600]
+
+
+def test_une_contradiction_ne_se_lit_pas_comme_une_quantite_hors_bornes(html):
+    """US-06 — l'artisan choisit entre deux valeurs qu'il a dictées ; lui parler
+    de bornes du référentiel n'aurait aucun sens."""
+    assert "a.motif === 'contradiction'" in html
+    assert "au lieu de ${a.valeur_existante} déjà au devis" in html
+    assert "Garder ${a.valeur_existante}" in html

@@ -305,9 +305,16 @@ répéter.
   `aria-live="polite"` sans voler le focus, afin qu'une dictée en cours ne soit
   pas interrompue (WCAG 4.1.3, 2.4.3).
 
-**Traçabilité.** C14, C17 · `CADRAGE_MODELE.md` §2 · état : **partiel**
-(idempotence implémentée dans `app/pipeline.py` ; détection de contradiction
-absente).
+**Traçabilité.** C14, C17 · `CADRAGE_MODELE.md` §2 · état : **fait** —
+idempotence et détection de contradiction dans `app/pipeline.py` : une valeur
+qui en contredit une déjà portée au devis pour le même poste n'est ni ajoutée ni
+substituée, elle part en attente avec `motif="contradiction"` et la valeur
+existante, et la question rappelle les deux chiffres. Retenir la nouvelle retire
+l'ancienne ligne et journalise l'arbitrage (`origine="contradiction_dictee"`,
+signal qualité US-25) ; garder l'ancienne laisse le devis intact. Le fil est en
+`aria-live="polite"` (`app/static/index.html`), donc annoncé sans vol de focus.
+Couvert par `tests/test_pipeline.py`, `tests/test_front.py` et
+`tests/test_persistance.py`.
 
 ---
 
@@ -1008,8 +1015,7 @@ traçabilité, pas pour le reste à faire.
 
 **Où en sont ces files (08/09/2026).** Les deux tables sont l'ordre décidé, pas
 l'état : celui-ci se lit story par story, à la ligne *Traçabilité*. De la file 1,
-seules **US-04** (transcription locale) et **US-06** (contradictions) restent
-ouvertes ; de la file 2, **US-01**, **US-03**, et la partie de **US-26** qui
+seule **US-04** (transcription locale) reste ouverte ; de la file 2, **US-01**, **US-03**, et la partie de **US-26** qui
 dépend d'un dépôt distant.
 
 US-17 reste hors des deux files : confort métier réel, aucun apport de preuve.

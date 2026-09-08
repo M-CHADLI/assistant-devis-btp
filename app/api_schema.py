@@ -52,13 +52,18 @@ class MentionSortie(BaseModel):
 
 
 class LigneEnAttente(BaseModel):
-    """Quantité hors bornes, retenue tant que l'artisan n'a pas tranché (US-11)."""
+    """Ligne retenue tant que l'artisan n'a pas tranché (US-11, US-06)."""
     lot_code: str
     lot_nom: str
     dimension_type: str
     dimension_valeur: float
     borne_min: float
     borne_max: float
+    motif: str = Field(default="hors_bornes",
+                       description="hors_bornes | contradiction")
+    # Renseigné pour une contradiction seulement : la valeur déjà au devis, que
+    # l'artisan doit pouvoir comparer à celle qu'il vient de dicter.
+    valeur_existante: float | None = None
 
 
 class CorrectionSortie(BaseModel):

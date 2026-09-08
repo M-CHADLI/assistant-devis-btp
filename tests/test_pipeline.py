@@ -138,6 +138,85 @@ def test_reconfirmation_orale_identique_ne_duplique_pas(faux):
     assert len(s.devis.lignes) == 1
 
 
+# --- US-06 : deux dictées qui se contredisent ------------------------------
+
+def _contradiction(faux) -> pipeline.Session:
+    """« 22 m² » puis « en fait 25 » sur le même poste."""
+    faux(_sortie_devis(valeur=22.0), _sortie_devis(valeur=25.0))
+    s = Session()
+    traiter_message(s, "22 m2 de peinture dans le salon")
+    traiter_message(s, "en fait 25")
+    return s
+
+
+def test_une_contradiction_n_est_ni_additionnee_ni_tranchee_seule(faux):
+    """Additionner ferait 47 m² d'une pièce qui en fait 25 ; choisir seul serait
+    un arbitrage silencieux. Les deux sont interdits."""
+    s = _contradiction(faux)
+    assert len(s.devis.lignes) == 1
+    assert s.devis.lignes[0].dimension_valeur == 22.0
+    assert len(s.a_confirmer) == 1
+    assert s.a_confirmer[0].motif == "contradiction"
+    assert s.a_confirmer[0].valeur_existante == 22.0
+
+
+def test_la_question_posee_rappelle_les_deux_valeurs(faux):
+    """L'artisan ne peut trancher que s'il voit ce qu'il a dit avant."""
+    faux(_sortie_devis(valeur=22.0), _sortie_devis(valeur=25.0))
+    s = Session()
+    traiter_message(s, "22 m2 de peinture dans le salon")
+    r = traiter_message(s, "en fait 25")
+    question = " ".join(r.messages_assistant)
+    assert "22" in question and "25" in question
+
+
+def test_retenir_la_nouvelle_valeur_retire_l_ancienne_ligne(faux):
+    s = _contradiction(faux)
+    assert pipeline.confirmer_quantite(s, 0) is True
+    assert [l.dimension_valeur for l in s.devis.lignes] == [25.0]
+    assert s.a_confirmer == []
+
+
+def test_l_arbitrage_d_une_contradiction_est_journalise(faux):
+    """C'est un signal qualité : la chaîne a produit une valeur que l'artisan a
+    remplacée (US-25)."""
+    s = _contradiction(faux)
+    pipeline.confirmer_quantite(s, 0)
+    correction = [c for c in s.corrections if c.origine == "contradiction_dictee"]
+    assert len(correction) == 1
+    assert correction[0].sortie_modele.startswith("22")
+    assert correction[0].corrige.startswith("25")
+
+
+def test_garder_l_ancienne_valeur_laisse_le_devis_intact(faux):
+    s = _contradiction(faux)
+    assert pipeline.abandonner_quantite(s, 0) is True
+    assert [l.dimension_valeur for l in s.devis.lignes] == [22.0]
+    assert s.a_confirmer == []
+
+
+def test_une_contradiction_redite_ne_s_empile_pas(faux):
+    """Le même « en fait 25 » répété ne pose pas deux fois la question."""
+    faux(_sortie_devis(valeur=22.0), _sortie_devis(valeur=25.0),
+         _sortie_devis(valeur=25.0))
+    s = Session()
+    traiter_message(s, "22 m2 de peinture dans le salon")
+    traiter_message(s, "en fait 25")
+    traiter_message(s, "je te dis 25")
+    assert len(s.a_confirmer) == 1
+
+
+def test_un_autre_lot_n_est_pas_une_contradiction(faux):
+    """Deux postes différents ne se contredisent pas : ils s'ajoutent."""
+    faux(_sortie_devis(lot_code="PEINT_FINITION", valeur=22.0),
+         _sortie_devis(lot_code="SOL_POSE_STRATIFIE", valeur=25.0))
+    s = Session()
+    traiter_message(s, "22 m2 de peinture")
+    traiter_message(s, "et 25 m2 de stratifié")
+    assert len(s.devis.lignes) == 2
+    assert s.a_confirmer == []
+
+
 def test_mention_ajoutee_par_le_code_meme_si_le_modele_l_oublie(faux):
     """La sécurité ne repose pas sur la bonne volonté du modèle."""
     faux(_sortie_devis(lot_code="ELEC_TABLEAU", valeur=1.0))

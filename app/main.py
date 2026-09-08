@@ -185,8 +185,9 @@ def _serialiser_devis(session: Session) -> dict:
         # Ce qui manque encore pour que l'export soit légalement recevable.
         "mentions_manquantes": champs_manquants(
             session.profil, session.client, session.delai_execution),
-        # Lignes retenues parce que leur quantité sort des bornes (US-11) :
-        # l'artisan doit confirmer ou abandonner avant qu'elles entrent au devis.
+        # Lignes retenues avant d'entrer au devis : quantité hors bornes
+        # (US-11) ou contradiction entre deux dictées (US-06). Dans les deux cas
+        # l'artisan tranche ; `motif` dit laquelle des deux questions lui poser.
         "a_confirmer": [
             {"lot_code": a.lot_code,
              # Le nom métier, pas le code : l'artisan arbitre sur « Peinture de
@@ -194,7 +195,8 @@ def _serialiser_devis(session: Session) -> dict:
              "lot_nom": REFERENTIEL[a.lot_code].nom if a.lot_code in REFERENTIEL else a.lot_code,
              "dimension_type": a.dimension_type,
              "dimension_valeur": a.dimension_valeur,
-             "borne_min": a.borne_min, "borne_max": a.borne_max}
+             "borne_min": a.borne_min, "borne_max": a.borne_max,
+             "motif": a.motif, "valeur_existante": a.valeur_existante}
             for a in session.a_confirmer
         ],
         "corrections": [
