@@ -122,7 +122,7 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
 | `8899b4b` | Rituels agiles, parties prenantes et définition de fini (C16) |
 | `743f3ef` | Accessibilité des sources de veille, traitée par le format (C7) |
 
-**Rien n'est poussé.** Quarante-cinq commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
+**Rien n'est poussé.** **Quarante-six commits cette nuit** (depuis `87cfb07`), cinquante-cinq sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
 
 **L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
 82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
