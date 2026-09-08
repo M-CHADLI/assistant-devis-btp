@@ -99,9 +99,12 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 > l'ADEME publie au kilogramme quand le fournisseur vend au litre, et aucune
 > source publique ne donne la masse volumique d'une peinture. Ces trous sont
 > maintenant des données, interrogeables par `familles_incompletes()`.
-> **Reste que le moteur de devis n'est pas encore branché dessus** : les codes
-> de lot du référentiel métier et les familles du dump ne coïncident pas, et
-> inventer la correspondance aurait été plus coûteux que de la nommer.
+> Le moteur de devis y est **branché derrière un réglage explicite**
+> (`BTP_CATALOGUE_SOURCE=base`), par une table lot ↔ famille déclarée dans
+> `app/correspondance.py`. Onze lots sur treize s'apparient sans ambiguïté ; deux
+> portent l'état `arbitrage_requis` et ne servent pas, faute d'un arbitrage métier
+> qui appartient à l'artisan. Le défaut reste `simule` tant qu'ils ne sont pas
+> rendus.
 
 ### C3 — Agrégation des données
 
@@ -256,7 +259,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 |---|---|---|---|
 | 87 | Cas à tester listés : partie visée, périmètre, stratégie | 🟡 | La stratégie d'évaluation du modèle est posée (`DISPOSITIF_AGENT.md` §4 : jeu de test de 150-200 exemples écrits à la main, protocole 20b brut contre 20b fine-tuné). Les cas ne sont pas listés un par un. |
 | 88 | Outils de test cohérents avec l'environnement | ✅ | pytest, cohérent avec la stack Python/uv. |
-| 89 | Tests intégrés respectant la couverture établie | 🟡 | **493 tests** couvrent le code déterministe : référentiel, moteur de devis, pipeline, garde-fous, persistance, API, contrat OpenAPI, transcription, export, authentification, observabilité, boucle qualité, chaîne de données, chaîne du modèle, annuaire d'entreprises, reprise de mise en page, duplication de devis, front. S'y ajoute `tools/parcours_bout_en_bout.py`, qui ne neutralise rien (24/24 étapes contre le serveur et `gpt-oss:20b` réels). Aucun test ne porte encore sur le **modèle** lui-même — or c'est l'objet de C12, et cela reste le manque de fond. |
+| 89 | Tests intégrés respectant la couverture établie | 🟡 | **514 tests** couvrent le code déterministe : référentiel, moteur de devis, pipeline, garde-fous, persistance, API, contrat OpenAPI, transcription, export, authentification, observabilité, boucle qualité, chaîne de données, chaîne du modèle, annuaire d'entreprises, reprise de mise en page, duplication de devis, correspondance lot ↔ famille, front. S'y ajoute `tools/parcours_bout_en_bout.py`, qui ne neutralise rien (24/24 étapes contre le serveur et `gpt-oss:20b` réels). Aucun test ne porte encore sur le **modèle** lui-même — or c'est l'objet de C12, et cela reste le manque de fond. |
 | 90 | Tests s'exécutant sans problème technique | ✅ | `62 passed` en ~4 s. |
 | 91 | Sources versionnées sur dépôt Git distant (DVC, GitLab…) | ❌ | Voir constat nº 1. Aucun versionnement de données non plus. |
 | 92 | Documentation : installation, dépendances, exécution, couverture | 🟡 | Installation et exécution documentées dans `CLAUDE.md` et `docs/INTEGRATION_CONTINUE.md`. **Aucune mesure de couverture** n'est produite. |
@@ -411,7 +414,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 9. ~~**Wireframes** de l'interface existante.~~ **Fait** : `docs/MAQUETTES.md`, six maquettes annotées. C14-104, C17-121 et C10-72 fermés, quatre tests d'accessibilité ajoutés au passage.
 10. ~~**Benchmark STT** avec colonne éco-responsable.~~ **Fait** : `docs/BENCHMARK_STT.md`. Six des sept critères de C7 fermés, C7-48 reste 🟡 faute de mesure ; C15-110 et C17-126 passent à partiel. Le protocole de mesure est écrit et attend un corpus de trente dictées.
 
-11. ~~**Chaîne de données** : collecte multi-sources, agrégation, base, requêtes.~~ **Fait** : `tools/donnees/` et `docs/CHAINE_DONNEES.md`. E1 passe de 14 ❌ à 2, C2 et C3 sont fermés, C4-21 à C4-25 avancent. Le moteur de devis n'est pas encore branché sur la base : c'est une décision de conception, nommée au §8 du document.
+11. ~~**Chaîne de données** : collecte multi-sources, agrégation, base, requêtes.~~ **Fait** : `tools/donnees/` et `docs/CHAINE_DONNEES.md`. E1 passe de 14 ❌ à 2, C2 et C3 sont fermés, C4-21 à C4-25 avancent. Le moteur de devis y est branché derrière `BTP_CATALOGUE_SOURCE=base`, par la table déclarative de `app/correspondance.py` ; deux lots sur treize attendent un arbitrage métier et ne servent pas (§8 du document).
 
 12. ~~**Empaquetage et livraison continue** : le produit ne s'installe qu'en connaissant la commande.~~ **Fait** : `Dockerfile`, `.dockerignore`, `.github/workflows/livraison.yml` et `docs/LIVRAISON_CONTINUE.md`. C19 passe de 5 ❌ à 1 (le dernier étant le dépôt distant). L'image est construite, démarrée et interrogée en local ; ce qui n'est pas vérifié, c'est l'exécution du workflow — comme pour l'intégration continue, et pour la même raison.
 

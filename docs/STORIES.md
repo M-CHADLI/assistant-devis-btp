@@ -619,10 +619,11 @@ ce qu'il n'a pas la possibilité d'exprimer » (§3.2). Le prix vient du code, a
 **Traçabilité.** C13, C14 · `DISPOSITIF_AGENT.md` §3.2, `CADRAGE_MODELE.md` §6 ·
 état : **fait** (schéma sans champ prix dans `app/schema.py`, chiffrage catalogue
 et totaux couverts par `tests/test_devis.py`). **Nuance depuis US-27** : le
-catalogue qui chiffre est encore le dictionnaire de `app/catalogue.py`, pas la
-base construite par la chaîne de données. La propriété que cette story défend —
-le modèle ne produit aucun prix — est vraie dans les deux cas ; ce qui change,
-c'est la provenance du prix, et elle est traitée en US-27.
+catalogue qui chiffre est le dictionnaire de `app/catalogue.py` par défaut, la base
+construite par la chaîne de données quand `BTP_CATALOGUE_SOURCE=base`. La propriété
+que cette story défend — le modèle ne produit aucun prix — est vraie dans les deux
+cas ; ce qui change, c'est la provenance du prix, que `Produit.origine` nomme, et
+elle est traitée en US-27.
 
 ### US-14 — Corriger une ligne et que ma correction fasse autorité
 
@@ -1149,7 +1150,8 @@ que cette story refuse.
   couleur, la qualité de correspondance étant un mot et non un code.
 
 **Traçabilité.** C1, C2, C3, C4, C5 · `docs/CHAINE_DONNEES.md` · état : **fait
-pour la chaîne, pas encore branché sur le devis** — `tools/donnees/` porte les six
+pour la chaîne, branché sur le devis derrière un réglage explicite** —
+`tools/donnees/` porte les six
 étapes (collecte fichier, API, scraping, agrégation, import, requêtes) ;
 `catalogue/jeu_de_donnees.json` retient 104 produits sur 539 lignes lues, chaque
 rejet compté par motif ; `tools/donnees/importer.py` construit un schéma 3NF dont
@@ -1161,11 +1163,25 @@ de les masquer ; cinq endpoints les servent sous le tag « Jeu de données ». L
 base n'est pas versionnée — l'API répond donc 503 sur un dépôt frais tant que la
 reconstruction n'a pas été lancée, et c'est testé. Tests :
 `tests/test_chaine_donnees.py` (43) et `tests/test_api_catalogue.py` (19).
-**Reste** : le moteur de devis lit toujours le dictionnaire de `app/catalogue.py`,
-pas la base. La couture est `resoudre_produit()`, que `moins_cher_de_famille()`
-remplacerait — mais les codes de lot du référentiel et les familles du dump ne se
-recouvrent pas encore, et inventer cette table de correspondance sans arbitrage
-métier reviendrait à décider à la place de l'artisan.
+**Couture avec le devis** : `app/correspondance.py` déclare la table lot ↔ famille,
+et `resoudre_produit()` la consulte quand `BTP_CATALOGUE_SOURCE=base`. La table est
+**déclarative à dessein** — une correspondance devinée par ressemblance de nom
+donnerait un prix sans jamais dire d'où il vient. Onze lots sur treize s'apparient
+sans ambiguïté ; deux portent l'état `arbitrage_requis` et **ne servent pas** :
+`PLOMB_APPAREIL` (le lot pose un lavabo, la famille ne contient que des mitigeurs)
+et `ELEC_TABLEAU` (le lot pose un tableau équipé, la famille ne contient que des
+disjoncteurs à 8,49 € — chiffrer un tableau à ce prix produirait un devis faux sans
+le signaler). La source est explicite et non implicite-si-présente : brancher la
+base « si elle est là » ferait dépendre le prix d'un fichier reconstructible et non
+versionné, et le même chantier chiffrerait différemment sur deux machines sans que
+rien ne le dise. `Produit.origine` voyage avec le prix et dit `base` ou `simule`.
+Trois cas retombent sur le catalogue simulé sans lever d'erreur : arbitrage en
+attente, base absente, famille vide. Tests : `tests/test_correspondance.py` (21).
+**Reste** : les deux arbitrages métier, qui appartiennent à l'artisan — trancher ce
+qu'on vend n'est pas un travail de programmation. Tant qu'ils ne sont pas rendus, le
+défaut reste `simule` ; le jour où ils le sont,
+`test_il_reste_des_arbitrages_et_ils_sont_nommes` tombe et rappelle de rebasculer le
+défaut.
 
 ### US-28 — Que la chaîne du modèle existe avant l'entraînement
 

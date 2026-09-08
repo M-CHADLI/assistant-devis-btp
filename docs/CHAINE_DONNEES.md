@@ -250,19 +250,80 @@ pas théorique ici : le code de lot peut venir d'un modèle de langage, donc
 d'une source qui n'a aucune notion de ce qu'est une chaîne dangereuse. Un test
 le vérifie en passant une référence hostile.
 
-## 8. Ce que la chaîne ne fait pas
+## 8. La couture avec le moteur de devis
 
-Trois limites, énoncées pour qu'elles ne soient pas prises pour des oublis.
+Deux vocabulaires se rencontrent, et ils n'ont pas été écrits ensemble. Les
+**lots** (`app/referentiel.py`) découpent un *ouvrage* — « pose stratifié »,
+« tableau électrique » : c'est la langue du chantier, celle que le modèle
+produit. Les **familles** de la base regroupent des *matières achetables* :
+c'est la langue du fournisseur, imposée par les sources. Un même mot n'y
+désigne pas la même chose.
 
-**Elle n'alimente pas encore le moteur de devis.** `app/catalogue.py` garde ses
-douze produits de démonstration, choisis pour correspondre aux lots du
-référentiel métier. Les familles du dump simulé ne portent pas les mêmes codes.
-Brancher l'un sur l'autre demande une table de correspondance entre lots et
-familles, qui est une décision de conception, pas une opération de plomberie.
-La couture est nette : `resoudre_produit()` est le seul point d'entrée à
-réécrire, et `moins_cher_de_famille()` est la requête qui le remplacera. Le jeu
-est en revanche mis à disposition d'un tiers par l'API, ce qui est exactement
-ce à quoi un jeu de données sert.
+`app/correspondance.py` est le seul endroit où les deux se touchent, et il est
+**déclaratif à dessein** : une correspondance devinée à l'exécution — par
+ressemblance de nom, par distance d'édition — donnerait un prix sans jamais
+dire d'où il vient.
+
+### Trois états, pas deux
+
+Chaque entrée porte son état. `etablie` quand le lot et la famille désignent la
+même chose ; `arbitrage_requis` quand ils n'en désignent pas tout à fait la
+même — **et dans ce cas l'entrée ne sert pas**. C'est la règle qui fait tenir
+le reste.
+
+| Lot | Famille | État | Pourquoi |
+|---|---|---|---|
+| `PEINT_PREP`, `PEINT_SOUS_COUCHE`, `PEINT_FINITION` | `PEINTURE_*` | établie | Même objet des deux côtés |
+| `SOL_PREP`, `SOL_SOUS_COUCHE`, `SOL_POSE_CARRELAGE` | `SOL_*` | établie | Même objet des deux côtés |
+| `SOL_POSE_STRATIFIE` | `SOL_STRATIFIE` | établie | `SOL_PARQUET` existe aussi, mais un contrecollé n'est pas un stratifié |
+| `PLOMB_ALIM`, `PLOMB_EVAC` | `PLOMBERIE_*` | établie | Tube au ml, même objet |
+| `ELEC_GAINE` | `ELECTRICITE_CABLE` | établie | La matière chiffrée est le câble ; la gaine est aux consommables du lot |
+| `ELEC_PRISE` | `ELECTRICITE_APPAREILLAGE` | établie | Prises et interrupteurs à l'unité |
+| **`PLOMB_APPAREIL`** | `PLOMBERIE_ROBINETTERIE` | **arbitrage requis** | Le lot pose un lavabo ; la famille ne contient que des mitigeurs |
+| **`ELEC_TABLEAU`** | `ELECTRICITE_TABLEAU` | **arbitrage requis** | Le lot pose un tableau équipé ; la famille ne contient que des disjoncteurs à 8,49 € |
+
+Chiffrer « un tableau électrique » au prix d'un disjoncteur produirait un devis
+faux **sans le signaler**, ce qui est exactement ce que le projet refuse. Les
+deux lots en attente retombent donc sur le catalogue simulé. Trancher n'est pas
+un travail de programmation : c'est décider ce qu'on vend, et cela appartient à
+l'artisan.
+
+`SOL_PARQUET` est une famille bien peuplée qu'aucun lot ne réclame : le
+référentiel n'a pas de lot « pose parquet ». Elle est déclarée dans
+`FAMILLES_SANS_LOT` — la nommer évite de croire la base intégralement
+exploitée.
+
+### La source de prix est explicite, jamais implicite
+
+```bash
+BTP_CATALOGUE_SOURCE=base    # sinon : simule, le défaut
+```
+
+Brancher la base « si elle est là » rendrait le prix d'un devis dépendant de la
+présence d'un fichier reconstructible et non versionné : le même chantier
+chiffrerait différemment sur deux machines, sans que rien ne le dise. D'où
+aussi `Produit.origine`, qui voyage avec le prix et dit d'où il vient (`base`
+ou `simule`) — une ligne reste explicable après un changement de réglage.
+
+Le défaut reste `simule` **tant que les deux arbitrages ne sont pas tranchés**.
+Le jour où ils le sont, un test tombe (`test_il_reste_des_arbitrages_et_ils_
+sont_nommes`) : c'est le rappel de rebasculer le défaut.
+
+Source `base` : le **moins cher de la famille**, prix remisé compris. Hypothèse
+de démonstration, pas règle métier — un artisan choisit une gamme, une
+disponibilité, parfois un fournisseur imposé. Elle a l'avantage d'être
+reproductible et d'être écrite plutôt que devinée.
+
+Trois cas retombent sur le catalogue simulé sans jamais lever d'erreur :
+correspondance en attente d'arbitrage, base absente (l'état d'un dépôt
+fraîchement cloné), famille vide. Un prix simulé assumé vaut mieux qu'un prix
+réel pris dans la mauvaise famille.
+
+Tests : `tests/test_correspondance.py` (21).
+
+## 9. Ce que la chaîne ne fait pas
+
+Deux limites, énoncées pour qu'elles ne soient pas prises pour des oublis.
 
 **Elle ne calcule pas d'empreinte carbone.** Les facteurs d'émission sont
 collectés et joints parce que c'est la seule manière de rendre la chaîne

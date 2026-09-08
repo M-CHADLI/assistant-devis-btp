@@ -92,8 +92,11 @@ archive/renoassistant/ conception précédente
   est comptée avec son motif) et aucune valeur n'est inventée (les peintures n'ont pas de masse
   volumique publiée, le champ reste vide et porte sa réserve). La colonne
   `qualite_correspondance` dit `exacte`, `proxy` ou `absente` — ne jamais laisser l'aval prendre
-  un proxy pour une mesure. La chaîne **n'alimente pas encore** `app/catalogue.py` : la couture
-  est décrite au §8 du document.
+  un proxy pour une mesure. La chaîne **alimente** le moteur de devis derrière un
+  réglage explicite (`BTP_CATALOGUE_SOURCE=base`), par la table lot ↔ famille déclarée dans
+  `app/correspondance.py`. Deux lots sur treize y portent `arbitrage_requis` et **ne servent
+  pas** : trancher ce qu'ils désignent appartient à l'artisan, pas au code. La couture est
+  décrite au §8 du document.
 - **`docs/RITUELS.md`** — les cinq rituels du projet et la **définition de fini** qui vaut
   pour toute story : comportement **et** cas dégradé, critères d'accessibilité satisfaits,
   tests sur le nominal et le dégradé, ligne de traçabilité de `docs/STORIES.md` mise à jour

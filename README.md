@@ -75,6 +75,7 @@ Variables d'environnement, toutes facultatives :
 | `BTP_DONNEES` | Racine des projets persistés | `donnees/` à la racine du dépôt |
 | `BTP_SIGNAL_QUALITE` | Fichier du jeu de candidats d'entraînement (US-25) | `~/.local/share/the-project/signal_qualite.jsonl` |
 | `BTP_CATALOGUE_BASE` | Base du jeu de données catalogue | `catalogue/catalogue.sqlite3` |
+| `BTP_CATALOGUE_SOURCE` | Source des prix du devis : `base` pour la base catalogue, `simule` sinon | `simule` |
 
 Pour produire une empreinte à coller dans l'environnement, sans jamais écrire la
 phrase nulle part :
