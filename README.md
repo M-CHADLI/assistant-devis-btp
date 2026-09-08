@@ -86,10 +86,14 @@ VIRTUAL_ENV=~/.venvs/the-project uv run uvicorn app.main:app --port 8199 &
 VIRTUAL_ENV=~/.venvs/the-project uv run python tools/parcours_bout_en_bout.py
 ```
 
-Vingt-deux étapes : application fermée sans jeton, profil, relecture de dictée
+Vingt-quatre étapes : application fermée sans jeton, profil, relecture de dictée
 (HITL-0), tour modèle, absence de prix avant validation (HITL-2), chiffrage,
-export, recalcul de chaque ligne, injection, hors périmètre, escalade, métriques,
-fermeture. Sortie 0 si tout passe.
+export, recalcul de chaque ligne, contradiction entre deux dictées, forme des
+mentions, injection, hors périmètre, escalade, métriques, fermeture. Sortie 0 si
+tout passe.
+
+`BTP_MOT_DE_PASSE` porte l'**empreinte** de la phrase, jamais la phrase :
+l'exporter en clair ferait échouer l'authentification sans dire pourquoi.
 
 ## État d'avancement
 
