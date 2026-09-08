@@ -74,7 +74,7 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
   une fois au démarrage** ; elle change à chaque redémarrage.
 - Le JavaScript du front passe `node --check`
   (node en `~/.nvm/versions/node/v22.22.2/bin`, pas dans le PATH par défaut).
-- `tools/verifier_accessibilite_docs.py` : **26 documents conformes**
+- `tools/verifier_accessibilite_docs.py` : **27 documents conformes**
   (`veille/seances/` est entré dans le corpus contrôlé le 08/09).
 - **L'image OCI se construit et démarre** : 212 Mo, base catalogue construite à
   la construction et non au démarrage, `/` à 200 et `/api/catalogue/familles` à
@@ -118,13 +118,17 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
 | `8ef0329` | Chaîne MLOps, écrite avant l'entraînement pour pouvoir en porter la trace (US-28) |
 | `a72dc7e` | Définition du sous-agent d'exécution locale |
 | `ae90dfe` | Conclusion de la preuve de concept, sur cinq exécutions relevées |
+| `48fc1a9` | Rafraîchissement de ce journal |
+| `8899b4b` | Rituels agiles, parties prenantes et définition de fini (C16) |
+| `743f3ef` | Accessibilité des sources de veille, traitée par le format (C7) |
 
-**Rien n'est poussé.** Quarante-deux commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
+**Rien n'est poussé.** Quarante-cinq commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
 
-**L'audit jury au réveil : 90 ✅ / 34 🟡 / 11 ❌ sur 135** (il était à
-82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Des onze ❌, neuf attendent un seul
-geste : `git remote add` puis `push`.** Les deux autres sont C7-43
-(accessibilité des sources de veille) et C16-117 (rituels à partager).
+**L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
+82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
+le même manque : aucun dépôt distant.** Il ne reste plus un seul critère rouge
+que le dépôt puisse fermer par lui-même — `git remote add` puis `push` les prend
+d'un coup.
 
 ---
 
@@ -136,8 +140,9 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
 
 ### Ce qui n'attend que vous — un geste chacun
 
-1. **`git remote add` puis `push`.** Neuf des onze ❌ de l'audit tombent d'un
-   coup. C'est de loin le meilleur rapport effort / critères du dépôt.
+1. **`git remote add` puis `push`.** Les neuf ❌ de l'audit tombent d'un seul
+   coup — ce sont désormais les seuls, et c'est de loin le meilleur rapport
+   effort / critères du dépôt.
 2. **Transposer sur Notion.** Les CSV de `docs/notion/` sont à jour (28 stories).
    Bloqué sur `NOTION_TOKEN` **et** le partage de la page racine avec
    l'intégration (menu `⋯` → Connexions). Sans ce partage, l'API rend une liste
@@ -175,10 +180,12 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
     `moins_cher_de_famille()`. Bloqué sur un arbitrage métier : les codes de lot
     du référentiel et les familles du dump ne se recouvrent pas, et inventer
     cette table de correspondance reviendrait à décider à votre place.
-11. **Deux ❌ résiduels hors dépôt distant** : C7-43 (vérifier que les sources de
-    veille respectent les normes d'accessibilité, et confirmer l'information
-    ailleurs) et C16-117 (écrire les objectifs et modalités des rituels, puis les
-    partager — la seconde moitié est un acte, pas un document).
+11. **Partager les rituels, pas seulement les écrire.** `docs/RITUELS.md` existe
+    désormais (objectifs, modalités, parties prenantes, définition de fini), mais
+    C16-117 reste 🟡 volontairement : le critère demande de *partager* avec les
+    parties prenantes, et un document versionné n'est pas un partage. C'est un
+    acte — l'envoyer au tuteur, l'ouvrir au premier point hebdomadaire.
+    C7-43 (accessibilité des sources de veille), qui figurait ici, est clos.
 
 ## À signaler à l'utilisateur au réveil
 
