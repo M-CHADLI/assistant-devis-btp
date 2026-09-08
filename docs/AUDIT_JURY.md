@@ -28,11 +28,11 @@ l'absence de jeu de données à exposer, et cette absence a cessé.
 | Livrable | Critères | ✅ | 🟡 | ❌ | ➖ |
 |---|---|---|---|---|---|
 | E1 — Données (C1-C5) | 28 | 18 | 8 | 2 | 0 |
-| E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
+| E2 — Veille et IA préexistante (C6-C8) | 20 | 16 | 4 | 0 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 27 | 8 | 4 | 0 |
 | E4 — Application (C14-C19) | 36 | 23 | 10 | 3 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **90** | **35** | **10** | **0** |
+| **Total** | **135** | **91** | **35** | **9** | **0** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -165,7 +165,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 | 40 | Informations partagées répondant à la thématique | 🟡 | Une séance tenue (08/09/2026) : 52 items balayés, 5 retenus, tous sur Unsloth et le fine-tuning. Elle a produit des effets réels — OPML corrigé, deux notes dans `docs/NOTES.md`, un ajout à `PLANNING.md`. **Une seule séance ne fait pas un rituel** : le critère se ferme par la récurrence hebdomadaire. |
 | 41 | Sources répondant aux critères de fiabilité (auteur identifié, notoriété, absence d'intérêt personnel) | 🟡 | Les six flux sont choisis, leur fiabilité n'est **pas argumentée par écrit** source par source, ce que le critère demande. |
 | 42 | Analyse du contenu valable (date récente, sources citées, document structuré) | ✅ | Séance du 08/09 : items datés d'août-septembre 2026, sources citées une à une, structure imposée par le gabarit, un verdict unique par item et une suite donnée à chacun. |
-| 43 | Sources respectant les normes d'accessibilité privilégiées, information confirmée ailleurs | ❌ | Non traité dans le choix des sources. |
+| 43 | Sources respectant les normes d'accessibilité privilégiées, information confirmée ailleurs | ✅ | `veille/DISPOSITIF.md`, section « Accessibilité des sources, et recoupement ». Le point de fond : **le format du flux est la première mesure d'accessibilité** — cinq sources sur six sont suivies en Atom/RSS, donc en texte structuré, lisible au lecteur d'écran comme au terminal ; la seule sans flux est nommée comme le point faible. S'y ajoute un relevé daté de ce que publie chaque éditeur (GitHub publie des rapports de conformité, Substack nomme WCAG 2.1, arXiv un engagement sans standard, PyPI et Hugging Face rien de trouvé) **avec ce que ce relevé ne prouve pas**. Le recoupement est une règle : la séance du 08/09 en donne le cas où il a *infirmé*. |
 
 > **Une séance tenue, pas quatre — délibérément.** Antidater trois séances de
 > plus fabriquerait la preuve au lieu de la produire, et la séance du 08/09 le
@@ -421,13 +421,15 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 15. ~~**Objectifs et modalités des rituels.**~~ **Fait** : `docs/RITUELS.md`. C16-117 passe à partiel, C16-118 s'appuie dessus. Le document refuse le rituel de façade — il adapte les modalités à un projet conduit à une personne au lieu de mimer une équipe, et dit ce qui n'est pas encore tenu.
 
+16. ~~**Accessibilité des sources de veille et recoupement.**~~ **Fait** : `veille/DISPOSITIF.md`. C6-43 fermé, dernier ❌ hors dépôt distant. L'argument qui porte : le format du flux Atom/RSS *est* la mesure d'accessibilité, et c'est celle que le projet contrôle.
+
 **Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
 protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
 mi-chemin), et **écrire le dataset à la main** — le reste est du rituel à
 tenir, pas du travail à inventer. Les six gisements documentaires de la liste
 ci-dessus sont fermés, et il ne reste plus de gisement de ❌ : les douze
-restants sont **neuf dépendances au dépôt distant** et un seul constat isolé,
-C7-43 — l'accessibilité des sources de veille.
+restants sont **tous les neuf** des dépendances au dépôt distant. Il n'y a plus
+un seul ❌ que le dépôt puisse fermer par lui-même.
 Ce qui bloque le projet n'est plus de l'outillage, c'est de la matière — les
 2000 exemples que personne ne peut écrire à ma place.
 

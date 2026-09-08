@@ -53,6 +53,70 @@ n'importe quel lecteur RSS.
 - **`unslothai/unsloth-zoo`** — le flux existe mais est **vide** (aucune
   release publiée). Écarté tant qu'il le reste.
 
+## Accessibilité des sources, et recoupement
+
+Le référentiel demande deux choses au **choix** des sources, pas seulement à
+leur contenu : privilégier celles qui respectent les normes d'accessibilité, et
+confirmer ailleurs l'information retenue. Les deux se traitent ici.
+
+### Le format du flux est la première mesure d'accessibilité
+
+C'est le point que le projet contrôle vraiment. Une source consommée **par flux
+Atom ou RSS** arrive comme du texte structuré : titre, date, corps. Pas de mise
+en page dépendant du JavaScript, pas d'information portée par la seule couleur,
+pas de navigation à la souris. Le même contenu se lit dans un lecteur d'écran,
+dans un terminal, ou dans un lecteur RSS réglé à la taille de police voulue.
+
+C'est pourquoi **cinq des six sources sont suivies par flux** et non par visite
+du site. Ce n'était pas d'abord un choix d'accessibilité — c'était un choix de
+rythme — mais il en produit l'effet, et il est conservé pour les deux raisons.
+
+Le corollaire est la seule source sans flux, `unsloth.ai/blog`, ouverte à la
+main en début de séance. C'est là que l'accessibilité dépend entièrement de
+l'éditeur, et le dispositif l'assume comme un point faible plutôt que de le
+taire.
+
+### Ce que publient les éditeurs
+
+Relevé le 08/09/2026, en lisant ce que chaque éditeur publie — pas en auditant
+les sites, ce que ce projet n'a pas les moyens de faire.
+
+| Éditeur | Ce qui est publié | Standard nommé |
+|---|---|---|
+| GitHub (Unsloth, PEFT) | Programme d'accessibilité, **rapports de conformité** publiés, système de composants accessibles par défaut, documentation d'usage au lecteur d'écran | Rapports de conformité publiés, standard à lire rapport par rapport |
+| Substack (Ahead of AI) | Déclaration d'accessibilité, canal de signalement | **WCAG 2.1**, sans niveau de conformité annoncé |
+| arXiv | Engagement écrit et adresse de signalement (`accessibility@arxiv.org`) | Aucun standard nommé |
+| PyPI | Aucun lien d'accessibilité trouvé depuis la page d'accueil | Aucun |
+| Hugging Face | Aucun lien d'accessibilité trouvé depuis la page d'accueil | Aucun |
+
+**Ce que ce tableau ne dit pas.** Il compare des *déclarations*, pas des sites.
+Un éditeur qui publie un rapport de conformité n'est pas nécessairement plus
+accessible qu'un éditeur silencieux ; il est seulement vérifiable. Et l'absence
+d'un lien en page d'accueil ne prouve pas l'absence de démarche.
+
+**Ce qu'on en fait, concrètement.** Aucune source n'est écartée sur ce critère :
+à thématique aussi étroite, l'écarter reviendrait à ne plus suivre l'outil du
+projet. Le classement sert ailleurs — **à départager deux sources qui disent la
+même chose.** C'est déjà arrivé : entre les notes de version GitHub et la page
+PyPI d'un même paquet, le flux GitHub est celui dont l'éditeur publie des
+rapports de conformité, et c'est un argument de plus pour le conserver malgré la
+correction du 08/09.
+
+### Recouper avant de retenir
+
+Un item n'est retenu qu'après **confirmation par une seconde source
+indépendante**, l'annonce de l'éditeur ne comptant pas comme sa propre
+confirmation. Un billet de blog qui annonce un gain de performance se confirme
+dans les notes de version, le dépôt, ou un article ; pas dans le billet suivant
+du même auteur.
+
+La séance du 08/09/2026 en donne le cas d'école, et il est instructif parce que
+le recoupement a **infirmé** au lieu de confirmer : le flux GitHub d'Unsloth
+donnait l'impression de suivre la bibliothèque Python. La vérification sur PyPI
+a montré deux numérotations distinctes et un changelog qui n'est pas là où on le
+croyait. Sans recoupement, la veille aurait continué à surveiller le mauvais
+flux en toute confiance — c'est exactement le risque que ce critère vise.
+
 ## Le rituel
 
 **Une heure, chaque vendredi matin.** C6 exige une récurrence planifiée d'au
