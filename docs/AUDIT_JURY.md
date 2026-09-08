@@ -25,12 +25,12 @@ chose de nommé · ❌ absent · ➖ écarté, avec motif assumé.
 
 | Livrable | Critères | ✅ | 🟡 | ❌ | ➖ |
 |---|---|---|---|---|---|
-| E1 — Données (C1-C5) | 28 | 6 | 5 | 16 | 1 |
+| E1 — Données (C1-C5) | 28 | 7 | 6 | 14 | 1 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 9 | 6 | 5 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 22 | 7 | 10 | 0 |
-| E4 — Application (C14-C19) | 36 | 16 | 7 | 13 | 0 |
+| E4 — Application (C14-C19) | 36 | 17 | 7 | 12 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **60** | **30** | **44** | **1** |
+| **Total** | **135** | **62** | **31** | **41** | **1** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -105,8 +105,8 @@ plutôt qu'un paragraphe d'intention.
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 19 | Modélisations respectant Merise | ❌ | Aucun MCD/MPD. `archive/renoassistant/DIAGRAMMES.md` contient des diagrammes Mermaid de flux, pas un modèle Merise, et relève d'une conception **périmée**. |
-| 20 | Modèle physique fonctionnel | ❌ | Absent. |
+| 19 | Modélisations respectant Merise | ✅ | `docs/MODELE_DONNEES.md` — modèle conceptuel Merise (neuf entités, cardinalités justifiées), dictionnaire des données champ par champ avec le module qui le définit, modèle logique en tables. Le niveau conceptuel et le dictionnaire **décrivent le code**, pas une intention ; le niveau logique est marqué comme cible. |
+| 20 | Modèle physique fonctionnel | 🟡 | Le modèle physique n'est pas écrit, et le document dit pourquoi : il n'a pas lieu d'être avant que la migration en base soit décidée. Les quatre déclencheurs de cette décision sont nommés. |
 | 21 | Base choisie au regard de la modélisation et des contraintes | ❌ | La persistance actuelle est du JSON à plat (`app/persistance.py`), choix assumé pour le prototype mais non argumenté comme choix de base. |
 | 22 | Procédures d'installation reproductibles (base + API) | 🟡 | L'API s'installe et se lance (`README.md`, `CLAUDE.md`). Rien pour une base. |
 | 23 | Script d'import fonctionnel | ❌ | Absent. |
@@ -275,7 +275,7 @@ plutôt qu'un paragraphe d'intention.
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 103 | Modélisation des données respectant un formalisme (Merise, entités-relations) | ❌ | Absente. Même manque que C4-19 ; un seul modèle sert les deux critères. |
+| 103 | Modélisation des données respectant un formalisme (Merise, entités-relations) | ✅ | Même document qu'en C4-19. Il couvre en plus les **structures propres à l'application** — projet, ligne de devis, correction, escalade — et les quatre contraintes d'intégrité qu'un schéma relationnel ne peut pas porter, avec ce qui les vérifie. |
 | 104 | Modélisation des parcours utilisateurs (schéma fonctionnel, wireframes) | ❌ | Aucune maquette, aucun wireframe. L'interface a été écrite directement en HTML. |
 | 105 | Chaque spécification couvre contexte, scénarios, critères de validation | ✅ | `docs/STORIES.md` : 26 stories, chacune avec son contexte, ses critères d'acceptation et **un cas dégradé**. |
 | 106 | Objectifs d'accessibilité intégrés aux critères d'acceptation des user stories | ✅ | 21 stories portent une rubrique « Accessibilité » **au même rang** que le fonctionnel — c'est exactement ce que le critère demande, et c'est rare. |
@@ -391,7 +391,7 @@ plutôt qu'un paragraphe d'intention.
 4. ~~**Quatre séances de veille** au gabarit.~~ **Fait pour une** (08/09/2026), et pas pour quatre : voir la note de C6. La suite est un rituel à tenir, pas un document à écrire. → C6.
 5. ~~**Registre des traitements de données personnelles** + procédures de tri.~~ **Fait** le 08/09/2026 : `docs/RGPD.md`. Trois critères fermés, et un défaut de confidentialité trouvé et corrigé au passage. → C4.
 6. ~~**Journalisation applicative** branchée sur les escalades et corrections existantes.~~ **Fait** : `app/observabilite.py`, dix points de journalisation, tableau de bord `/metriques`. → C20 et C11 largement fermés.
-7. **Modèle Merise** du référentiel métier et du catalogue. Deux critères d'un coup (C4-19 et C14-103), et il débloque le portage du catalogue en base — donc C2.
+7. ~~**Modèle Merise** du référentiel métier et du catalogue.~~ **Fait** : `docs/MODELE_DONNEES.md`. C4-19 et C14-103 fermés, C4-20 passe à partiel, et le schéma cible du catalogue est prêt pour C2.
 8. ~~**Authentification de l'API.**~~ **Fait** : `app/authentification.py`, 19 tests. C5-31, C5-33, C9-59, C9-61, C9-65 fermés ; C10-70 et C17-124 restent 🟡 (pas de renouvellement de jeton, un seul rôle).
 9. **Wireframes** de l'interface existante. Deux critères (C14-104, C17-121).
 10. **Benchmark STT** avec colonne éco-responsable. Sept critères de C7 et deux ailleurs (C15-110, C17-126). **C'est désormais le plus gros gisement restant** après le dépôt distant.
