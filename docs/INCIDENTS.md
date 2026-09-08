@@ -11,7 +11,7 @@
 
 ## La procédure suivie, à chaque fois
 
-Elle est identique pour les sept incidents ci-dessous, et c'est délibéré : une
+Elle est identique pour les dix incidents ci-dessous, et c'est délibéré : une
 procédure qui change à chaque incident n'en est pas une.
 
 1. **Reproduire d'abord, comprendre ensuite.** Tant que le symptôme n'est pas
@@ -218,10 +218,13 @@ le producteur et le consommateur ont chacun leur vocabulaire.
 avec repli sur le code brut. Un code inconnu affiche donc `forte` plutôt que
 `undefined` — laid, mais pas silencieux.
 
-**Test de non-régression.** Aucun, et c'est un manque assumé : le front n'a pas
-de suite de tests. La chaîne d'intégration passe désormais `node --check` sur
-son JavaScript, ce qui attrape la syntaxe, **pas** ce genre de défaut. Un test
-de bout en bout de l'interface reste à faire.
+**Test de non-régression.** D'abord aucun — le front n'avait alors aucun test
+portant sur son rendu. Depuis, **INC-09** a repris le même défaut à la racine :
+la sévérité voyage comme donnée et
+`tests/test_front.py::test_la_severite_d_une_mention_ne_se_devine_pas_dans_le_texte`
+interdit qu'elle se redevine dans le texte. La chaîne d'intégration passe par
+ailleurs `node --check` sur le JavaScript, ce qui attrape la syntaxe, **pas** ce
+genre de défaut.
 
 ---
 
@@ -248,6 +251,97 @@ au lieu de résoudre en silence des versions que personne n'a vues.
 
 ---
 
+## INC-08 — Une remise s'appliquait sans apparaître nulle part
+
+**Symptôme.** Le devis affiche `2 × 79,90 €` et un total de `135,83 €`. Rien
+sur la ligne n'explique l'écart. Un client qui vérifie son devis à la
+calculatrice — et c'est son droit — y lit une erreur de calcul.
+
+**Reproduction.** Dicter un chantier comportant un lot dont le produit du
+catalogue porte une promotion, puis valider la structure et lire le devis.
+
+**Comment il a été trouvé.** Ni par la relecture ni par les 245 tests d'alors,
+mais **du premier coup** par `tools/parcours_bout_en_bout.py` — le parcours qui
+ne neutralise rien : serveur réel, `gpt-oss:20b` réel, document écrit sur le
+disque. C'est la leçon de cet incident : une suite qui remplace le modèle par
+une fausse fonction teste correctement le code et reste **muette sur la chaîne
+complète**.
+
+**Cause.** `chiffrer_ligne()` appliquait `produit.promo_pct` au montant de la
+ligne, mais ni le document ni l'écran ne portaient de colonne où l'écrire. La
+remise existait dans le calcul et nulle part dans la restitution.
+
+**Correctif.** `remise_pct` entre au contrat de l'API, et une colonne *Remise*
+est ajoutée au `.docx` et à l'écran — **présente seulement s'il y a une
+remise**, pour ne pas afficher une colonne de zéros.
+
+**Test de non-régression.** `tests/test_devis.py` vérifie l'égalité
+quantité × prix unitaire × (1 − remise) = total ligne, et l'étape 8 bis du
+parcours de bout en bout la revérifie sur les lignes réellement produites par
+le modèle.
+
+---
+
+## INC-09 — La sévérité d'une mention se devinait dans le texte
+
+**Symptôme.** Un avertissement réglementaire perd sa couleur et son rôle ARIA
+dès qu'on reformule la phrase. Sur un poste gaz ou électrique, la mention forte
+cesse d'être annoncée aux technologies d'assistance.
+
+**Reproduction.** Modifier le libellé d'une mention forte pour qu'il ne
+commence plus par « ⚠️ », puis dicter un poste `ELEC_TABLEAU`.
+
+**Cause.** Le front classait la sévérité en cherchant l'emoji « ⚠️ » en tête du
+message. **Une information de sécurité portée par un caractère décoratif** :
+elle disparaît à la première reformulation, et un lecteur d'écran n'en tire
+rien. Le serveur, lui, connaissait la sévérité depuis toujours.
+
+**Correctif.** Elle voyage désormais comme donnée : `MentionSortie {niveau,
+texte}` est publié dans l'OpenAPI, le libellé vit dans `TEXTE_MENTION`
+(`app/referentiel.py`), et le front lit `niveau` pour écrire « Réglementé — »
+ou « Vigilance — » et annoncer une mention forte en `role="alert"`.
+
+**Test de non-régression.**
+`tests/test_front.py::test_la_severite_d_une_mention_ne_se_devine_pas_dans_le_texte`,
+plus l'étape 8 quater du parcours de bout en bout, qui contrôle la **forme** de
+chaque mention quoi que le modèle réponde.
+
+---
+
+## INC-10 — La dictée du prototype sortait de la machine
+
+**Symptôme.** Aucun, et c'est ce qui le rend grave : rien à l'écran ne signale
+que l'audio part ailleurs. Le produit affiche « 100 % local » dans son cadrage
+et envoyait la voix de l'artisan à un tiers.
+
+**Reproduction.** Ouvrir l'application dans Chrome, cliquer sur *Dicter*,
+observer le trafic sortant pendant l'enregistrement.
+
+**Comment il a été trouvé.** En rédigeant le registre des traitements
+(`docs/RGPD.md`) **depuis le code** plutôt que depuis un modèle type. Remonter
+la trace d'une donnée — ici la voix — oblige à répondre à « où va-t-elle ? »,
+question que personne ne s'était posée sur cette interface. C'est la leçon de
+cet incident : un exercice de conformité mené sérieusement est un outil de
+détection de défauts.
+
+**Cause.** Contrairement à ce que son nom laisse croire, la *Web Speech API* ne
+transcrit pas dans le navigateur : Chrome envoie l'audio à un service Google,
+Safari au sien. La voix de l'artisan et les noms de clients qu'elle porte
+quittaient donc le poste.
+
+**Correctif.** Le front réclame `processLocally` (Chrome 139+), qui garde la
+transcription sur l'appareil. Quand le navigateur ne sait pas le faire, **il
+n'y a pas de repli silencieux** : l'application nomme ce qui sortirait de la
+machine et demande un accord explicite, refusable. Le correctif ne supprime pas
+la cause — seul le STT local d'US-04 le fera — mais il supprime le caractère
+silencieux du défaut, qui en était le pire aspect.
+
+**Test de non-régression.** Deux tests dans `tests/test_front.py` : l'un exige
+que le traitement local soit demandé, l'autre qu'aucun second point de
+démarrage de la reconnaissance ne contourne la demande d'accord.
+
+---
+
 ## Ce que ce journal ne couvre pas encore
 
 - **Aucun outil de suivi.** C21-155 demande une procédure de débogage
@@ -255,6 +349,6 @@ au lieu de résoudre en silence des versions que personne n'a vues.
   tableau Notion (`docs/NOTION_BOARD.md`) le portera quand il sera monté.
 - **Aucune merge request.** C21-157 la cite en exemple. Sans dépôt distant, les
   correctifs sont des commits atomiques et rien de plus.
-- **Aucun incident de production**, puisqu'il n'y a pas de production. Les sept
+- **Aucun incident de production**, puisqu'il n'y a pas de production. Les dix
   incidents ci-dessus sont des défauts de développement — ce sont de vrais
   incidents, avec de vraies causes, mais aucun n'a touché un utilisateur.
