@@ -93,7 +93,7 @@
 </div>
 
 <div class="panneau devis-panneau">
-  <h1>📋 Devis en cours</h1>
+  <h1 id="titre-devis" tabindex="-1">📋 Devis en cours</h1>
 
   <p class="alerte" id="alerte-mentions" role="status" tabindex="-1" hidden></p>
 
@@ -258,15 +258,18 @@ function rendreDevis(devis) {
       .map(m => LIBELLE_MENTION[m] || m).join(' · ')}</p>`;
   }
   if ((devis.a_confirmer || []).length) {
-    html += '<div class="a-confirmer" role="group" aria-label="Quantités à confirmer">';
+    // role="alert" : la demande de confirmation doit être entendue tout de
+    // suite, et l'entrée de saisie la référence en aria-describedby (US-11).
+    html += '<div class="a-confirmer" id="zone-a-confirmer" role="alert" aria-label="Quantités à confirmer">';
     html += '<strong>Quantités inhabituelles — je ne les ai pas ajoutées :</strong><ul>';
     devis.a_confirmer.forEach((a, i) => {
-      html += `<li>${a.dimension_valeur} (${a.dimension_type}) sur ${a.lot_code}
+      const nom = a.lot_nom || a.lot_code;
+      html += `<li>${a.dimension_valeur} (${a.dimension_type}) sur ${nom}
         — habituellement entre ${a.borne_min} et ${a.borne_max}.
         <button onclick="arbitrerQuantite(${i}, 'confirmer')"
-          aria-label="Confirmer ${a.dimension_valeur} ${a.dimension_type} sur ${a.lot_code}">C'est bien ça</button>
+          aria-label="Confirmer ${a.dimension_valeur} ${a.dimension_type} sur ${nom}">C'est bien ça</button>
         <button onclick="arbitrerQuantite(${i}, 'abandonner')"
-          aria-label="Abandonner ${a.dimension_valeur} ${a.dimension_type} sur ${a.lot_code}">Erreur de dictée</button>
+          aria-label="Abandonner ${a.dimension_valeur} ${a.dimension_type} sur ${nom}">Erreur de dictée</button>
       </li>`;
     });
     html += '</ul></div>';
@@ -279,6 +282,13 @@ function rendreDevis(devis) {
     html += '</ul></div>';
   }
   devisCorps.innerHTML = html;
+  // La zone de saisie décrit ce qu'on attend d'elle : tant qu'une quantité est
+  // en attente, le lecteur d'écran annonce la demande en même temps que le champ.
+  if (document.getElementById('zone-a-confirmer')) {
+    entree.setAttribute('aria-describedby', 'zone-a-confirmer');
+  } else {
+    entree.removeAttribute('aria-describedby');
+  }
 }
 
 const modaleFond = document.getElementById('modale-correction');
@@ -572,8 +582,16 @@ formProfil.addEventListener('submit', async (e) => {
 
 fetch('/api/profil').then(r => r.json()).then(remplirProfil);
 
-// Resynchronisation au chargement
-fetch('/api/devis').then(r => r.json()).then(data => rendreDevis(data.devis));
+// Resynchronisation au chargement. US-16 : si un projet est retrouvé, le focus
+// va sur le titre du devis — sinon l'artisan repart en tête de document et doit
+// tout retraverser à la tabulation.
+fetch('/api/devis').then(r => r.json()).then(data => {
+  rendreDevis(data.devis);
+  if ((data.devis.lignes || []).length) {
+    ajouterMessage('Projet retrouvé : ton devis en cours a été rechargé.', 'assistant');
+    document.getElementById('titre-devis').focus();
+  }
+});
 
 // Dictée — prototype navigateur (Web Speech API)
 const btnDicter = document.getElementById('btn-dicter');

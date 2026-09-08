@@ -311,3 +311,17 @@ def test_l_api_expose_les_messages_de_cadrage_a_part(client):
 def test_un_tour_ordinaire_ne_porte_aucun_cadrage(client):
     r = client.post("/api/message", json={"texte": "je refais le salon, 22 m² de peinture"})
     assert r.json()["cadrages"] == []
+
+
+def test_une_quantite_en_attente_porte_le_nom_metier_du_lot(client, monkeypatch):
+    """L'artisan arbitre sur « Peinture de finition », pas sur PEINT_FINITION."""
+    def hors_bornes(historique, message, timeout=60):
+        return {"intent": "devis", "mention": None,
+                "payload": {"pieces": ["salon"],
+                            "lignes": [{"lot_code": "PEINT_FINITION",
+                                        "dimension": {"type": "surface", "valeur": 2200.0}}]}}
+
+    monkeypatch.setattr(pipeline, "appeler_modele", hors_bornes)
+    r = client.post("/api/message", json={"texte": "2200 m² de peinture"})
+    attente = r.json()["devis"]["a_confirmer"][0]
+    assert attente["lot_nom"] and attente["lot_nom"] != attente["lot_code"]

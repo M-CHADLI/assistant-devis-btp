@@ -20,6 +20,7 @@ from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
                           corriger_ligne, traiter_message, valider_structure,
                           valider_transcription)
 from app.profil import Client, RegimeTVA, champs_manquants
+from app.referentiel import REFERENTIEL
 from app.transcription import relire
 
 app = FastAPI(title="Démo — Assistant chantier BTP vocal")
@@ -96,7 +97,11 @@ def _serialiser_devis(session: Session) -> dict:
         # Lignes retenues parce que leur quantité sort des bornes (US-11) :
         # l'artisan doit confirmer ou abandonner avant qu'elles entrent au devis.
         "a_confirmer": [
-            {"lot_code": a.lot_code, "dimension_type": a.dimension_type,
+            {"lot_code": a.lot_code,
+             # Le nom métier, pas le code : l'artisan arbitre sur « Peinture de
+             # finition », pas sur PEINT_FINITION.
+             "lot_nom": REFERENTIEL[a.lot_code].nom if a.lot_code in REFERENTIEL else a.lot_code,
+             "dimension_type": a.dimension_type,
              "dimension_valeur": a.dimension_valeur,
              "borne_min": a.borne_min, "borne_max": a.borne_max}
             for a in session.a_confirmer

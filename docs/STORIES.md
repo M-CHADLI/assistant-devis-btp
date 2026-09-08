@@ -455,9 +455,18 @@ où le client reçoit le devis.
 - *Accessibilité* — le message de confirmation est relié au champ par
   `aria-describedby` et annoncé en `role="alert"` (RGAA 8.9, 11.10 — WCAG 3.3.1).
 
-**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §3.1, §3.2 ·
-état : **à faire** (aucune borne de plausibilité dans `app/devis.py` ni dans
-`app/referentiel.py`).
+**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §3.1, §3.2 · état : **fait** —
+les bornes vivent dans `app/referentiel.py` (`BORNES_PAR_UNITE`, plus
+`BORNES_PAR_LOT` là où l'unité générique est trop permissive), jamais dans la
+logique d'appel. Une valeur hors bornes n'est pas rejetée : elle part en
+`LigneEnAttente` et l'artisan arbitre (`confirmer_quantite` / `abandonner_quantite`,
+`POST /api/arbitrer`), sa confirmation étant journalisée en `Correction`. La
+même quantité redictée après confirmation n'est ni redemandée ni doublée
+(déduplication sur `(lot_code, type, valeur)`). Une valeur négative ou nulle,
+elle, ne passe même pas le schéma (`valeur: float = Field(gt=0)`). Côté
+interface, la demande est un bloc `role="alert"` référencé par la zone de saisie
+en `aria-describedby`, et nomme le lot en clair (`lot_nom`). Tests :
+`tests/test_pipeline.py`, `tests/test_api.py`, `tests/test_front.py`.
 
 ---
 
@@ -608,9 +617,17 @@ verrouille, page qui se recharge. Perdre la session, c'est perdre l'usage.
 - *Accessibilité* — après rechargement, le focus est placé sur le titre du projet,
   pas perdu en tête de document (WCAG 2.4.3).
 
-**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §2.5 · état : **à faire** —
-`app/main.py` expose une unique `SESSION` de module : aucun isolement, aucune
-persistance au-delà du process.
+**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §2.5 · état : **fait** —
+l'état est rattaché à un `projet_id` porté par un cookie et rangé par
+`app/persistance.py` (`Registre`, un fichier JSON par projet, format versionné
+avec relecture des versions antérieures) ; plus aucune `SESSION` de module. Deux
+navigateurs ouvrent donc deux projets distincts et ne se lisent pas. Au
+rechargement, le front resynchronise sur `GET /api/devis` et, si un projet est
+retrouvé, place le focus sur le titre du devis. Tests :
+`tests/test_persistance.py`, `tests/test_api.py`, `tests/test_front.py`.
+**Reste** : deux appareils sur *le même* projet s'écrasent encore au dernier
+écrivain — le partage d'un projet entre appareils suppose l'authentification
+(US-23), pas encore faite.
 
 ### US-17 — Repartir d'un devis pour un chantier voisin
 

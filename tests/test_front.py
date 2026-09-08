@@ -121,3 +121,16 @@ def test_le_cadrage_reste_lisible_sans_couleur(html):
     debut = html.index(".msg.cadrage")
     style = html[debut:debut + 200]
     assert "border-left" in style or "font-style" in style
+
+
+def test_la_demande_de_confirmation_est_annoncee_et_reliee_au_champ(html):
+    """US-11 — RGAA 8.9 et 11.10 : role="alert" + aria-describedby sur la saisie."""
+    assert 'id="zone-a-confirmer" role="alert"' in html
+    assert "setAttribute('aria-describedby', 'zone-a-confirmer')" in html
+    assert "removeAttribute('aria-describedby')" in html
+
+
+def test_apres_rechargement_le_focus_va_sur_le_titre_du_devis(html):
+    """US-16 — WCAG 2.4.3 : sinon l'artisan repart en tête de document."""
+    assert '<h1 id="titre-devis" tabindex="-1">' in html
+    assert "document.getElementById('titre-devis').focus()" in html

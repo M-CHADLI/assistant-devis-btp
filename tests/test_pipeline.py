@@ -191,6 +191,17 @@ def test_confirmer_un_index_inexistant_ne_plante_pas(faux):
     assert pipeline.abandonner_quantite(s, 3) is False
 
 
+def test_une_quantite_confirmee_n_est_pas_redemandee_au_tour_suivant(faux):
+    """Critère US-11 : reconfirmer serait traiter l'artisan comme non fiable."""
+    faux(_sortie_devis(valeur=2200.0), _sortie_devis(valeur=2200.0))
+    s = Session()
+    traiter_message(s, "un très grand chantier")
+    pipeline.confirmer_quantite(s, 0)
+    traiter_message(s, "je redis : deux mille deux cents mètres carrés")
+    assert s.a_confirmer == [], "la quantité déjà confirmée ne repasse pas en attente"
+    assert len(s.devis.lignes) == 1, "et elle n'est pas ajoutée deux fois"
+
+
 def test_borne_serree_sur_le_tableau_electrique(faux):
     """Un logement a un tableau, deux au plus — pas douze."""
     faux(_sortie_devis(lot_code="ELEC_TABLEAU", valeur=12.0))
