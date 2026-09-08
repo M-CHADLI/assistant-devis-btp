@@ -63,6 +63,16 @@
   .relecture label { display: block; font-size: .85rem; margin-bottom: .3rem; }
   .relecture textarea { width: 100%; box-sizing: border-box; font: inherit;
                padding: .5rem; resize: vertical; }
+  /* Sur un téléphone tenu sur chantier, deux panneaux côte à côte forcent un
+     défilement horizontal : WCAG 2.1 critère 1.4.10 (« Reflow ») demande qu'à
+     320 px de large le contenu s'empile au lieu de se serrer. Les cibles
+     tactiles, elles, font déjà 44 px partout (règle `button` ci-dessus). */
+  @media (max-width: 45rem) {
+    body { flex-direction: column; height: auto; min-height: 100vh; }
+    .panneau { overflow-y: visible; }
+    .chat { border-right: 0; border-bottom: 1px solid #8883; }
+    .fil { min-height: 40vh; }
+  }
   .connexion { max-width: 26rem; margin: 3rem auto; border: 1px solid #2563eb;
                border-radius: .4rem; padding: 1.2rem; }
   .connexion h1 { font-size: 1.1rem; margin: 0 0 .6rem; }

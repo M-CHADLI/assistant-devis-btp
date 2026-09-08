@@ -31,6 +31,7 @@ docs/                  la conception — fait autorité
 docs/STORIES.md        les 26 stories et l'ordre du backlog
 docs/notion/           schémas et CSV de la transposition Notion
 docs/MODELE_DONNEES.md le modèle de données — conceptuel constaté, logique cible
+docs/MAQUETTES.md      parcours utilisateur et maquettes filaires annotées
 docs/RGPD.md           registre des traitements et procédures de tri
 app/                   l'implémentation (FastAPI, moteur de devis, front)
 tests/                 la suite pytest
@@ -58,6 +59,9 @@ archive/renoassistant/ conception précédente
   **décrivent le code constaté**, le modèle logique est une **cible** (il n'y a pas de base de
   données). Les quatre déclencheurs de la migration y sont nommés — tant qu'ils ne sont pas
   atteints, ne pas introduire de base.
+- **`docs/MAQUETTES.md`** — le parcours de bout en bout et six maquettes filaires, chacune
+  annotée des règles d'accessibilité qu'elle porte **et du test qui les tient**. Les écrans
+  restants s'y dessinent **avant** d'être codés, annotations comprises.
 - **`docs/NOTION_BOARD.md`** — comment poser cette organisation sur Notion (thème JIRA) sans le
   connecteur MCP, qui charge 42 outils pour six appels utiles.
 - **`docs/NOTES.md`** — bloc-notes des idées non encore arbitrées. Ce qui y est tranché remonte

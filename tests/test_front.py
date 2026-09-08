@@ -273,3 +273,68 @@ def test_le_recours_au_service_distant_exige_un_accord_explicite(html):
     assert "sortent de cette machine" in bloc, "l'avertissement ne dit pas ce qui sort"
     assert bloc.count("reco.start()") == 1, (
         "un second point de démarrage contournerait la demande d'accord")
+
+
+# --- Affichage sur téléphone (WCAG 2.1, critère 1.4.10) ---------------------
+
+def test_les_panneaux_s_empilent_sur_un_ecran_etroit(html):
+    """L'entrée du produit est la voix, dictée sur chantier : l'écran probable
+    est un téléphone. Deux panneaux côte à côte y imposeraient un défilement à
+    deux dimensions, que le critère « Reflow » interdit."""
+    debut = html.index("@media (max-width: 45rem)")
+    bloc = html[debut:html.index("}", html.index(".fil { min-height", debut))]
+    assert "flex-direction: column" in bloc, "les panneaux ne s'empilent pas"
+    assert "height: auto" in bloc, "une hauteur fixe rognerait le contenu empilé"
+
+
+def test_les_cibles_tactiles_font_au_moins_44_pixels(html):
+    """RGAA 4.1, critère 10.11 : une cible pointée sous 44 px se rate avec des
+    gants. La règle vaut pour tous les boutons, pas seulement les principaux."""
+    regle = html[html.index("  button { cursor: pointer;"):]
+    regle = regle[:regle.index("}")]
+    assert "min-height:44px" in regle and "min-width:44px" in regle
+
+
+# --- Propriétés d'accessibilité annotées sur les maquettes ------------------
+# docs/MAQUETTES.md renvoie à ces tests : une annotation de maquette qui n'est
+# tenue par rien décrit une intention, pas un contrat.
+
+def test_le_lien_d_evitement_est_le_premier_element_focalisable(html):
+    """RGAA 4.1, critère 12.7. Un lien d'évitement placé après la barre
+    d'actions ne sert à rien : il faut déjà l'avoir traversée pour l'atteindre."""
+    corps = html[html.index("<body"):]
+    positions = [corps.index(balise) for balise in
+                 ("<a ", "<button", "<input", "<textarea", "<select")
+                 if balise in corps]
+    premier = corps[min(positions):min(positions) + 120]
+    assert "lien-evitement" in premier, (
+        f"le premier élément focalisable n'est pas le lien d'évitement : {premier[:60]}")
+    assert 'href="#contenu"' in premier, "le lien d'évitement ne vise pas le contenu"
+
+
+def test_le_lien_d_evitement_redevient_visible_a_la_prise_de_focus(html):
+    """Masqué hors focus, il doit réapparaître au clavier — sinon c'est un lien
+    invisible pour tout le monde, y compris pour qui en a besoin."""
+    assert ".lien-evitement:focus" in html
+    regle = html[html.index(".lien-evitement:focus"):]
+    assert "position:static" in regle[:regle.index("}")]
+
+
+def test_le_fil_de_conversation_est_une_region_vivante(html):
+    """Les réponses arrivent après coup. Sans `aria-live`, un lecteur d'écran
+    ne les annonce jamais : l'artisan parle dans le vide."""
+    ligne = [l for l in html.splitlines() if 'id="fil"' in l][0]
+    assert 'aria-live="polite"' in ligne, "le fil n'est pas annoncé"
+    assert 'aria-atomic="false"' in ligne, "tout le fil serait relu à chaque ajout"
+
+
+def test_la_modale_piege_le_focus_et_le_rend(html):
+    """RGAA 4.1, critère 7.3. Un focus qui s'échappe derrière une modale laisse
+    l'utilisateur au clavier sans moyen de revenir."""
+    assert 'aria-modal="true"' in html
+    bloc = html[html.index("function fermerModal"):]
+    assert "elementAvantModal" in bloc, "le focus n'est pas rendu à son origine"
+    assert "e.key === 'Escape'" in html, "Échappement ne ferme pas la modale"
+    piege = html[html.index("if (e.key === 'Escape')"):]
+    assert "e.preventDefault(); last.focus()" in piege, "le focus sort par le haut"
+    assert "e.preventDefault(); first.focus()" in piege, "le focus sort par le bas"

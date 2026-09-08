@@ -27,10 +27,10 @@ chose de nommé · ❌ absent · ➖ écarté, avec motif assumé.
 |---|---|---|---|---|---|
 | E1 — Données (C1-C5) | 28 | 7 | 6 | 14 | 1 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 9 | 6 | 5 | 0 |
-| E3 — Modèle IA (C9-C13) | 39 | 22 | 7 | 10 | 0 |
-| E4 — Application (C14-C19) | 36 | 17 | 7 | 12 | 0 |
+| E3 — Modèle IA (C9-C13) | 39 | 23 | 6 | 10 | 0 |
+| E4 — Application (C14-C19) | 36 | 19 | 7 | 10 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **62** | **31** | **41** | **1** |
+| **Total** | **135** | **65** | **30** | **39** | **1** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -215,7 +215,7 @@ plutôt qu'un paragraphe d'intention.
 | 69 | Communication avec l'API fonctionnelle | ✅ | Le front mono-fichier `app/static/index.html` appelle les sept endpoints. |
 | 70 | Authentification et renouvellement des jetons intégrés | 🟡 | Le front ouvre la session, la ferme, et **tout 401 le ramène au formulaire quel que soit l'appel** (`tests/test_front.py`). Il n'y a en revanche **aucun renouvellement silencieux** : à l'expiration des 12 h, l'artisan ressaisit sa phrase. Acceptable pour une journée de chantier, à nommer devant le jury plutôt qu'à cacher. |
 | 71 | Tous les endpoints du projet intégrés selon les spécifications | ✅ | Les sept sont appelés depuis le front. |
-| 72 | Adaptations d'interface intégrées | 🟡 | Interface fonctionnelle et conforme RGAA, mais **il n'existe aucune maquette** dont on puisse dire qu'elle est respectée (voir C14-104 et C17-121). |
+| 72 | Adaptations d'interface intégrées | ✅ | Interface conforme RGAA 4.1, désormais **adossée à des maquettes annotées**. L'exercice a produit une adaptation réelle : sous 45 rem, les deux panneaux s'empilent au lieu de se serrer (WCAG 2.1, critère 1.4.10), ce qui manquait pour un produit dont l'entrée est la dictée sur chantier. |
 | 73 | Tests d'intégration couvrant tous les endpoints exploités | ✅ | `tests/test_api.py` via `TestClient`. |
 | 74 | Tests s'exécutant en totalité, résultats interprétés | ✅ | `62 passed`. |
 | 75 | Sources versionnées sur le dépôt Git de l'application | 🟡 | Versionnées localement depuis `e669883`. **Pas de remote.** |
@@ -276,7 +276,7 @@ plutôt qu'un paragraphe d'intention.
 | # | Critère | Statut | Constat |
 |---|---|---|---|
 | 103 | Modélisation des données respectant un formalisme (Merise, entités-relations) | ✅ | Même document qu'en C4-19. Il couvre en plus les **structures propres à l'application** — projet, ligne de devis, correction, escalade — et les quatre contraintes d'intégrité qu'un schéma relationnel ne peut pas porter, avec ce qui les vérifie. |
-| 104 | Modélisation des parcours utilisateurs (schéma fonctionnel, wireframes) | ❌ | Aucune maquette, aucun wireframe. L'interface a été écrite directement en HTML. |
+| 104 | Modélisation des parcours utilisateurs (schéma fonctionnel, wireframes) | ✅ | `docs/MAQUETTES.md` — le parcours complet en schéma fonctionnel (les trois points d'arrêt HITL y sont visibles), puis six maquettes filaires. Le document **dit qu'elles ont été dessinées après l'interface** plutôt que de faire croire l'inverse ; à partir de là, les écrans restants (US-01, US-03, US-17) seront dessinés avant d'être codés. |
 | 105 | Chaque spécification couvre contexte, scénarios, critères de validation | ✅ | `docs/STORIES.md` : 26 stories, chacune avec son contexte, ses critères d'acceptation et **un cas dégradé**. |
 | 106 | Objectifs d'accessibilité intégrés aux critères d'acceptation des user stories | ✅ | 21 stories portent une rubrique « Accessibilité » **au même rang** que le fonctionnel — c'est exactement ce que le critère demande, et c'est rare. |
 | 107 | Objectifs d'accessibilité appuyés sur un standard (WCAG, RGAA) | ✅ | RGAA 4.1 nommé 23 fois dans `docs/STORIES.md`, avec les numéros de critère. |
@@ -309,7 +309,7 @@ plutôt qu'un paragraphe d'intention.
 | # | Critère | Statut | Constat |
 |---|---|---|---|
 | 120 | Environnement de développement conforme aux spécifications | ✅ | uv, venv hors dépôt, Python ≥ 3.14, dépendances épinglées. |
-| 121 | Interfaces intégrées respectant les maquettes | ❌ | Il n'y a pas de maquette (C14-104). Le critère ne peut pas être satisfait tant qu'elle n'existe pas — même si l'interface, elle, existe. |
+| 121 | Interfaces intégrées respectant les maquettes | ✅ | L'interface respecte les maquettes par construction, puisqu'elles en sont tirées. Ce qui rend le critère défendable est ailleurs : **chaque maquette porte ses annotations d'accessibilité et le test qui les tient**. Quatre propriétés annotées n'étaient couvertes par aucun test — lien d'évitement, région vivante du fil, piège de focus de la modale — elles le sont depuis. |
 | 122 | Comportements des composants et navigation conformes aux spécifications | ✅ | Validation, modale accessible, arbitrage des quantités, correction de ligne — conformes aux stories. |
 | 123 | Composants métier développés et fonctionnels | ✅ | Moteur de devis déterministe : référentiel, taux de chute, rendements, TVA, ventilation, acompte. 12 tests dédiés. |
 | 124 | Gestion des droits d'accès développée | 🟡 | L'accès est fermé, testé et journalisé (voir C5-33), mais **il n'y a qu'un seul rôle** : un artisan sur sa machine. Il n'existe donc pas de gestion de droits différenciés, et il n'en faut pas encore — US-01 (comptes) la rendra nécessaire. |
@@ -393,7 +393,7 @@ plutôt qu'un paragraphe d'intention.
 6. ~~**Journalisation applicative** branchée sur les escalades et corrections existantes.~~ **Fait** : `app/observabilite.py`, dix points de journalisation, tableau de bord `/metriques`. → C20 et C11 largement fermés.
 7. ~~**Modèle Merise** du référentiel métier et du catalogue.~~ **Fait** : `docs/MODELE_DONNEES.md`. C4-19 et C14-103 fermés, C4-20 passe à partiel, et le schéma cible du catalogue est prêt pour C2.
 8. ~~**Authentification de l'API.**~~ **Fait** : `app/authentification.py`, 19 tests. C5-31, C5-33, C9-59, C9-61, C9-65 fermés ; C10-70 et C17-124 restent 🟡 (pas de renouvellement de jeton, un seul rôle).
-9. **Wireframes** de l'interface existante. Deux critères (C14-104, C17-121).
+9. ~~**Wireframes** de l'interface existante.~~ **Fait** : `docs/MAQUETTES.md`, six maquettes annotées. C14-104, C17-121 et C10-72 fermés, quatre tests d'accessibilité ajoutés au passage.
 10. **Benchmark STT** avec colonne éco-responsable. Sept critères de C7 et deux ailleurs (C15-110, C17-126). **C'est désormais le plus gros gisement restant** après le dépôt distant.
 
 **Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), tenir le banc
