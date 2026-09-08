@@ -10,6 +10,7 @@ import pytest
 
 from app import pipeline
 from app.llm import ModeleInjoignable, SortieModeleInvalide
+from app.garde_fous import MESSAGE_HUMAIN
 from app.pipeline import MAX_APPELS_MODELE, Session, traiter_message
 
 
@@ -245,3 +246,38 @@ def test_le_compteur_de_clarification_ne_bouge_pas_sur_un_devis(faux):
     s = Session()
     traiter_message(s, "22 m2 de peinture")
     assert s.tours_clarification == 0
+
+
+# --- US-21 : l'artisan tire lui-même la soupape ----------------------------
+
+def test_la_demande_d_humain_court_circuite_le_modele(faux):
+    """Répondre à « je veux un humain » par du texte généré serait exactement
+    le contraire de ce qui est demandé : le modèle n'est pas appelé."""
+    f = faux()
+    s = Session()
+    r = traiter_message(s, "je veux parler à un humain")
+    assert r.intent == "escalade"
+    assert f.appels == 0
+    assert r.messages_assistant == [MESSAGE_HUMAIN]
+
+
+def test_l_escalade_demandee_est_journalisee_avec_son_motif(faux):
+    faux()
+    s = Session()
+    traiter_message(s, "passe-moi un conseiller")
+    assert [e.motif for e in s.escalades] == ["demande_explicite"]
+    assert s.escalades[0].horodatage
+
+
+def test_l_escalade_demandee_conserve_le_devis_en_cours(faux):
+    """Scénario 3 : le conseiller reprend là où l'artisan en est, il ne repart
+    pas de zéro."""
+    faux(_sortie_devis())
+    s = Session()
+    traiter_message(s, "je refais le salon, 22 m2 de peinture")
+    avant = list(s.devis.lignes)
+    assert avant, "le tour de mise en place doit produire au moins une ligne"
+    r = traiter_message(s, "bon, passe-moi un humain")
+    assert r.intent == "escalade"
+    assert list(r.devis.lignes) == avant
+    assert list(s.devis.lignes) == avant

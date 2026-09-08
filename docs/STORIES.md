@@ -766,10 +766,20 @@ par échec répété des contrôles de sortie, périmètre ambigu, ou demande ex
 - Le nombre d'appels au modèle par message est borné et connu.
 
 **Traçabilité.** C17, C20 · `DISPOSITIF_AGENT.md` §1.4 (HITL-4) · état :
-**partiel** — l'escalade existe (`session.escalades`, sortie `"escalade"` dans
-`app/pipeline.py`), mais les reprises se **superposent** : `app/llm.py` réessaie
-deux fois *et* `traiter_message` réessaie deux fois, soit jusqu'à **quatre appels
-modèle** par message. À borner explicitement.
+**fait** — les trois scénarios sont couverts. La soupape automatique et la
+journalisation du motif existaient (`session.escalades`, sortie `"escalade"` dans
+`app/pipeline.py`) ; la superposition des reprises signalée ici a été corrigée :
+`MAX_APPELS_MODELE = 2` (un essai, une reprise) et `app/llm.py` n'a plus de
+boucle interne, le pipeline est le seul à reprendre. Manquait le **scénario 1**,
+la soupape tirée par l'artisan lui-même : `demande_un_humain()` dans
+`app/garde_fous.py` la détecte de façon déterministe et `traiter_message` en fait
+sa **première** branche, **avant tout appel modèle** — répondre à « je veux un
+humain » par du texte généré serait le contraire de ce qui est demandé. Le devis
+en cours est passé tel quel dans le `ResultatTour` (scénario 3). Coût du faux
+positif assumé : la détection exige une **cible humaine** (« humain »,
+« conseiller », « technicien »…), jamais le verbe seul — « passe-moi la truelle »
+ne coupe pas l'artisan en plein travail, et neuf tournures de chantier ordinaire
+sont testées comme telles.
 
 ---
 

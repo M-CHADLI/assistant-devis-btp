@@ -14,9 +14,10 @@ from pydantic import ValidationError
 
 from app.devis import (Devis, LotInconnu, ajouter_consommables, ajouter_ligne,
                        chiffrer, consommables_par_defaut)
-from app.garde_fous import (MESSAGE_INJECTION, detecter_hors_perimetre,
-                            detecter_injection, message_hors_perimetre,
-                            neutraliser, reste_du_chantier)
+from app.garde_fous import (MESSAGE_HUMAIN, MESSAGE_INJECTION, demande_un_humain,
+                            detecter_hors_perimetre, detecter_injection,
+                            message_hors_perimetre, neutraliser,
+                            reste_du_chantier)
 from app.llm import MODEL_NAME, ModeleInjoignable, SortieModeleInvalide, appeler_modele
 from app.observabilite import JOURNAL
 from app.profil import Client, ProfilArtisan
@@ -284,6 +285,16 @@ def traiter_message(session: Session, texte_utilisateur: str) -> ResultatTour:
     texte_modele = texte_utilisateur
 
     debut = time.monotonic()
+
+    # HITL-4, la soupape tirée par l'artisan (US-21, §1.4). Avant tout appel
+    # modèle : demander un humain et recevoir une réponse générée serait
+    # exactement le contraire de ce qui est demandé. Le devis n'est pas touché —
+    # le conseiller reprend là où l'artisan en est.
+    if demande_un_humain(texte_utilisateur):
+        _journaliser_escalade(session, "demande_explicite", texte_utilisateur[:200])
+        JOURNAL.enregistrer("escalade", motif="demande_explicite")
+        _journaliser_tour(session, "escalade", debut)
+        return ResultatTour("escalade", [MESSAGE_HUMAIN], [], session.devis, {})
 
     injections = detecter_injection(texte_utilisateur)
     if injections:

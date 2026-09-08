@@ -156,3 +156,46 @@ def neutraliser(texte: str) -> str:
     ferait perdre du chantier, et le contenu retiré échapperait à la relecture
     de l'artisan (HITL-0)."""
     return f"{CADRE_DONNEE}\n{texte}\n[fin de la dictée]"
+
+
+# --------------------------------------------------------------------------
+# Demande explicite d'un humain (US-21, HITL-4)
+# --------------------------------------------------------------------------
+
+# La soupape doit pouvoir être tirée par l'artisan lui-même, pas seulement par
+# l'échec du modèle : « un agent qui n'a pas de sortie de secours produit des
+# réponses dégradées plutôt que d'admettre sa limite » (§1.4). Détection
+# déterministe, comme le reste de ce module — on ne demande pas au modèle s'il
+# doit se retirer.
+# Une personne, pas une machine. Formulée de vingt façons sur un chantier, mais
+# toujours autour d'une même cible : « humain », « conseiller », « technicien ».
+# Le verbe seul ne suffit pas — « passe-moi la truelle » n'est pas une escalade.
+_CIBLE_HUMAINE = (
+    r"(?:vrai(?:e)?\s+|veritable\s+)?"
+    r"(?:humain|conseiller|technicien|expert|operateur|"
+    r"personne\s+(?:reelle|physique)|vraie?\s+personne|quelqu.un|"
+    r"assistance\s+humaine|standard)"
+)
+_APPEL = r"(?:parler|passer|passe[rz]?|mettre|met[sz]?|basculer|joindre|contacter)"
+_ENVIE = (
+    r"(?:je veux|j.aimerais|je voudrais|je prefere|je souhaite|il me faut"
+    r"|je peux avoir|j.ai besoin d.)"
+)
+DEMANDE_HUMAIN = re.compile(
+    rf"\b{_APPEL}\b[^.!?]{{0,30}}?\b{_CIBLE_HUMAINE}\b"
+    rf"|\b{_ENVIE}\b[^.!?]{{0,30}}?\b{_CIBLE_HUMAINE}\b"
+    rf"|\bpasse[- ]moi\b[^.!?]{{0,20}}?\b{_CIBLE_HUMAINE}\b"
+    rf"|\b(?:un|une)\s+{_CIBLE_HUMAINE}\s+"
+    r"(?:stp|svp|s.il te plait|s.il vous plait)\b"
+)
+
+MESSAGE_HUMAIN = (
+    "D'accord, je m'arrête là et je passe la main. Ton devis en cours est "
+    "conservé tel quel — un conseiller le reprend à l'endroit où tu en es, tu "
+    "n'auras rien à redire depuis le début."
+)
+
+
+def demande_un_humain(texte: str) -> bool:
+    """L'artisan demande explicitement à sortir de l'agent (US-21, scénario 1)."""
+    return bool(DEMANDE_HUMAIN.search(_normaliser(texte)))

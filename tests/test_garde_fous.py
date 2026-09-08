@@ -8,9 +8,9 @@ from __future__ import annotations
 import pytest
 
 from app import pipeline
-from app.garde_fous import (HORS_PERIMETRE, MESSAGE_INJECTION,
-                            detecter_hors_perimetre, detecter_injection,
-                            neutraliser, reste_du_chantier)
+from app.garde_fous import (HORS_PERIMETRE, MESSAGE_HUMAIN, MESSAGE_INJECTION,
+                            demande_un_humain, detecter_hors_perimetre,
+                            detecter_injection, neutraliser, reste_du_chantier)
 from app.pipeline import MESSAGE_ESCALADE, MESSAGE_INDISPONIBLE, Session, traiter_message
 
 
@@ -172,3 +172,52 @@ def test_une_erreur_modele_ne_remonte_pas_le_detail_technique(monkeypatch):
     assert "11434" not in rendu and "localhost" not in rendu
     # …mais la trace interne, elle, garde le détail utile au débogage.
     assert any("11434" in e.detail for e in session.escalades)
+
+
+# --- US-21 : demande explicite d'un humain ---------------------------------
+
+@pytest.mark.parametrize("texte", [
+    "je veux parler à un humain",
+    "passe-moi un conseiller",
+    "je préfère un technicien s'il te plaît",
+    "mets moi en relation avec quelqu'un",
+    "j'aimerais un vrai humain",
+    "je veux parler a une personne reelle",
+    "basculer vers un conseiller",
+    "un humain stp",
+    "je peux avoir quelqu'un au téléphone",
+    "j'en ai marre, mets-moi un vrai conseiller",
+])
+def test_la_demande_d_un_humain_est_reconnue(texte):
+    assert demande_un_humain(texte)
+
+
+@pytest.mark.parametrize("texte", [
+    "je refais le salon en peinture et sol",
+    "il faut passer le rouleau deux fois",
+    "je veux parler du sol du séjour",
+    "mets moi 20 m2 de parquet",
+    "passe-moi la truelle",
+    "passe au lot suivant",
+    "je voudrais un devis",
+    "je vais contacter le client demain",
+    "mets une couche d'enduit",
+])
+def test_le_chantier_ordinaire_ne_declenche_pas_l_escalade(texte):
+    """Le verbe seul ne suffit pas : « passe-moi la truelle » n'est pas une
+    demande d'humain. Un faux positif coûte cher — il coupe l'artisan en
+    plein travail."""
+    assert not demande_un_humain(texte)
+
+
+def test_la_demande_est_reconnue_sans_accents_ni_casse():
+    """La dictée vocale rend les trois formes."""
+    assert demande_un_humain("JE VEUX PARLER A UN HUMAIN")
+    assert demande_un_humain("je veux parler à un humain")
+
+
+def test_le_message_de_passage_de_main_ne_promet_pas_de_delai():
+    """On ne sait pas quand un conseiller reprendra : ne rien promettre."""
+    assert MESSAGE_HUMAIN
+    for mot in ("minute", "heure", "rappel", "immédiat", "tout de suite"):
+        assert mot not in MESSAGE_HUMAIN.lower()
