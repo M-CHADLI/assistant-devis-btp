@@ -14,6 +14,9 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from app.api_schema import (Erreur404, Erreur409, MetriquesSortie, ProfilSortie,
+                            ReponseDevis, ReponseRelecture, ReponseTour,
+                            ReponseTourTranscrit)
 from app.export import MentionsIncompletes, generer_docx
 from app.observabilite import JOURNAL, agreger
 from app.persistance import Registre
@@ -24,7 +27,16 @@ from app.profil import Client, RegimeTVA, champs_manquants
 from app.referentiel import REFERENTIEL
 from app.transcription import relire
 
-app = FastAPI(title="Démo — Assistant chantier BTP vocal")
+app = FastAPI(
+    title="Démo — Assistant chantier BTP vocal",
+    version="0.1.0",
+    description=(
+        "API de l'assistant de devis pour artisans du bâtiment. Le modèle "
+        "décrit, le code calcule : aucun prix ne vient du LLM. Tant que "
+        "l'artisan n'a pas validé la structure du devis (HITL-2), les réponses "
+        "ne portent **aucune clé de prix** — voir `docs/STORIES.md` US-12."
+    ),
+)
 
 REGISTRE = Registre()
 
@@ -115,19 +127,21 @@ def _serialiser_devis(session: Session) -> dict:
     }
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, summary="Page de l'assistant",
+         tags=["Interface"])
 def index() -> HTMLResponse:
     return HTMLResponse(INDEX_HTML.read_text(encoding="utf-8"))
 
 
-@app.get("/metriques", response_class=HTMLResponse,
+@app.get("/metriques", response_class=HTMLResponse, tags=["Interface"],
          summary="Tableau de bord d'exploitation (docs/STORIES.md US-24)")
 def page_metriques() -> HTMLResponse:
     """Lit le journal applicatif : reste consultable modèle arrêté."""
     return HTMLResponse(METRIQUES_HTML.read_text(encoding="utf-8"))
 
 
-@app.get("/api/metriques", summary="Métriques du §4.3 agrégées depuis le journal")
+@app.get("/api/metriques", response_model=MetriquesSortie, tags=["Exploitation"],
+         summary="Métriques du §4.3 agrégées depuis le journal applicatif")
 def api_metriques() -> dict:
     return agreger(JOURNAL)
 
@@ -136,7 +150,8 @@ class MessageEntrant(BaseModel):
     texte: str
 
 
-@app.get("/api/devis")
+@app.get("/api/devis", response_model=ReponseDevis, tags=["Devis"],
+         summary="État du devis du projet courant")
 def api_devis(request: Request, response: Response) -> dict:
     """Resynchronise l'interface avec l'état serveur — utile après un simple
     rechargement de page, sans perdre le devis en cours."""
@@ -145,7 +160,8 @@ def api_devis(request: Request, response: Response) -> dict:
     return {"projet_id": projet_id, "devis": _serialiser_devis(session)}
 
 
-@app.post("/api/message")
+@app.post("/api/message", response_model=ReponseTour, tags=["Dialogue"],
+          summary="Traiter un message de l'artisan (un tour complet)")
 def api_message(msg: MessageEntrant, request: Request, response: Response) -> dict:
     projet_id, session = _projet(request)
     resultat = traiter_message(session, msg.texte)
@@ -162,7 +178,10 @@ def api_message(msg: MessageEntrant, request: Request, response: Response) -> di
     }
 
 
-@app.post("/api/valider-structure")
+@app.post("/api/valider-structure", response_model=ReponseDevis, tags=["Devis"],
+          summary="HITL-2 — valider la structure, puis chiffrer",
+          responses={409: {"model": Erreur409,
+                           "description": "structure vide : rien à valider"}})
 def api_valider_structure(request: Request, response: Response) -> dict:
     """HITL-2 — l'artisan valide lots et quantités ; le chiffrage suit."""
     projet_id, session = _projet(request)
@@ -184,7 +203,8 @@ class TranscriptionValidee(BaseModel):
     texte: str
 
 
-@app.post("/api/transcription")
+@app.post("/api/transcription", response_model=ReponseRelecture, tags=["Dictée"],
+          summary="HITL-0 — remettre la dictée en forme, sans rien déclencher")
 def api_transcription(dictee: DicteeEntrante, request: Request,
                       response: Response) -> dict:
     """HITL-0 — remet la dictée en forme et la rend à relire. **Aucune étape
@@ -201,7 +221,9 @@ def api_transcription(dictee: DicteeEntrante, request: Request,
             "alerte": lecture.alerte, "reformule": lecture.reformule}
 
 
-@app.post("/api/transcription/valider")
+@app.post("/api/transcription/valider", response_model=ReponseTourTranscrit,
+          tags=["Dictée"],
+          summary="Valider la dictée relue et lancer le traitement")
 def api_transcription_valider(validee: TranscriptionValidee, request: Request,
                               response: Response) -> dict:
     """L'artisan a relu : on journalise ce qu'il a corrigé, puis on traite."""
@@ -227,7 +249,8 @@ class CorrectionEntrante(BaseModel):
     description: str
 
 
-@app.post("/api/corriger")
+@app.post("/api/corriger", response_model=ReponseDevis, tags=["Devis"],
+          summary="Corriger une ligne — la correction de l'artisan fait autorité")
 def api_corriger(corr: CorrectionEntrante, request: Request, response: Response) -> dict:
     projet_id, session = _projet(request)
     corriger_ligne(session, corr.index, corr.description)
@@ -241,7 +264,11 @@ class ArbitrageQuantite(BaseModel):
     action: str  # "confirmer" | "abandonner"
 
 
-@app.post("/api/quantite")
+@app.post("/api/quantite", response_model=ReponseDevis, tags=["Devis"],
+          summary="Confirmer ou abandonner une quantité hors bornes (US-11)",
+          responses={404: {"model": Erreur404,
+                           "description": "aucune ligne en attente à cet index"},
+                     422: {"description": "action inconnue : confirmer | abandonner"}})
 def api_quantite(arb: ArbitrageQuantite, request: Request, response: Response) -> dict:
     """US-11 : l'artisan tranche sur une quantité jugée invraisemblable."""
     projet_id, session = _projet(request)
@@ -258,7 +285,8 @@ def api_quantite(arb: ArbitrageQuantite, request: Request, response: Response) -
     return {"projet_id": projet_id, "devis": _serialiser_devis(session)}
 
 
-@app.post("/api/reset")
+@app.post("/api/reset", response_model=ReponseDevis, tags=["Devis"],
+          summary="Vider le projet courant")
 def api_reset(request: Request, response: Response) -> dict:
     """Vide le projet courant. Le devis précédent n'est pas archivé : c'est un
     geste explicite de l'artisan, pas une perte accidentelle."""
@@ -311,14 +339,16 @@ def _serialiser_profil(session: Session) -> dict:
     }
 
 
-@app.get("/api/profil")
+@app.get("/api/profil", response_model=ProfilSortie, tags=["Profil"],
+         summary="Lire les mentions légales déclarées par l'artisan")
 def api_profil_lire(request: Request, response: Response) -> dict:
     projet_id, session = _projet(request)
     _poser_cookie(response, projet_id)
     return _serialiser_profil(session)
 
 
-@app.post("/api/profil")
+@app.post("/api/profil", response_model=ProfilSortie, tags=["Profil"],
+          summary="Déclarer régime de TVA, décennale et coordonnées (US-02)")
 def api_profil_ecrire(entrant: ProfilEntrant, request: Request,
                        response: Response) -> dict:
     """US-02 — le régime de TVA est un attribut du profil, pas une case par devis."""
@@ -343,7 +373,15 @@ def api_profil_ecrire(entrant: ProfilEntrant, request: Request,
     return _serialiser_profil(session)
 
 
-@app.get("/api/export")
+@app.get("/api/export", tags=["Devis"],
+         summary="Exporter le devis en .docx, mentions obligatoires comprises",
+         response_class=Response,
+         responses={200: {"content": {"application/vnd.openxmlformats-officedocument"
+                                      ".wordprocessingml.document": {}},
+                          "description": "le devis au format .docx"},
+                    409: {"model": Erreur409,
+                          "description": "structure non validée, ou mentions "
+                                         "obligatoires incomplètes"}})
 def api_export(request: Request) -> Response:
     _, session = _projet(request)
     if not session.structure_validee:

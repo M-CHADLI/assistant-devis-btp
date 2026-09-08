@@ -791,9 +791,15 @@ la conception ; non documentée, elle ne prouve rien.
 - Chaque endpoint a un `response_model` et un résumé en français.
 - Les codes d'erreur documentés correspondent à ceux réellement émis.
 
-**Traçabilité.** C5, C9, C13 · état : **partiel** — FastAPI génère l'OpenAPI, mais
-les endpoints de `app/main.py` n'ont ni `response_model`, ni description, ni
-erreurs déclarées.
+**Traçabilité.** C5, C9, C13 · état : **fait** — `app/api_schema.py` porte les
+modèles de sortie, chaque endpoint a `response_model`, résumé français et
+`tags` ; les 404, 409 et 422 sont déclarés avec leur corps. Un test compare par
+analyse du code les `HTTPException` réellement levées aux codes déclarés : la
+documentation ne peut plus diverger en silence. Le contrat porte aussi
+l'invariant d'US-12 — `LigneStructure` **interdit** les clés de prix
+(`extra="forbid"`), donc un prix qui fuiterait avant HITL-2 ferait échouer la
+sérialisation au lieu d'atteindre le navigateur. Tests :
+`tests/test_contrat_api.py`.
 
 ### US-23 — Que l'accès soit authentifié
 
