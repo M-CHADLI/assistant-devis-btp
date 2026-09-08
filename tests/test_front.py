@@ -67,3 +67,25 @@ def test_aucun_champ_du_profil_n_est_laisse_sans_nom_cote_api(html):
     script = html[html.index("<script>"):]
     lus = set(re.findall(r"'(p-[^']+)'", script))
     assert ids <= lus, f"champs jamais lus par le script : {sorted(ids - lus)}"
+
+
+def test_la_dictee_est_relue_dans_un_textarea_etiquete(html):
+    """US-05 — RGAA 11.1 : un `<textarea>` étiqueté, pas un `contenteditable`."""
+    assert "contenteditable" not in html
+    section = re.search(r'<section class="relecture".*?</section>', html, re.S)
+    assert section, "la zone de relecture HITL-0 a disparu"
+    zone = section.group(0)
+    identifiant = re.search(r'<textarea[^>]*\bid="([^"]+)"', zone)
+    assert identifiant, "le texte à relire doit être dans un textarea"
+    assert f'for="{identifiant.group(1)}"' in zone
+    assert "rows=" in zone  # dimensionné en lignes : suit le zoom texte à 200 %
+
+
+def test_la_dictee_ne_part_pas_au_pipeline_sans_relecture(html):
+    """La sortie de la reconnaissance vocale passe par /api/transcription."""
+    script = html[html.index("<script>"):]
+    onresult = re.search(r"reco\.onresult\s*=\s*\(e\)\s*=>\s*\{(.*?)\};", script, re.S)
+    assert onresult, "le gestionnaire de dictée a changé de forme — à revérifier"
+    corps = onresult.group(1)
+    assert "relireDictee" in corps
+    assert "/api/message" not in corps

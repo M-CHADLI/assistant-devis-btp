@@ -191,3 +191,49 @@ def test_l_attente_survit_a_un_rechargement(tmp_path, monkeypatch):
     c = _client_hors_bornes(tmp_path, monkeypatch)
     c.post("/api/message", json={"texte": "2200 m2"})
     assert len(c.get("/api/devis").json()["devis"]["a_confirmer"]) == 1
+
+
+# --- HITL-0 : relecture de la dictée (US-05) --------------------------------
+
+@pytest.fixture
+def client_relecture(client, monkeypatch):
+    """La reformulation est simulée : ces tests portent sur le contrat HTTP."""
+    from app.transcription import Relecture
+    monkeypatch.setattr(
+        main, "relire",
+        lambda texte: Relecture(brut=texte, propose=f"{texte.strip()} (reformulé)"))
+    return client
+
+
+def test_la_relecture_ne_declenche_aucun_traitement(client_relecture):
+    """Critère US-05 : aucune étape aval avant validation explicite."""
+    r = client_relecture.post("/api/transcription",
+                              json={"texte": "22 m2 de peinture"})
+    assert r.status_code == 200
+    assert r.json()["propose"] == "22 m2 de peinture (reformulé)"
+
+    devis = client_relecture.get("/api/devis").json()["devis"]
+    assert devis["lignes"] == []  # le pipeline n'a pas tourné
+
+
+def test_la_validation_declenche_le_traitement_et_journalise_la_correction(
+        client_relecture):
+    client_relecture.post("/api/transcription", json={"texte": "2 m2 de peinture"})
+    r = client_relecture.post("/api/transcription/valider",
+                              json={"propose": "2 m2 de peinture (reformulé)",
+                                    "texte": "22 m2 de peinture"})
+    assert r.status_code == 200
+    corps = r.json()
+    assert corps["texte_traite"] == "22 m2 de peinture"
+    assert corps["devis"]["lignes"]  # le pipeline a tourné, cette fois
+
+    trace = corps["devis"]["corrections"][0]
+    assert trace["auteur"] == "artisan"
+    assert "transcription corrigée" in trace["description"]
+
+
+def test_une_validation_sans_correction_ne_laisse_pas_de_trace(client_relecture):
+    r = client_relecture.post("/api/transcription/valider",
+                              json={"propose": "22 m2 de peinture",
+                                    "texte": "22 m2 de peinture"})
+    assert r.json()["devis"]["corrections"] == []

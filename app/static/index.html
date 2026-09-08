@@ -56,6 +56,12 @@
   .profil .radio { display: flex; align-items: baseline; gap: .4rem; margin-top: .4rem; }
   .profil .radio label { margin: 0; font-size: .9rem; }
   .consequence { margin: .5rem 0 0; font-size: .85rem; font-style: italic; }
+  .relecture { border: 1px solid #2563eb; border-radius: .4rem; padding: .7rem;
+               margin-top: .8rem; }
+  .relecture h2 { font-size: 1rem; margin: 0 0 .5rem; }
+  .relecture label { display: block; font-size: .85rem; margin-bottom: .3rem; }
+  .relecture textarea { width: 100%; box-sizing: border-box; font: inherit;
+               padding: .5rem; resize: vertical; }
 </style>
 </head>
 <body>
@@ -67,6 +73,17 @@
     <button id="btn-reset">↺ Nouveau chantier</button>
   </div>
   <div class="fil" id="fil" aria-live="polite" aria-atomic="false"></div>
+  <section class="relecture" id="relecture" hidden aria-labelledby="relecture-titre">
+    <h2 id="relecture-titre">Relis ta dictée avant que je la traite</h2>
+    <p class="alerte" id="relecture-alerte" role="status" hidden></p>
+    <label for="relecture-texte">Texte de ta dictée — corrige-le si besoin</label>
+    <textarea id="relecture-texte" rows="4"></textarea>
+    <div class="barre-actions" style="margin-top:.6rem">
+      <button class="principal" id="btn-valider-dictee">Valider ce texte et lancer l'analyse</button>
+      <button id="btn-redicter">Redicter — abandonner ce texte</button>
+    </div>
+  </section>
+
   <div class="saisie">
     <label for="entree" class="sr-only">Entrée texte du chantier</label>
     <input id="entree" type="text" placeholder="Je refais le salon, 22 m² au sol..." autofocus>
@@ -313,16 +330,7 @@ async function arbitrerQuantite(index, action) {
     : 'Quantité écartée.', 'assistant');
 }
 
-async function envoyer() {
-  const texte = entree.value.trim();
-  if (!texte) return;
-  ajouterMessage(texte, 'user');
-  entree.value = '';
-  const resp = await fetch('/api/message', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({texte})
-  });
-  const data = await resp.json();
+function rendreTour(data) {
   data.messages.forEach(m => {
     let classe = 'assistant';
     if (m.startsWith('⚠️')) classe += ' mention-forte';
@@ -342,7 +350,72 @@ async function envoyer() {
   rendreDevis(data.devis);
 }
 
+async function envoyer() {
+  const texte = entree.value.trim();
+  if (!texte) return;
+  ajouterMessage(texte, 'user');
+  entree.value = '';
+  const resp = await fetch('/api/message', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({texte})
+  });
+  rendreTour(await resp.json());
+}
+
 document.getElementById('btn-envoyer').onclick = envoyer;
+
+// --- HITL-0 : relecture de la dictée (US-05) --------------------------------
+// Rien ne part au pipeline tant que l'artisan n'a pas validé ce texte.
+const zoneRelecture = document.getElementById('relecture');
+const texteRelecture = document.getElementById('relecture-texte');
+const alerteRelecture = document.getElementById('relecture-alerte');
+let propositionCourante = '';
+
+function montrerRelecture(data) {
+  propositionCourante = data.propose;
+  texteRelecture.value = data.propose;
+  if (data.alerte) {
+    alerteRelecture.textContent = data.alerte;
+    alerteRelecture.hidden = false;
+  } else {
+    alerteRelecture.hidden = true;
+    alerteRelecture.textContent = '';
+  }
+  zoneRelecture.hidden = false;
+  texteRelecture.focus();
+}
+
+function cacherRelecture() {
+  zoneRelecture.hidden = true;
+  texteRelecture.value = '';
+  propositionCourante = '';
+}
+
+async function relireDictee(brut) {
+  const resp = await fetch('/api/transcription', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({texte: brut})
+  });
+  montrerRelecture(await resp.json());
+}
+
+document.getElementById('btn-valider-dictee').onclick = async () => {
+  const texte = texteRelecture.value.trim();
+  if (!texte) return;
+  ajouterMessage(texte, 'user');
+  const resp = await fetch('/api/transcription/valider', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({propose: propositionCourante, texte})
+  });
+  cacherRelecture();
+  rendreTour(await resp.json());
+};
+
+document.getElementById('btn-redicter').onclick = () => {
+  // L'ancienne transcription est abandonnée, jamais fusionnée avec la suivante.
+  cacherRelecture();
+  btnDicter.focus();
+};
 entree.addEventListener('keydown', e => { if (e.key === 'Enter') envoyer(); });
 
 document.getElementById('btn-reset').onclick = async () => {
@@ -473,7 +546,7 @@ if (!Reco) {
   reco.interimResults = false;
   let enCours = false;
   reco.onresult = (e) => {
-    entree.value = e.results[0][0].transcript;
+    relireDictee(e.results[0][0].transcript);
   };
   reco.onend = () => { enCours = false; btnDicter.textContent = '🎤 Dicter (prototype navigateur)'; };
   btnDicter.onclick = () => {

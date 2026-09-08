@@ -17,8 +17,9 @@ from pydantic import BaseModel
 from app.export import MentionsIncompletes, generer_docx
 from app.persistance import Registre
 from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
-                          corriger_ligne, traiter_message)
+                          corriger_ligne, traiter_message, valider_transcription)
 from app.profil import Client, RegimeTVA, champs_manquants
+from app.transcription import relire
 
 app = FastAPI(title="Démo — Assistant chantier BTP vocal")
 
@@ -115,6 +116,52 @@ def api_message(msg: MessageEntrant, request: Request, response: Response) -> di
         "messages": resultat.messages_assistant,
         "mentions": resultat.mentions,
         "consommables_suggeres": resultat.consommables_suggeres,
+        "devis": _serialiser_devis(session),
+    }
+
+
+class DicteeEntrante(BaseModel):
+    texte: str
+
+
+class TranscriptionValidee(BaseModel):
+    propose: str = ""
+    texte: str
+
+
+@app.post("/api/transcription")
+def api_transcription(dictee: DicteeEntrante, request: Request,
+                      response: Response) -> dict:
+    """HITL-0 — remet la dictée en forme et la rend à relire. **Aucune étape
+    aval n'est déclenchée ici** (docs/STORIES.md US-05) : le pipeline ne démarre
+    qu'à `/api/transcription/valider`.
+
+    La reformulation passe par `app.transcription`, qui utilise un modèle
+    prompté — jamais le modèle du pipeline.
+    """
+    projet_id, _ = _projet(request)
+    lecture = relire(dictee.texte)
+    _poser_cookie(response, projet_id)
+    return {"projet_id": projet_id, "brut": lecture.brut, "propose": lecture.propose,
+            "alerte": lecture.alerte, "reformule": lecture.reformule}
+
+
+@app.post("/api/transcription/valider")
+def api_transcription_valider(validee: TranscriptionValidee, request: Request,
+                              response: Response) -> dict:
+    """L'artisan a relu : on journalise ce qu'il a corrigé, puis on traite."""
+    projet_id, session = _projet(request)
+    texte = valider_transcription(session, validee.propose, validee.texte)
+    resultat = traiter_message(session, texte)
+    REGISTRE.enregistrer(projet_id, session)
+    _poser_cookie(response, projet_id)
+    return {
+        "projet_id": projet_id,
+        "intent": resultat.intent,
+        "messages": resultat.messages_assistant,
+        "mentions": resultat.mentions,
+        "consommables_suggeres": resultat.consommables_suggeres,
+        "texte_traite": texte,
         "devis": _serialiser_devis(session),
     }
 

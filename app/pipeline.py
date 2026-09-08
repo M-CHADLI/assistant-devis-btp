@@ -272,6 +272,26 @@ def traiter_message(session: Session, texte_utilisateur: str) -> ResultatTour:
     return ResultatTour("escalade", [MESSAGE_ESCALADE], [], session.devis, {})
 
 
+def valider_transcription(session: Session, propose: str, corrige: str) -> str:
+    """HITL-0 : l'artisan relit sa dictée et la valide (docs/STORIES.md US-05).
+
+    Rien ne s'exécute avant cet appel — c'est ici que le pipeline démarre. Si
+    l'artisan a corrigé le texte, l'écart est journalisé au même titre qu'une
+    correction de devis : c'est le **premier point de capture du signal qualité**
+    (docs/DISPOSITIF_AGENT.md §5.2), celui qui dit ce que la chaîne dictée +
+    reformulation a mal entendu.
+    """
+    retenu = (corrige or "").strip()
+    if retenu != (propose or "").strip():
+        session.corrections.append(Correction(
+            horodatage=dt.datetime.now().isoformat(timespec="seconds"),
+            auteur="artisan",
+            description=(f"transcription corrigée avant traitement : "
+                         f"« {(propose or '').strip()[:200]} » → « {retenu[:200]} »"),
+        ))
+    return retenu
+
+
 def confirmer_quantite(session: Session, index: int) -> bool:
     """L'artisan confirme une quantité hors bornes. Il fait autorité (CLAUDE.md) :
     on l'applique sans discuter, et on garde la trace que la borne a été franchie."""

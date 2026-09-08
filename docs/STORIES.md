@@ -266,7 +266,18 @@ prompté (non fine-tuné)** reformule et ponctue ; il ne doit rien inventer.
   le bouton de dictée sans piège de focus (WCAG 2.1.2) ; le texte reste
   redimensionnable jusqu'à 200 % sans perte de contenu (WCAG 1.4.4).
 
-**Traçabilité.** C10, C14, C17 · `DISPOSITIF_AGENT.md` §1.4 · état : **à faire**.
+**Traçabilité.** C10, C14, C17 · `DISPOSITIF_AGENT.md` §1.4 · état : **fait** —
+`app/transcription.py` porte la reformulation par un modèle **prompté**
+(`MODELE_PROMPTE`, prompt de mise en forme seule) ; le module n'importe rien de
+`app/llm.py` et un test le vérifie. `POST /api/transcription` rend le texte à
+relire **sans rien déclencher** ; le pipeline ne démarre qu'à
+`POST /api/transcription/valider`, qui journalise l'écart entre proposition et
+texte retenu via `valider_transcription` (`app/pipeline.py`). Au-delà de
+l'affichage, un contrôle déterministe compare nombres et unités avant/après : une
+reformulation qui transforme 22 m² en 2 m² est **écartée**, pas seulement
+visible. Front : `<textarea>` étiqueté, bouton « Redicter » qui abandonne le
+texte au lieu de le fusionner. **Reste** : la dictée passe par la Web Speech API
+du navigateur — le choix Gladia / Whisper local n'est pas arbitré.
 
 ### US-06 — Enchaîner plusieurs enregistrements sur un même chantier
 
