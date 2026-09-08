@@ -39,22 +39,34 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
 
 ## État vérifié au 08/09/2026
 
-- **265 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
-  `test_garde_fous` 52, `test_pipeline` 33, `test_front` 30, `test_api` 29,
-  `test_boucle_qualite` 24, `test_auth` 19, `test_export` 13,
-  `test_transcription` 12, `test_persistance` 12, `test_devis` 12,
+- **383 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+  `test_garde_fous` 52, `test_chaine_donnees` 43, `test_front` 38,
+  `test_pipeline` 33, `test_mlops` 33, `test_api` 29, `test_boucle_qualite` 24,
+  `test_api_catalogue` 19, `test_auth` 19, `test_devis` 16, `test_export` 13,
+  `test_transcription` 12, `test_persistance` 12, `test_packaging` 11,
   `test_observabilite` 11, `test_contrat_api` 10, `test_referentiel` 8.
-- **Stories : 21 faites, 2 partielles, 3 à faire** (compté depuis les lignes de
-  traçabilité de `docs/STORIES.md`, pas depuis un tableau recopié).
+- **Stories : 28 au découpage — 21 faites, 4 partielles, 3 à faire** (compté
+  depuis les lignes de traçabilité de `docs/STORIES.md`, pas depuis un tableau
+  recopié).
   - *fait* : US-02, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20,
     21, 22, 23, 24, 25
   - *partiel* : US-04 (dictée navigateur, transcription locale à faire),
-    US-26 (chaîne d'intégration écrite, aucun `remote` pour l'exécuter)
+    US-26 (chaînes écrites et image construite, aucun `remote` pour les
+    exécuter), US-27 (chaîne de données faite, pas branchée sur le devis),
+    US-28 (chaîne du modèle faite, entraînement non lancé)
   - *à faire* : US-01, 03, 17
-- **Le parcours de bout en bout passe 24/24** contre le serveur réel et
-  `gpt-oss:20b` : 4 lignes de devis, 620,81 € TTC, `.docx` de 37 579 octets.
+- **Le parcours de bout en bout passe 24/24, cinq fois de suite** (08/09,
+  05 h 57 – 06 h 01) contre le serveur réel et `gpt-oss:20b` : 4 lignes de devis,
+  620,81 € TTC, `.docx` de 37 579 octets, ~46 s par passage.
   `tools/parcours_bout_en_bout.py` — c'est la seule preuve que la chaîne complète
   fonctionne, la suite pytest neutralisant le modèle.
+- **Le chiffre le plus important de la nuit** : sur ces 21 appels modèle,
+  `gpt-oss:20b` **brut** n'a produit du JSON conforme que dans **71,4 %** des
+  cas, contre 98 % visés. Six reprises pour six échecs, aucun passé en silence.
+  Le produit tient quand même (24/24 cinq fois), parce que la reprise et le
+  moteur déterministe absorbent l'échec — mais c'est la valeur de référence
+  contre laquelle se mesurera le fine-tuning. Tout est dans
+  `docs/CONCLUSION_POC.md` ; latence p95 12,8 s, 0 prix inventé.
 - L'application démarre depuis n'importe quel répertoire et **exige désormais une
   authentification** : seuls `/` et `POST /api/session` sont ouverts, tout le
   reste répond 401 sans jeton — y compris `/docs` et `/openapi.json`.
@@ -62,8 +74,13 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
   une fois au démarrage** ; elle change à chaque redémarrage.
 - Le JavaScript du front passe `node --check`
   (node en `~/.nvm/versions/node/v22.22.2/bin`, pas dans le PATH par défaut).
-- `tools/verifier_accessibilite_docs.py` : **18 documents conformes**
+- `tools/verifier_accessibilite_docs.py` : **26 documents conformes**
   (`veille/seances/` est entré dans le corpus contrôlé le 08/09).
+- **L'image OCI se construit et démarre** : 212 Mo, base catalogue construite à
+  la construction et non au démarrage, `/` à 200 et `/api/catalogue/familles` à
+  401 sans session — vérifié, pas supposé.
+- **La chaîne du modèle s'exécute** : étape `donnees` réussie, les trois autres
+  `ignoré` en nommant leur prérequis manquant. `uv run python -m tools.mlops.executer`.
 - Ollama répond sur `localhost:11434` et sert `gpt-oss:20b`.
 
 ## Fait cette nuit
@@ -94,44 +111,74 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
 | `f9867a9` | Deux dictées qui se contredisent : ni addition, ni arbitrage silencieux (US-06) |
 | `29e3dd7` | Parcours de bout en bout étendu à 24 étapes + piège `BTP_MOT_DE_PASSE` documenté |
 | `445a8b8` | Première séance de veille C6, et correction du flux qu'elle prend en défaut |
+| `…` | *(suite : RGPD, incidents, modèle de données, maquettes, benchmark STT — voir `git log`)* |
+| `9c5b8c3` | Chaîne de données : trois sources hétérogènes → base SQLite → API (US-27) |
+| `46e309b` | US-27 inscrite au backlog |
+| `311d4c3` | Empaquetage OCI et chaîne de livraison (US-26) |
+| `8ef0329` | Chaîne MLOps, écrite avant l'entraînement pour pouvoir en porter la trace (US-28) |
+| `a72dc7e` | Définition du sous-agent d'exécution locale |
+| `ae90dfe` | Conclusion de la preuve de concept, sur cinq exécutions relevées |
 
-**Rien n'est poussé.** Vingt-quatre commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
+**Rien n'est poussé.** Quarante-deux commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
+
+**L'audit jury au réveil : 90 ✅ / 34 🟡 / 11 ❌ sur 135** (il était à
+82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Des onze ❌, neuf attendent un seul
+geste : `git remote add` puis `push`.** Les deux autres sont C7-43
+(accessibilité des sources de veille) et C16-117 (rituels à partager).
 
 ---
 
 ## File de travail — prendre dans l'ordre
 
-Les douze premières tâches de la file initiale sont **faites**, sauf celles
-listées ci-dessous. Nouvelle file :
+La file initiale est **entièrement traitée**, sauf ce qui suit. Ce qui reste se
+range en trois familles : ce que vous seul pouvez faire, ce qui demande une
+matière que personne ne peut écrire à votre place, et le reste à coder.
 
-1. **Transposer sur Notion** — les CSV de `docs/notion/` sont à jour de cette
-   nuit. Bloqué sur `NOTION_TOKEN` + partage de la page racine avec l'intégration
-   (menu `⋯` → Connexions). Sans ce partage l'API rend une liste vide, pas une erreur.
-2. ~~**Séances de veille** (C6)~~ — **faite en partie**. La séance du 08/09 est
-   écrite (`veille/seances/2026-09-08.md`), six sources, cinq items, un verdict
-   chacun, et ses trois suites exécutées. **Ce qui reste appartient à
-   l'utilisateur** : le référentiel demande une *récurrence*, or une seule séance
-   existe et elle a été préparée avec l'assistant, pas tenue seul un vendredi.
-   Antidater trois séances de plus fabriquerait la preuve au lieu de la produire —
-   non fait délibérément. Le rituel doit maintenant tourner pour de vrai.
-3. **RGPD** (C4-26/27/28) : registre des traitements et procédures de tri des
-   données. `donnees/` contient des noms et adresses de clients — voir l'alerte
-   plus bas.
-4. **Modèle de données Merise** (C4-19, C14-103) et **maquettes** (C14-104,
-   C17-121) : deux livrables attendus, absents du dépôt.
-5. **Benchmark STT** avec colonne éco-responsabilité (C7, C15-110, C17-126).
-   Dépend de l'arbitrage Gladia contre Whisper local, qui appartient à l'utilisateur.
-   Protocole amendé le 08/09 (`PLANNING.md`, séance de veille item 5) : la mesure
-   se fait sur **un corpus maison** d'une dizaine de dictées de chantier réelles,
-   les classements publics ne servant qu'au pré-tri — ils mesurent des corpus de
-   lecture, pas une dictée bruitée en français avec unités du bâtiment.
-6. **Stories partielles** : US-04 (moitié transcription locale) et US-26
-   (bloquée sur l'absence de `remote`). US-06, 07, 09, 14 et 18 sont closes.
-7. **Fragilité des tests** : `tests/test_devis.py` recopie en dur des valeurs du
-   référentiel et du catalogue (taux de chute 0,05, rendement 0,1, contenance 10,
-   prix 34,90, promo 0,10). Le jour où une valeur métier bouge, le test casse
-   alors que le code est juste. Les lire depuis la source.
-8. **Stories à faire** : US-01 (compte par SIRET, API Pappers), US-03, US-17.
+### Ce qui n'attend que vous — un geste chacun
+
+1. **`git remote add` puis `push`.** Neuf des onze ❌ de l'audit tombent d'un
+   coup. C'est de loin le meilleur rapport effort / critères du dépôt.
+2. **Transposer sur Notion.** Les CSV de `docs/notion/` sont à jour (28 stories).
+   Bloqué sur `NOTION_TOKEN` **et** le partage de la page racine avec
+   l'intégration (menu `⋯` → Connexions). Sans ce partage, l'API rend une liste
+   vide — pas une erreur, ce qui rend le diagnostic pénible.
+3. **Tenir le rituel de veille pour de vrai.** Une seule séance existe
+   (`veille/seances/2026-09-08.md`), préparée avec l'assistant. Le référentiel
+   demande une *récurrence*. Antidater des séances fabriquerait la preuve au lieu
+   de la produire — délibérément non fait.
+4. **Arbitrer Gladia contre Whisper local.** `docs/BENCHMARK_STT.md` instruit la
+   question et ne la tranche pas : c'est votre décision, pas la mienne. Le
+   prototype utilise encore la Web Speech API du navigateur, qui envoie l'audio
+   à l'éditeur — contradiction ouverte avec la règle « 100 % local ».
+
+### Ce qui demande de la matière écrite à la main
+
+5. **Le dataset (~2000 exemples) et le jeu d'essai (150-200).** C'est désormais
+   le **chemin critique du projet** : plus rien d'autre ne bloque le
+   fine-tuning. La chaîne qui les validera existe et tourne
+   (`docs/CHAINE_MLOPS.md`) ; `dataset/gabarit.jsonl` donne le format exact sur
+   quatre exemples complets. Le jeu d'essai doit être écrit **à la main et
+   jamais montré à l'entraînement** — la détection de fuite est bloquante et
+   sans tolérance, précisément pour protéger ça.
+6. **Le corpus de dictées du banc d'essai STT** : une dizaine de dictées de
+   chantier réelles. Le protocole est écrit, il attend son corpus.
+
+### Ce qui reste à coder
+
+7. **US-01** — compte artisan par SIRET (API Pappers). Demande une clé.
+8. **US-03** — OCR d'un devis image/PDF vers Markdown, par API externe, jamais
+   par le modèle.
+9. **US-17** — confort métier réel, aucun apport de preuve : à faire en dernier.
+10. **Brancher le devis sur la base catalogue.** La chaîne de données alimente
+    l'API mais **pas encore le moteur de devis**, qui lit toujours le
+    dictionnaire de `app/catalogue.py`. La couture est `resoudre_produit()` →
+    `moins_cher_de_famille()`. Bloqué sur un arbitrage métier : les codes de lot
+    du référentiel et les familles du dump ne se recouvrent pas, et inventer
+    cette table de correspondance reviendrait à décider à votre place.
+11. **Deux ❌ résiduels hors dépôt distant** : C7-43 (vérifier que les sources de
+    veille respectent les normes d'accessibilité, et confirmer l'information
+    ailleurs) et C16-117 (écrire les objectifs et modalités des rituels, puis les
+    partager — la seconde moitié est un acte, pas un document).
 
 ## À signaler à l'utilisateur au réveil
 
@@ -153,6 +200,16 @@ listées ci-dessous. Nouvelle file :
 - Les tâches cron programmées cette nuit **vivent dans cette session seulement** et
   expirent d'elles-mêmes au bout de sept jours. Elles ne survivront pas à la
   fermeture de la session.
+- **Le chemin critique a changé de nature.** Au début de la nuit, ce qui bloquait
+  le projet était de l'outillage : pas de chaîne de données, pas d'empaquetage,
+  pas de chaîne MLOps, pas de conclusion de preuve de concept. Tout cela existe
+  maintenant. Ce qui bloque désormais est de la **matière** — les 2000 exemples
+  du dataset et les 150 à 200 du jeu d'essai, qui ne peuvent être écrits ni par
+  moi ni par un sous-agent sans détruire la seule mesure honnête du projet.
+- **Le modèle brut est à 71,4 % de JSON valide, pas à 98 %.** C'est une mauvaise
+  nouvelle utile : elle donne au fine-tuning une raison chiffrée et datée. À ne
+  pas enjoliver en soutenance — le document qui la porte
+  (`docs/CONCLUSION_POC.md`) explique aussi pourquoi le produit tient quand même.
 
 ## Décisions prises seul (à faire relire)
 
