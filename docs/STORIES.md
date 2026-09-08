@@ -228,7 +228,40 @@ un VLM dans le projet en ferait un second projet (`CADRAGE_MODELE.md` §6).
   supplémentaire (RGAA 7.3, WCAG 2.1.1) ; la progression du traitement est
   annoncée textuellement, pas seulement par une animation (WCAG 4.1.3).
 
-**Traçabilité.** C8, C14 · `CADRAGE_MODELE.md` §6 · état : **à faire**.
+**Décisions prises en implémentant.**
+- **Rien du document déposé n'est conservé.** Le gabarit ne retient que les
+  clés du dictionnaire `BLOCS` de `app/gabarit.py` et lequel de *nos propres*
+  synonymes déclarés chacune a reconnu. Aucune chaîne du fichier n'atteint le
+  profil, le disque ou le navigateur. Motif RGPD : un ancien devis porte le
+  nom, l'adresse et les montants d'un **autre** client, qui n'a consenti à
+  rien. La promesse est vérifiable mécaniquement — `vocabulaire()` énumère
+  tout ce qu'un gabarit peut contenir.
+- **Un gabarit réordonne et renomme, il ne retire jamais.** `Gabarit.ordre()`
+  ajoute toujours en fin les blocs que le document déposé n'avait pas.
+  Laisser un gabarit supprimer un bloc permettrait à un vieux devis mal fait
+  de retirer une mention obligatoire BTP du suivant, et de le rendre
+  inopposable (US-15).
+- **Un document illisible ou qui n'est pas un devis répond 200, pas 5xx.** Le
+  produit n'est pas en panne : c'est le document qui ne convient pas. La
+  réponse porte un motif nommé (`cle_absente`, `injoignable`, `quota`,
+  `trop_gros`, `illisible`, `pas_un_devis`, `inattendu`) et le gabarit par
+  défaut.
+- **La validation locale précède le réseau.** Type lu aux octets de tête (pas
+  à l'extension) et taille vérifiée avant tout appel : un fichier qu'on sait
+  refuser ne sort jamais de la machine.
+
+**Réserve.** Le chemin nominal n'a **jamais été joué contre un service réel** :
+`BTP_OCR_CLE` n'est pas configurée. La ligne de requête et la forme de la
+réponse (`pages[].markdown`, `confidence_scores`) viennent de la documentation
+publiée, **pas d'une réponse observée**. Ce que les tests prouvent, c'est la
+tolérance du code à ce qu'elles soient autres.
+
+**Traçabilité.** C8, C14 · `CADRAGE_MODELE.md` §6 · `app/gabarit.py`,
+`POST` et `DELETE /api/profil/gabarit` dans `app/main.py`, `gabarit=` dans
+`app/export.py`, champ `gabarit` du profil (`app/profil.py`,
+`app/persistance.py`) · tests : `tests/test_gabarit.py` (41), accessibilité du
+dépôt dans `tests/test_front.py` (5) · état : **partiel** — tout est écrit et
+testé derrière un transport injecté, il manque la clé et un appel réel.
 
 ---
 

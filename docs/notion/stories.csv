@@ -1,7 +1,7 @@
 Clé,Titre,Épique,Type,File,Rang,Priorité,État,Sprint,Points,Compétences,Source,État du code
 US-01,Créer mon compte à partir de mon SIRET,A — Profil artisan,Story,Certification,5,Moyenne,En cours,S6,5,C5 · C14 · C17,CADRAGE_MODELE.md §6,partiel
 US-02,Déclarer mon régime de TVA et mon assurance décennale,A — Profil artisan,Story,Noyau démontrable,6,Haute,Terminé,S2,3,C14 · C17,CADRAGE_MODELE.md §6,fait
-US-03,Déposer un devis existant pour en faire mon gabarit,A — Profil artisan,Story,Certification,6,Basse,À faire,S6,5,C8 · C14,CADRAGE_MODELE.md §6,à faire
+US-03,Déposer un devis existant pour en faire mon gabarit,A — Profil artisan,Story,Certification,6,Basse,En cours,S6,5,C8 · C14,CADRAGE_MODELE.md §6,partiel
 US-04,Dicter mon chantier sur place,B — Capture vocale,Story,Noyau démontrable,11,Haute,En cours,S5,8,C10 · C14 · C17,CADRAGE_MODELE.md §2,partiel
 US-05,Relire et corriger la transcription avant traitement,B — Capture vocale,Story,Noyau démontrable,4,Critique,Terminé,S2,5,C10 · C14 · C17,DISPOSITIF_AGENT.md §1.4 (HITL-0),fait
 US-06,Enchaîner plusieurs enregistrements sur un même chantier,B — Capture vocale,Story,Noyau démontrable,12,Moyenne,Terminé,S5,3,C14 · C17,CADRAGE_MODELE.md §2,fait

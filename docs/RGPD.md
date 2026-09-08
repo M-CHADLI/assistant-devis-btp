@@ -26,7 +26,7 @@ contenu porte les noms de ses clients.
 | Rôle | Qui | Remarque |
 |---|---|---|
 | Responsable de traitement | L'entreprise artisanale qui exploite l'application | C'est elle qui décide des finalités : le produit tourne sur sa machine |
-| Sous-traitant | Aucun à ce jour, hors la réserve du navigateur (voir plus bas) | Le fine-tuning et l'inférence sont locaux |
+| Sous-traitant | **Un seul** : le service d'OCR de T5, et seulement si l'artisan dépose un ancien devis. Plus la réserve du navigateur (voir plus bas) | Le fine-tuning et l'inférence restent locaux ; l'annuaire d'entreprises interrogé en US-01 ne reçoit qu'un SIRET, et ne reçoit rien du chantier |
 | Personnes concernées | L'artisan (utilisateur), le client final (non-utilisateur) | Deux catégories, deux régimes d'information |
 
 En phase de soutenance, les données manipulées sont **simulées** : le catalogue porte une
@@ -36,8 +36,9 @@ pas ce qu'il contient aujourd'hui.
 
 ## Registre des traitements
 
-Quatre traitements, dont trois portent des données personnelles au sens strict et un porte
-une donnée technique identifiante (l'adresse IP).
+Cinq traitements, dont quatre portent des données personnelles au sens strict et un porte
+une donnée technique identifiante (l'adresse IP). Le cinquième est le seul du produit à
+faire sortir des données personnelles de la machine, et il est facultatif.
 
 ### T1 — Établissement du devis
 
@@ -115,6 +116,34 @@ une donnée technique identifiante (l'adresse IP).
 | Conservation | **Non implémentée.** La CNIL recommande six mois pour des journaux de sécurité |
 | Sécurité | Le journal ne porte **aucun texte libre** : `correction_artisan` n'enregistre que son origine et le code de lot, jamais la dictée elle-même. C'est une propriété voulue, pas un hasard — la dictée est dans le signal qualité, qui a son propre garde-fou de destination |
 
+### T5 — Reprise de mise en page depuis un ancien devis (US-03)
+
+**Le seul traitement du produit qui envoie des données personnelles à un tiers.** Il est
+facultatif, déclenché par un geste explicite de l'artisan, et annoncé avant le dépôt.
+
+| Rubrique | Contenu |
+|---|---|
+| Finalité | Reprendre l'ordre des sections et les intitulés d'usage de l'artisan, pour que les devis produits ressemblent aux siens |
+| Base légale | Intérêt légitime de l'artisan — l'adoption de l'outil tient à ce détail. L'alternative est le gabarit par défaut, complet et conforme : le traitement est donc évitable |
+| Personnes concernées | **Un client antérieur de l'artisan**, qui n'est ni utilisateur, ni informé, ni partie à ce chantier — c'est ce qui rend ce traitement le plus délicat du registre |
+| Données transmises | Le fichier déposé **tel quel** : PDF ou photo d'un ancien devis, donc le nom et l'adresse de ce client, les montants, le numéro de contrat décennale de l'artisan (`app/gabarit.py`, `_transport_http`) |
+| Données conservées | **Rien du fichier.** Le gabarit ne retient que des clés du dictionnaire `BLOCS` de `app/gabarit.py` et lequel de *nos propres* synonymes déclarés chacune a reconnu. Aucune chaîne du document n'atteint le profil, le disque ou le navigateur |
+| Source | Dépôt manuel par l'artisan |
+| Destinataires | Le service d'OCR, le temps de l'appel. Personne d'autre |
+| Transferts hors UE | **Possibles**, selon le service retenu. À vérifier avant toute exploitation réelle : c'est le point à instruire de ce traitement |
+| Stockage | Le champ `gabarit` du profil (`app/persistance.py`) : une liste de clés et une table de synonymes, tous issus de notre propre vocabulaire |
+| Conservation | Tant que le profil vit. **Révocable à tout moment** : `DELETE /api/profil/gabarit`, exposé par un bouton de l'écran de profil |
+| Sécurité | Type et taille vérifiés **avant** tout appel, sur les octets de tête et non sur l'extension : un fichier qu'on sait refuser ne sort jamais de la machine. La clé d'API ne quitte pas le serveur — le navigateur ignore jusqu'au nom du service. Le journal ne porte que le motif, jamais le nom du fichier ni son contenu |
+
+**Ce que ce traitement écarte volontairement, et pourquoi.** Le Markdown rendu par l'OCR
+contient tout l'ancien devis. Le retenir, même « pour améliorer la reconnaissance », ferait
+entrer dans le produit les données d'un tiers qui n'a consenti à rien et dont l'artisan
+n'a plus forcément de relation contractuelle. La contrainte est donc posée dans le code
+plutôt que dans une intention : `vocabulaire()` énumère l'intégralité de ce qu'un gabarit
+peut contenir, un test l'exige mot à mot sur un devis truffé de données personnelles, et
+la relecture depuis le disque revalide le même vocabulaire — un fichier de profil édité à
+la main ne peut pas y faire entrer autre chose.
+
 ## Procédures de tri
 
 Le tri se fait à trois moments distincts, et chacun a une règle qui lui est propre.
@@ -128,6 +157,9 @@ Le tri se fait à trois moments distincts, et chacun a une règle qui lui est pr
   sollicitées sont « non stockées, non répétées en sortie » (même document, tableau des
   garde-fous).
 - **L'audio n'est pas conservé.** Seul le texte issu de la dictée l'est, après relecture.
+- **Le devis déposé pour en tirer un gabarit n'est pas conservé** — ni le fichier, ni le
+  texte que l'OCR en tire, ni aucun fragment. Voir T5 : c'est le tri le plus strict du
+  produit, parce que la personne concernée n'est pas celle qui dépose.
 - **La phrase de passe n'est jamais stockée en clair**, ni journalisée quand elle est fausse :
   l'environnement ne porte que son empreinte scrypt (`app/authentification.py`).
 
@@ -159,6 +191,7 @@ compteurs et des latences — aucun contenu de projet ne transite par `/api/metr
 | Dictée et relecture (HITL-0) | L'artisan dicte | Plusieurs fois par chantier | En session, puis dans le projet |
 | Appel au modèle | Chaque tour de conversation | Plusieurs fois par dictée | `journal.jsonl`, sans texte libre |
 | Écriture du projet sur disque | Fin de chaque tour | À chaque tour | Le fichier du projet |
+| Dépôt d'un ancien devis pour en tirer un gabarit | Geste explicite de l'artisan | Facultatif, une fois par artisan en pratique | `journal.jsonl`, motif seul — ni nom de fichier, ni contenu |
 | Export du devis en `.docx` | L'artisan exporte | Une à quelques fois par chantier | Fichier remis au client |
 | Versement au signal qualité | Correction de l'artisan | À chaque correction | `signal_qualite.jsonl`, hors dépôt |
 | Réentraînement à partir du signal | Décision de l'artisan | Rythme visé : hebdomadaire, non automatisé | Jeu de données local |
@@ -174,7 +207,7 @@ ce que le registre doit dire.
 |---|---|
 | Accès | Lire le fichier JSON du projet — il est en clair et lisible à l'œil |
 | Rectification | L'artisan corrige dans l'application ; la correction est journalisée comme signal qualité |
-| Effacement | Supprimer le fichier du projet. **Incomplet** : le signal qualité, lui, ne rétrécit jamais |
+| Effacement | Supprimer le fichier du projet. **Incomplet** : le signal qualité, lui, ne rétrécit jamais. Le gabarit de T5, en revanche, s'efface d'un bouton |
 | Opposition | Ne pas utiliser l'application pour ce chantier |
 | Information | **Non fait.** Le client final n'est informé de rien : il reçoit un devis, pas une notice |
 
@@ -203,7 +236,13 @@ avec le motif de chacun.
    noms et des adresses de clients à une synchronisation dans le nuage.
    **Arbitrage laissé à l'artisan** : changer le défaut, ou documenter `BTP_DONNEES` comme
    obligatoire en exploitation.
-6. **Aucune analyse d'impact (AIPD) n'a été menée.** Elle n'est vraisemblablement pas requise
+6. **Le sous-traitant de T5 n'est pas encadré.** Aucun contrat de sous-traitance (art. 28),
+   aucune vérification de la localisation des traitements, aucune durée de rétention connue
+   côté service. Tant que `BTP_OCR_CLE` n'est pas configurée, le produit ne transmet rien et
+   la lacune est théorique ; le jour où elle l'est, ces trois points sont un préalable, pas
+   une formalité. C'est aussi le motif pour lequel le dépôt reste **facultatif** et le
+   gabarit par défaut **complet**.
+7. **Aucune analyse d'impact (AIPD) n'a été menée.** Elle n'est vraisemblablement pas requise
    — ni données sensibles, ni surveillance systématique, ni grande échelle — mais l'absence
    de traitement de la question est elle-même une lacune. Une demi-page de justification suffit.
 
