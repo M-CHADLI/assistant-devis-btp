@@ -143,6 +143,41 @@ class ProfilSortie(BaseModel):
     client_adresse_chantier: str
     delai_execution: str
     mentions_manquantes: list[str]
+    origines: dict[str, str] = Field(
+        default_factory=dict,
+        description="artisan | annuaire, par champ légal (US-01)")
+
+
+class RechercheSiretSortie(BaseModel):
+    """Réponse au pré-remplissage par SIRET (US-01).
+
+    `origine` vaut `annuaire` ou `saisie_manuelle` : il n'y a pas de troisième
+    issue, et surtout pas d'échec — une indisponibilité de l'annuaire bascule
+    en saisie manuelle, elle ne refuse jamais l'inscription.
+    """
+    origine: str = Field(description="annuaire | saisie_manuelle")
+    motif: str | None = Field(
+        default=None,
+        description="cle_absente | injoignable | inconnu | quota | illisible")
+    explication: str = Field(
+        description="Phrase destinée à l'artisan : dit toujours la suite")
+    champs: dict[str, str] = Field(
+        default_factory=dict,
+        description="Valeurs proposées, sous les noms de champs du profil")
+    champs_conserves: list[str] = Field(
+        default_factory=list,
+        description="Champs non écrasés parce que l'artisan les a saisis")
+    profil: ProfilSortie
+
+
+class Erreur422Siret(BaseModel):
+    """SIRET mal formé : refusé **avant tout appel réseau**.
+
+    Le message énonce la correction attendue, pas seulement la faute, et
+    `champ` permet au front de le rattacher au bon `aria-describedby`.
+    """
+    detail: str
+    champ: str = "siret"
 
 
 class MetriqueSortie(BaseModel):

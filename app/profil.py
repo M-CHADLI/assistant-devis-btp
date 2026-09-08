@@ -43,6 +43,18 @@ class Decennale:
         return self.valide_jusqu_au < (a_la_date or dt.date.today())
 
 
+# Les champs légaux susceptibles d'être pré-remplis par l'annuaire (US-01).
+# Le régime de TVA et la décennale n'en font pas partie : aucun annuaire ne les
+# connaît, ils restent déclaratifs (US-02).
+CHAMPS_PREREMPLISSABLES = (
+    "raison_sociale", "siret", "adresse", "rcs", "ape_naf",
+    "tva_intracommunautaire",
+)
+
+ORIGINE_ARTISAN = "artisan"
+ORIGINE_ANNUAIRE = "annuaire"
+
+
 @dataclass
 class ProfilArtisan:
     raison_sociale: str = ""
@@ -54,9 +66,28 @@ class ProfilArtisan:
     regime_tva: RegimeTVA = RegimeTVA.REEL
     decennale: Decennale = field(default_factory=Decennale)
 
+    # Origine de chaque champ légal (`docs/DISPOSITIF_AGENT.md` §2.3). Absent
+    # du dictionnaire vaut `artisan` : par défaut, ce qui est dans le profil y
+    # a été mis à la main, et c'est la lecture la plus prudente — elle protège
+    # la saisie plutôt que le pré-remplissage.
+    origines: dict[str, str] = field(default_factory=dict)
+
     @property
     def en_franchise(self) -> bool:
         return self.regime_tva is RegimeTVA.FRANCHISE_293B
+
+    def origine_de(self, champ: str) -> str:
+        return self.origines.get(champ, ORIGINE_ARTISAN)
+
+    def fait_autorite(self, champ: str) -> bool:
+        """Vrai si l'artisan a posé cette valeur — donc si nul ne l'écrase.
+
+        Un champ vide ne fait jamais autorité : ne rien avoir saisi n'est pas
+        une décision, et refuser de le remplir pour cette raison reviendrait à
+        faire retaper à l'artisan ce qu'on sait déjà.
+        """
+        return (bool(getattr(self, champ, "").strip())
+                and self.origine_de(champ) == ORIGINE_ARTISAN)
 
 
 @dataclass

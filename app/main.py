@@ -14,9 +14,10 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.api_schema import (Erreur401, Erreur404, Erreur409, Erreur503,
-                            FamilleIncomplete, FamilleSynthese, MetriquesSortie,
-                            ProduitCatalogue, ProfilSortie, ReponseDevis,
+from app.api_schema import (Erreur401, Erreur404, Erreur409, Erreur422Siret,
+                            Erreur503, FamilleIncomplete, FamilleSynthese,
+                            MetriquesSortie, ProduitCatalogue, ProfilSortie,
+                            RechercheSiretSortie, ReponseDevis,
                             ReponseRelecture, ReponseTour, ReponseTourTranscrit,
                             SessionOuverte, SourceDonnees)
 from app import catalogue_base
@@ -28,7 +29,11 @@ from app.persistance import Registre
 from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
                           corriger_ligne, traiter_message, valider_structure,
                           valider_transcription)
-from app.profil import Client, RegimeTVA, champs_manquants
+from app.annuaire import (Indisponible, SiretInvalide, normaliser_siret,
+                          rechercher)
+from app.profil import (CHAMPS_PREREMPLISSABLES, ORIGINE_ANNUAIRE,
+                        ORIGINE_ARTISAN, Client, RegimeTVA,
+                        champs_manquants)
 from app.referentiel import REFERENTIEL
 from app.transcription import relire
 
@@ -423,6 +428,7 @@ def _serialiser_profil(session: Session) -> dict:
         "delai_execution": session.delai_execution,
         "mentions_manquantes": champs_manquants(
             session.profil, session.client, session.delai_execution),
+        "origines": {c: p.origine_de(c) for c in CHAMPS_PREREMPLISSABLES},
     }
 
 
@@ -552,6 +558,7 @@ def api_profil_ecrire(entrant: ProfilEntrant, request: Request,
     """US-02 — le régime de TVA est un attribut du profil, pas une case par devis."""
     projet_id, session = _projet(request)
     p = session.profil
+    avant = {c: getattr(p, c) for c in CHAMPS_PREREMPLISSABLES}
     p.raison_sociale = entrant.raison_sociale
     p.siret = entrant.siret
     p.adresse = entrant.adresse
@@ -566,9 +573,104 @@ def api_profil_ecrire(entrant: ProfilEntrant, request: Request,
     session.client = Client(nom=entrant.client_nom,
                             adresse_chantier=entrant.client_adresse_chantier)
     session.delai_execution = entrant.delai_execution
+    # Ce que l'artisan enregistre lui-même lui appartient — sauf s'il a laissé
+    # tel quel ce que l'annuaire avait proposé : dans ce cas la valeur garde son
+    # origine, et une nouvelle recherche pourra la corriger. Accepter sans
+    # relire n'est pas décider.
+    for champ in CHAMPS_PREREMPLISSABLES:
+        valeur = getattr(p, champ)
+        if p.origine_de(champ) == ORIGINE_ANNUAIRE and valeur == avant.get(champ):
+            continue
+        p.origines[champ] = ORIGINE_ARTISAN
     REGISTRE.enregistrer(projet_id, session)
     _poser_cookie(response, projet_id)
     return _serialiser_profil(session)
+
+
+class RechercheSiret(BaseModel):
+    siret: str = ""
+
+
+@app.post("/api/profil/siret", response_model=RechercheSiretSortie,
+          tags=["Profil"],
+          responses={422: {"model": Erreur422Siret,
+                           "description": "SIRET mal formé, aucun appel émis"}},
+          summary="Pré-remplir les mentions légales à partir du SIRET (US-01)")
+def api_profil_siret(entrant: RechercheSiret, request: Request,
+                     response: Response) -> dict:
+    """US-01 — ce n'est pas une brique d'IA : une clé de contrôle et un appel HTTP.
+
+    Deux règles gouvernent cette route, et elles sont dans cet ordre :
+
+    1. **Un SIRET mal formé ne coûte pas un appel réseau.** La validation est
+       locale et lève un 422 avant que quoi que ce soit ne sorte de la machine.
+    2. **L'indisponibilité n'est pas une erreur.** Clé absente, annuaire muet,
+       SIRET inconnu : la réponse reste un 200 qui bascule en saisie manuelle
+       et dit pourquoi. Rendre un 5xx ici, ce serait faire échouer une
+       inscription parce qu'un tiers est en panne.
+    """
+    projet_id, session = _projet(request)
+    try:
+        siret = normaliser_siret(entrant.siret)
+    except SiretInvalide as erreur:
+        raise HTTPException(status_code=422,
+                            detail=str(erreur)) from None
+
+    resultat = rechercher(siret)
+    profil = session.profil
+
+    if isinstance(resultat, Indisponible):
+        # Le SIRET, lui, est valide et vient d'être saisi : le retenir évite de
+        # le faire retaper dans le formulaire manuel.
+        profil.siret = siret
+        profil.origines["siret"] = ORIGINE_ARTISAN
+        REGISTRE.enregistrer(projet_id, session)
+        _poser_cookie(response, projet_id)
+        return {"origine": "saisie_manuelle", "motif": resultat.motif,
+                "explication": resultat.explication,
+                "champs": {"siret": siret}, "champs_conserves": [],
+                "profil": _serialiser_profil(session)}
+
+    proposes = resultat.champs()
+    conserves: list[str] = []
+    for champ, valeur in proposes.items():
+        # Le SIRET n'est pas pré-rempli : c'est l'artisan qui vient de le
+        # taper. Le faire passer pour une donnée d'annuaire le rendrait
+        # écrasable par une recherche suivante, ce qui n'a aucun sens.
+        if champ == "siret":
+            continue
+        if profil.fait_autorite(champ):
+            conserves.append(champ)
+            continue
+        if not valeur:
+            continue
+        setattr(profil, champ, valeur)
+        profil.origines[champ] = ORIGINE_ANNUAIRE
+    profil.siret = siret
+    profil.origines["siret"] = ORIGINE_ARTISAN
+
+    manquants = [c for c in CHAMPS_PREREMPLISSABLES
+                 if not getattr(profil, c).strip()]
+    explication = (
+        "Vos informations légales ont été récupérées. Relisez-les : ce que "
+        "vous corrigez fait autorité.")
+    if manquants:
+        explication += (
+            f" L'annuaire n'a pas renseigné {len(manquants)} champ"
+            f"{'s' if len(manquants) > 1 else ''} — complétez-le"
+            f"{'s' if len(manquants) > 1 else ''} à la main.")
+    if conserves:
+        explication += (
+            f" {len(conserves)} champ{'s' if len(conserves) > 1 else ''} que "
+            f"vous aviez saisi{'s' if len(conserves) > 1 else ''} "
+            f"{'ont' if len(conserves) > 1 else 'a'} été conservé"
+            f"{'s' if len(conserves) > 1 else ''}.")
+
+    REGISTRE.enregistrer(projet_id, session)
+    _poser_cookie(response, projet_id)
+    return {"origine": "annuaire", "motif": None, "explication": explication,
+            "champs": proposes, "champs_conserves": conserves,
+            "profil": _serialiser_profil(session)}
 
 
 @app.get("/api/export", tags=["Devis"],

@@ -338,3 +338,70 @@ def test_la_modale_piege_le_focus_et_le_rend(html):
     piege = html[html.index("if (e.key === 'Escape')"):]
     assert "e.preventDefault(); last.focus()" in piege, "le focus sort par le haut"
     assert "e.preventDefault(); first.focus()" in piege, "le focus sort par le bas"
+
+
+# --------------------------------------------------------------------------
+# US-01 — pré-remplissage par SIRET : l'accessibilité au même rang que le reste
+# --------------------------------------------------------------------------
+
+def test_le_champ_siret_est_relie_a_son_aide_et_a_son_erreur(html):
+    """RGAA 11.10 / WCAG 3.3.3 — un message d'erreur non rattaché au champ
+    n'est jamais lu au bon moment par un lecteur d'écran."""
+    champ = re.search(r'<input[^>]*id="p-siret"[^>]*>', html)
+    assert champ, "le champ SIRET a disparu"
+    decrit = re.search(r'aria-describedby="([^"]+)"', champ.group(0))
+    assert decrit, "le champ SIRET ne cite ni aide ni erreur"
+    for identifiant in decrit.group(1).split():
+        assert f'id="{identifiant}"' in html, (
+            f"aria-describedby cite « {identifiant} », qui n'existe pas")
+
+
+def test_la_bascule_en_saisie_manuelle_est_annoncee(html):
+    """WCAG 4.1.3 — le passage en saisie manuelle change ce que l'artisan doit
+    faire ; l'afficher sans l'annoncer laisse un utilisateur non voyant devant
+    un formulaire qui ne se remplira jamais."""
+    region = re.search(r'<p[^>]*id="siret-retour"[^>]*>', html)
+    assert region, "pas de zone de retour pour la recherche SIRET"
+    assert 'aria-live="polite"' in region.group(0)
+
+
+def test_l_erreur_de_siret_est_une_alerte_et_ne_tient_pas_a_la_couleur(html):
+    """RGAA 3.1 — la couleur seule ne porte jamais une information."""
+    erreur = re.search(r'<p[^>]*id="siret-erreur"[^>]*>', html)
+    assert erreur and 'role="alert"' in erreur.group(0)
+    # Le script préfixe le message d'un signe : le texte suffit à lui seul.
+    assert "'⚠ ' + message" in html
+
+
+def test_le_champ_invalide_est_marque_pour_les_technologies_d_assistance(html):
+    assert "setAttribute('aria-invalid'" in html
+
+
+def test_un_champ_prerempli_reste_modifiable(html):
+    """Critère d'US-01 : « tout champ pré-rempli reste modifiable ». Un
+    `readonly` posé pour « protéger » la donnée d'annuaire retirerait à
+    l'artisan l'autorité que le cadrage lui donne."""
+    for identifiant in ("p-raison", "p-siret", "p-adresse", "p-rcs", "p-ape",
+                        "p-tvaintra"):
+        champ = re.search(rf'<input[^>]*id="{identifiant}"[^>]*>', html)
+        assert champ, f"champ {identifiant} introuvable"
+        assert "readonly" not in champ.group(0)
+        assert "disabled" not in champ.group(0)
+    # Ni le balisage ni le script ne verrouillent l'un de ces six champs.
+    # (Les boutons, eux, se désactivent le temps d'un appel : c'est autre chose.)
+    for identifiant in ("p-raison", "p-siret", "p-adresse", "p-rcs", "p-ape",
+                        "p-tvaintra"):
+        assert f"'{identifiant}').readOnly" not in html
+        assert f"'{identifiant}').disabled" not in html
+
+
+def test_le_front_ignore_le_nom_de_l_annuaire(html):
+    """Le navigateur parle au serveur, jamais au tiers : c'est ce qui garde la
+    clé d'API hors de portée du client."""
+    assert "pappers" not in html.lower()
+    assert "api_token" not in html
+
+
+def test_l_origine_d_un_champ_prerempli_est_visible_sans_etre_bloquante(html):
+    assert "dataset.origine" in html
+    assert "votre correction fait autorité" in html

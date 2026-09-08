@@ -118,7 +118,41 @@ abandon à l'inscription. L'API Pappers les restitue à partir du seul SIRET
   faute (RGAA 11.10, WCAG 3.3.3) ; le passage en saisie manuelle est annoncé
   dans une région `aria-live="polite"` (WCAG 4.1.3).
 
-**Traçabilité.** C5, C14, C17 · `CADRAGE_MODELE.md` §6 · état : **à faire**.
+**Traçabilité.** C5, C14, C17 · `CADRAGE_MODELE.md` §6 · état : **partiel**.
+
+`app/annuaire.py` porte la validation locale du SIRET (clé de Luhn, plus le cas
+La Poste) et l'appel à l'annuaire derrière un transport injectable ;
+`POST /api/profil/siret` route les deux issues ; `app/profil.py` porte
+désormais l'**origine** de chaque champ légal (`artisan` ou `annuaire`), qui
+survit au rechargement du projet. Le front expose un bouton de récupération,
+une erreur rattachée au champ par `aria-describedby`, une bascule annoncée en
+`aria-live="polite"`, et laisse tous les champs modifiables. Trente tests dans
+`tests/test_annuaire.py`, sept dans `tests/test_front.py`.
+
+Trois décisions ont été prises en écrivant, et méritent d'être discutées :
+
+- **La validation précède le réseau, et le message dit la correction.** Neuf
+  chiffres donnent « ces neuf chiffres sont votre SIREN, ajoutez les cinq de
+  l'établissement », pas « format invalide ». Un message qui ne se corrige pas
+  est un message inutile.
+- **L'indisponibilité rend 200, pas 5xx.** Clé absente, annuaire muet, SIRET
+  inconnu, quota épuisé : tout bascule en saisie manuelle avec son motif.
+  Rendre une erreur serveur reviendrait à faire échouer une inscription parce
+  qu'un tiers est en panne.
+- **Accepter sans relire n'est pas décider.** Un champ venu de l'annuaire que
+  l'artisan enregistre sans y toucher garde l'origine `annuaire` et reste
+  écrasable par une recherche suivante. Il ne devient `artisan` — donc
+  intouchable — que s'il l'a effectivement modifié. C'est la lecture stricte de
+  « sa modification prime », et elle évite de figer une donnée fausse que
+  personne n'a jamais lue.
+
+**Reste** : le scénario nominal n'a **jamais été joué contre l'annuaire réel**,
+faute de clé sur cette machine. Le nom des clés JSON lues (`denomination`,
+`numero_rcs`, `code_naf`, `siege`) vient de la documentation publiée, non d'une
+réponse observée. Le code en tire la conséquence — un champ absent reste vide
+et n'est jamais comblé — et les tests prouvent cette tolérance, pas la
+correspondance. À vérifier le jour où `BTP_PAPPERS_CLE` sera configurée ; c'est
+la seule chose qui manque à cette story.
 
 ### US-02 — Déclarer mon régime de TVA et mon assurance décennale
 
@@ -1159,8 +1193,9 @@ traçabilité, pas pour le reste à faire.
 
 **Où en sont ces files (08/09/2026).** Les deux tables sont l'ordre décidé, pas
 l'état : celui-ci se lit story par story, à la ligne *Traçabilité*. De la file 1,
-seule **US-04** (transcription locale) reste ouverte ; de la file 2, **US-01**, **US-03**, et la partie de **US-26** qui
-dépend d'un dépôt distant.
+seule **US-04** (transcription locale) reste ouverte ; de la file 2, **US-03**,
+la partie de **US-26** qui dépend d'un dépôt distant, et **US-01** — dont tout
+est écrit et testé sauf l'appel réel, faute de clé d'annuaire.
 
 US-17 reste hors des deux files : confort métier réel, aucun apport de preuve.
 

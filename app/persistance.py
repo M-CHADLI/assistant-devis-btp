@@ -69,6 +69,11 @@ def _profil_en_dict(p: ProfilArtisan) -> dict:
         "rcs": p.rcs, "ape_naf": p.ape_naf,
         "tva_intracommunautaire": p.tva_intracommunautaire,
         "regime_tva": str(p.regime_tva),
+        # Sans les origines, un rechargement transformerait un champ venu de
+        # l'annuaire en champ « saisi par l'artisan » : le pré-remplissage
+        # deviendrait indiscernable d'une décision, et cesserait d'être
+        # écrasable par une nouvelle recherche.
+        "origines": dict(p.origines),
         "decennale": {
             "assureur": d.assureur, "numero_contrat": d.numero_contrat,
             "couverture_geographique": d.couverture_geographique,
@@ -87,6 +92,7 @@ def _profil_depuis_dict(brut: dict) -> ProfilArtisan:
         ape_naf=brut.get("ape_naf", ""),
         tva_intracommunautaire=brut.get("tva_intracommunautaire", ""),
         regime_tva=RegimeTVA(brut.get("regime_tva", RegimeTVA.REEL)),
+        origines={k: str(v) for k, v in (brut.get("origines") or {}).items()},
         decennale=Decennale(
             assureur=d.get("assureur", ""), numero_contrat=d.get("numero_contrat", ""),
             couverture_geographique=d.get("couverture_geographique", ""),

@@ -51,6 +51,12 @@
   .alerte ul { margin: .3rem 0 0; padding-left: 1.2rem; }
   .profil fieldset { border: 1px solid #8886; border-radius: .4rem; margin: 0 0 .8rem; padding: .6rem .8rem; }
   .profil legend { font-weight: bold; padding: 0 .3rem; }
+  .profil .aide { font-size: .78rem; margin: .25rem 0 0; opacity: .8; }
+  /* L'erreur porte un préfixe textuel « ⚠ » dans le script : la couleur seule
+     ne suffit jamais à signaler une information (RGAA 3.1, WCAG 1.4.1). */
+  .profil .erreur:empty { display: none; }
+  .profil .erreur { font-size: .82rem; margin: .3rem 0 0; color: #a11; font-weight: bold; }
+  .profil input[aria-invalid="true"] { outline: 2px solid #a11; }
   .profil label { display: block; margin-top: .5rem; font-size: .85rem; }
   .profil input[type=text], .profil input[type=date] { width: 100%; padding: .4rem;
             box-sizing: border-box; font-size: .9rem; }
@@ -145,7 +151,13 @@
       <label for="p-raison">Raison sociale</label>
       <input type="text" id="p-raison" name="raison_sociale" autocomplete="organization">
       <label for="p-siret">Numéro SIRET</label>
-      <input type="text" id="p-siret" name="siret" inputmode="numeric">
+      <input type="text" id="p-siret" name="siret" inputmode="numeric"
+             aria-describedby="siret-aide siret-erreur">
+      <p class="aide" id="siret-aide">Quatorze chiffres. Le renseigner remplit
+        les champs légaux ci-dessous ; vous pourrez tous les corriger.</p>
+      <p class="erreur" id="siret-erreur" role="alert"></p>
+      <button type="button" id="btn-siret">Récupérer mes informations légales</button>
+      <p class="consequence" id="siret-retour" aria-live="polite"></p>
       <label for="p-adresse">Adresse de l'entreprise</label>
       <input type="text" id="p-adresse" name="adresse" autocomplete="street-address">
       <label for="p-rcs">RCS ou répertoire des métiers</label>
@@ -602,6 +614,16 @@ function remplirProfil(p) {
   mettre('p-client', p.client_nom);
   mettre('p-chantier', p.client_adresse_chantier);
   mettre('p-delai', p.delai_execution);
+  // Un champ pré-rempli reste modifiable et le dit : `title` pour la souris,
+  // `data-origine` pour les tests, et rien qui empêche la saisie.
+  for (const [champ, id] of Object.entries(CHAMPS_LEGAUX)) {
+    const origine = (p.origines || {})[champ] || 'artisan';
+    const noeud = document.getElementById(id);
+    noeud.dataset.origine = origine;
+    noeud.title = (origine === 'annuaire')
+      ? "Rempli depuis l'annuaire des entreprises — corrigez-le si besoin, votre correction fait autorité."
+      : '';
+  }
   document.getElementById(
     p.regime_tva === 'franchise_293b' ? 'p-franchise' : 'p-reel').checked = true;
   annoncerConsequenceTVA();
@@ -611,6 +633,59 @@ function remplirProfil(p) {
       "Attention : votre assurance décennale est expirée. Le devis reste émis, mais la date affichée sera fausse.";
   }
 }
+
+// US-01 — le pré-remplissage par SIRET. Ce n'est pas de l'IA : une clé de
+// contrôle vérifiée par le serveur, puis un annuaire public. Trois choses
+// comptent ici, et ce sont les trois critères de la story :
+//   - l'erreur de saisie est rattachée au champ (aria-describedby) et énonce
+//     la correction attendue, pas seulement la faute ;
+//   - la bascule en saisie manuelle est *annoncée*, pas seulement affichée ;
+//   - un champ que l'artisan a modifié n'est jamais réécrit par une recherche.
+const champSiret = document.getElementById('p-siret');
+const erreurSiret = document.getElementById('siret-erreur');
+const retourSiret = document.getElementById('siret-retour');
+const btnSiret = document.getElementById('btn-siret');
+
+const CHAMPS_LEGAUX = {
+  raison_sociale: 'p-raison', siret: 'p-siret', adresse: 'p-adresse',
+  rcs: 'p-rcs', ape_naf: 'p-ape', tva_intracommunautaire: 'p-tvaintra',
+};
+
+function poserErreurSiret(message) {
+  // Le « ⚠ » est dans le texte, pas seulement dans la couleur : un lecteur
+  // d'écran et un écran monochrome disent la même chose.
+  erreurSiret.textContent = message ? '⚠ ' + message : '';
+  champSiret.setAttribute('aria-invalid', message ? 'true' : 'false');
+}
+
+btnSiret.addEventListener('click', async () => {
+  poserErreurSiret('');
+  retourSiret.textContent = 'Recherche en cours…';
+  btnSiret.disabled = true;
+  let resp, corps;
+  try {
+    resp = await fetch('/api/profil/siret', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({siret: champSiret.value}),
+    });
+    corps = await resp.json();
+  } catch (e) {
+    // Le réseau du navigateur, pas celui du serveur : même conséquence.
+    retourSiret.textContent =
+      "La recherche n'a pas abouti. Saisissez vos informations légales à la main.";
+    btnSiret.disabled = false;
+    return;
+  }
+  btnSiret.disabled = false;
+  if (resp.status === 422) {
+    retourSiret.textContent = '';
+    poserErreurSiret(corps.detail);
+    champSiret.focus();
+    return;
+  }
+  remplirProfil(corps.profil);
+  retourSiret.textContent = corps.explication;
+});
 
 function lireProfil() {
   const lu = (id) => document.getElementById(id).value.trim();
