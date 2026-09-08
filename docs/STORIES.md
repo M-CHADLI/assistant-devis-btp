@@ -551,7 +551,11 @@ ce qu'il n'a pas la possibilité d'exprimer » (§3.2). Le prix vient du code, a
 
 **Traçabilité.** C13, C14 · `DISPOSITIF_AGENT.md` §3.2, `CADRAGE_MODELE.md` §6 ·
 état : **fait** (schéma sans champ prix dans `app/schema.py`, chiffrage catalogue
-et totaux couverts par `tests/test_devis.py`).
+et totaux couverts par `tests/test_devis.py`). **Nuance depuis US-27** : le
+catalogue qui chiffre est encore le dictionnaire de `app/catalogue.py`, pas la
+base construite par la chaîne de données. La propriété que cette story défend —
+le modèle ne produit aucun prix — est vraie dans les deux cas ; ce qui change,
+c'est la provenance du prix, et elle est traitée en US-27.
 
 ### US-14 — Corriger une ligne et que ma correction fasse autorité
 
@@ -975,6 +979,69 @@ emplacement (lancement indépendant du répertoire courant). **Reste** : aucun
 `remote` git n'est configuré, donc la chaîne ne s'exécute nulle part et rien
 n'est observable par un tiers.
 
+### US-27 — Que le catalogue vienne de vraies sources, trous compris
+
+**Contexte.** Le produit chiffre à partir d'un catalogue. Tant que ce catalogue est
+un dictionnaire écrit à la main dans `app/catalogue.py`, il ne prouve ni collecte,
+ni nettoyage, ni mise en base : il prouve qu'on sait taper des prix. Une chaîne de
+données réelle — un fichier, une API, une page web — expose au problème inverse :
+les sources ne se recouvrent pas. Le fournisseur vend au litre, l'ADEME publie au
+kilogramme, et personne ne publie la masse volumique d'une peinture. La tentation
+est alors d'inventer la valeur manquante pour que la table soit pleine. C'est ce
+que cette story refuse.
+
+**Scénarios d'usage.**
+1. *Nominal* — trois sources hétérogènes (CSV fournisseur simulé, API ADEME Base
+   Carbone, page Wikipédia des masses volumiques) sont collectées, nettoyées,
+   jointes, versées en base SQLite et servies par l'API.
+2. *Trou assumé* — aucune masse volumique de peinture n'existe dans la source
+   scrapée : le produit est conservé, la valeur reste vide, et une réserve écrite
+   dit pourquoi.
+3. *Correspondance approchée* — un vernis acrylique sert de proxy à une peinture
+   de finition : le produit porte `qualite_correspondance = "proxy"`, jamais
+   `"exacte"`.
+4. *Dégradé* — la base n'a pas été construite : l'API répond **503** avec la
+   commande de reconstruction, pas un 500 ni une liste vide qui ferait croire à un
+   catalogue vide.
+
+**Critères de validation.**
+- Aucune ligne n'est écartée en silence : chaque rejet est compté avec son motif,
+  et le total des rejets plus le total des retenus égale le total lu.
+- Aucune valeur n'est inventée : une donnée absente reste absente et porte une
+  réserve rédigée.
+- La qualité de correspondance (`exacte` · `proxy` · `absente`) voyage avec le
+  produit jusqu'à l'API, pour qu'aucun consommateur ne prenne un proxy pour une
+  mesure.
+- Le schéma refuse lui-même l'incohérence (clés étrangères actives, contraintes
+  `CHECK` sur le prix, la remise, l'unité et la qualité) — la validation n'est pas
+  seulement dans le script d'import.
+- La reconstruction est idempotente et hors ligne : rejouer la chaîne sur les
+  fichiers déjà téléchargés redonne la même base.
+- La licence de chaque source est enregistrée en base et exposée par l'API.
+- *Accessibilité* — la documentation de la chaîne respecte le standard de
+  `docs/ACCESSIBILITE_DOCUMENTS.md` (tableaux à en-tête, pas de lien « ici »,
+  schémas commentés en texte) ; les réponses de l'API restent lisibles sans
+  couleur, la qualité de correspondance étant un mot et non un code.
+
+**Traçabilité.** C1, C2, C3, C4, C5 · `docs/CHAINE_DONNEES.md` · état : **fait
+pour la chaîne, pas encore branché sur le devis** — `tools/donnees/` porte les six
+étapes (collecte fichier, API, scraping, agrégation, import, requêtes) ;
+`catalogue/jeu_de_donnees.json` retient 104 produits sur 539 lignes lues, chaque
+rejet compté par motif ; `tools/donnees/importer.py` construit un schéma 3NF dont
+le déterminant est la **famille** et non la matière (stratifié et parquet sont
+tous deux du bois et n'ont pas la même densité : une table `matiere` encoderait
+une dépendance fonctionnelle qui n'existe pas) ; `app/catalogue_base.py` porte le
+contrat de lecture, dont `familles_incompletes()` qui expose les manques au lieu
+de les masquer ; cinq endpoints les servent sous le tag « Jeu de données ». La
+base n'est pas versionnée — l'API répond donc 503 sur un dépôt frais tant que la
+reconstruction n'a pas été lancée, et c'est testé. Tests :
+`tests/test_chaine_donnees.py` (43) et `tests/test_api_catalogue.py` (19).
+**Reste** : le moteur de devis lit toujours le dictionnaire de `app/catalogue.py`,
+pas la base. La couture est `resoudre_produit()`, que `moins_cher_de_famille()`
+remplacerait — mais les codes de lot du référentiel et les familles du dump ne se
+recouvrent pas encore, et inventer cette table de correspondance sans arbitrage
+métier reviendrait à décider à la place de l'artisan.
+
 ---
 
 ## Ordre de traitement
@@ -1016,6 +1083,7 @@ Elles ne se voient pas à la démonstration, et elles se notent.
 | 6 | US-03 (OCR du gabarit) | C8 |
 | 7 | US-25 (export du signal qualité) | C20 |
 | 8 | US-19 / US-20 (périmètre, injection) | C17, C21 |
+| 9 | US-27 (chaîne de données) | C1 à C5 |
 
 Trois stories ne figurent dans aucune file parce qu'elles étaient **déjà faites**
 au moment du découpage : US-08, US-10 et US-13. Elles restent au découpage pour la
@@ -1027,6 +1095,11 @@ seule **US-04** (transcription locale) reste ouverte ; de la file 2, **US-01**, 
 dépend d'un dépôt distant.
 
 US-17 reste hors des deux files : confort métier réel, aucun apport de preuve.
+
+**Ajout du 08/09/2026.** US-27 (chaîne de données) est née de l'audit jury :
+les compétences C1 à C5 exigent une collecte, un nettoyage et une mise en base
+réels, qu'aucune des vingt-six stories initiales ne portait. Elle est faite pour
+la chaîne, ouverte pour le branchement au devis.
 
 ### Ce que ce découpage ne couvre pas
 

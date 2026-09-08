@@ -4,7 +4,7 @@
 > niveau de la *compétence*. Ici on descend d'un cran : les **135 critères
 > d'évaluation** que le jury coche un par un, extraits de
 > `reference/referentiel-rncp-ai-engineer.xlsx`, confrontés à l'**état constaté
-> du dépôt** au commit `9a4b6b3` (08/09/2026).
+> du dépôt** au commit `9c5b8c3` (08/09/2026).
 >
 > Même règle que la grille de contrôle : **on ne dénature pas le projet pour
 > cocher une case.** Un critère hors périmètre est écrit comme tel, avec la
@@ -288,7 +288,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 |---|---|---|---|
 | 103 | Modélisation des données respectant un formalisme (Merise, entités-relations) | ✅ | Même document qu'en C4-19. Il couvre en plus les **structures propres à l'application** — projet, ligne de devis, correction, escalade — et les quatre contraintes d'intégrité qu'un schéma relationnel ne peut pas porter, avec ce qui les vérifie. |
 | 104 | Modélisation des parcours utilisateurs (schéma fonctionnel, wireframes) | ✅ | `docs/MAQUETTES.md` — le parcours complet en schéma fonctionnel (les trois points d'arrêt HITL y sont visibles), puis six maquettes filaires. Le document **dit qu'elles ont été dessinées après l'interface** plutôt que de faire croire l'inverse ; à partir de là, les écrans restants (US-01, US-03, US-17) seront dessinés avant d'être codés. |
-| 105 | Chaque spécification couvre contexte, scénarios, critères de validation | ✅ | `docs/STORIES.md` : 26 stories, chacune avec son contexte, ses critères d'acceptation et **un cas dégradé**. |
+| 105 | Chaque spécification couvre contexte, scénarios, critères de validation | ✅ | `docs/STORIES.md` : 27 stories, chacune avec son contexte, ses critères d'acceptation et **un cas dégradé**. |
 | 106 | Objectifs d'accessibilité intégrés aux critères d'acceptation des user stories | ✅ | 21 stories portent une rubrique « Accessibilité » **au même rang** que le fonctionnel — c'est exactement ce que le critère demande, et c'est rare. |
 | 107 | Objectifs d'accessibilité appuyés sur un standard (WCAG, RGAA) | ✅ | RGAA 4.1 nommé 23 fois dans `docs/STORIES.md`, avec les numéros de critère. |
 
@@ -306,7 +306,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 115 | Cycles, étapes, rôles, rituels et outils de la méthode respectés | 🟡 | Le découpage agile est réel — 26 stories, 7 épiques, deux files de priorité, sprints dans `PLANNING.md`. Les **rituels ne sont pas tenus ni tracés** (pas de revue de sprint, pas de rétrospective écrite). |
+| 115 | Cycles, étapes, rôles, rituels et outils de la méthode respectés | 🟡 | Le découpage agile est réel — 27 stories, 7 épiques, deux files de priorité, sprints dans `PLANNING.md`. Les **rituels ne sont pas tenus ni tracés** (pas de revue de sprint, pas de rétrospective écrite). |
 | 116 | Outils de pilotage disponibles (kanban, burndown, backlog) | 🟡 | Le backlog existe et fait autorité. Le kit de transposition Notion est prêt (`docs/NOTION_BOARD.md`, CSV, CLI) mais **le tableau n'est pas encore monté**. |
 | 117 | Objectifs et modalités des rituels partagés aux parties prenantes | ❌ | Non écrits. |
 | 118 | Éléments de pilotage accessibles à toutes les parties tout au long du projet | 🟡 | Accessibles dans le dépôt ; pas de vue partagée hors dépôt tant que Notion n'est pas monté. |
@@ -419,5 +419,5 @@ est plus un.
 ---
 
 *Audit établi le 08/09/2026, révisé le même jour sur le dépôt à l'état du
-commit `9a4b6b3`. Les statuts décrivent ce qui est dans le dépôt à ce
+commit `9c5b8c3`. Les statuts décrivent ce qui est dans le dépôt à ce
 commit-là, pas ce qui est prévu — et pas ce qui a été écrit depuis.*

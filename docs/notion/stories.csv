@@ -25,3 +25,4 @@ US-23,Que l'accès soit authentifié,G — Socle,Story,Certification,1,Critique,
 US-24,Que l'exploitation soit observable,G — Socle,Story,Certification,2,Critique,Terminé,S4,8,C11 · C20,DISPOSITIF_AGENT.md §4.3,fait
 US-25,Que les corrections alimentent la boucle qualité,G — Socle,Story,Certification,7,Haute,Terminé,S6,5,C20,DISPOSITIF_AGENT.md §4.2 · §5.2,fait
 US-26,Que le produit s'installe et se relance sans moi,G — Socle,Story,Certification,4,Haute,En cours,S5,5,C18 · C19,—,partiel
+US-27,"Que le catalogue vienne de vraies sources, trous compris",G — Socle,Story,Certification,9,Haute,En cours,S5,8,C1 · C2 · C3 · C4 · C5,CHAINE_DONNEES.md,partiel

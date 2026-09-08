@@ -14,7 +14,7 @@
 
 | Fichier | Rôle |
 |---|---|
-| `docs/notion/stories.csv` | Les 26 stories, avec épique, file, rang, sprint, points, compétences |
+| `docs/notion/stories.csv` | Les 27 stories, avec épique, file, rang, sprint, points, compétences |
 | `docs/notion/sprints.csv` | Les 7 sprints de deux semaines, alignés sur les jalons de `PLANNING.md` |
 | `docs/notion/taches.csv` | La décomposition technique des sprints S1 et S2 (22 tâches) |
 | `docs/notion/schema-*.json` | Le schéma de chaque base : nom et type de chaque propriété |

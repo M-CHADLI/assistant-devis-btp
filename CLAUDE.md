@@ -28,7 +28,7 @@ README.md              porte d'entrée
 CLAUDE.md              ce fichier
 PLANNING.md            calendrier des 4 mois
 docs/                  la conception — fait autorité
-docs/STORIES.md        les 26 stories et l'ordre du backlog
+docs/STORIES.md        les 27 stories et l'ordre du backlog
 docs/notion/           schémas et CSV de la transposition Notion
 docs/MODELE_DONNEES.md le modèle de données — conceptuel constaté, logique cible
 docs/MAQUETTES.md      parcours utilisateur et maquettes filaires annotées
@@ -50,7 +50,7 @@ archive/renoassistant/ conception précédente
 - **`docs/LIVRABLES.md`** — grille de contrôle de la couverture des cinq livrables attendus.
   **Ce n'est pas le projet** : le projet vaut par lui-même, cette grille ne fait que signaler
   les manques. Ne jamais dénaturer le cadrage pour cocher une case.
-- **`docs/STORIES.md`** — le découpage en 26 stories, sept épiques, deux files de priorité.
+- **`docs/STORIES.md`** — le découpage en 27 stories, sept épiques, deux files de priorité.
   Chaque story porte un cas dégradé, des critères d'accessibilité **au même rang** que les
   critères fonctionnels, et une ligne de traçabilité qui dit l'état du code **constaté**.
   Sa mise à jour fait partie de la définition de fini.
