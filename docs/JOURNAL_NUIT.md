@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **09/09/2026**, commit `28fcfab`.
+Dernière mise à jour : **08/09/2026**, reprise Notion (voir plus bas).
 
 ---
 
@@ -39,7 +39,8 @@ Dernière mise à jour : **09/09/2026**, commit `28fcfab`.
 
 ## État vérifié au 08/09/2026
 
-- **520 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+- **553 tests, tous verts** (520, plus les 33 de `test_notion_cli` ajoutés le 08/09).
+  Répartition relevée par `pytest --collect-only -q` :
   `test_front` 55, `test_garde_fous` 52, `test_chaine_donnees` 43,
   `test_gabarit` 41, `test_pipeline` 33, `test_mlops` 33, `test_annuaire` 30,
   `test_api` 29, `test_boucle_qualite` 24, `test_duplication` 22,
@@ -175,9 +176,19 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
    coup — ce sont désormais les seuls, et c'est de loin le meilleur rapport
    effort / critères du dépôt.
 2. **Transposer sur Notion.** Les CSV de `docs/notion/` sont à jour (28 stories).
-   Bloqué sur `NOTION_TOKEN` **et** le partage de la page racine avec
-   l'intégration (menu `⋯` → Connexions). Sans ce partage, l'API rend une liste
-   vide — pas une erreur, ce qui rend le diagnostic pénible.
+   Toujours bloqué sur les deux mêmes gestes, qui n'appartiennent qu'à vous :
+   créer l'intégration interne et coller son secret en `NOTION_TOKEN`, puis
+   partager la page racine avec elle (menu `⋯` → Connexions).
+   **Ce qui a changé le 08/09** : le diagnostic n'est plus pénible. Le CLI porte
+   une commande `diagnostic` qui sépare les causes au lieu de les confondre —
+   `python tools/notion_cli.py diagnostic`. Elle appelle `/search` **sans**
+   paramètre `query`, ce que la documentation Notion définit comme « tout ce qui
+   est partagé avec la connexion » : zéro résultat n'y veut plus dire « rien ne
+   correspond » mais « rien ne m'est partagé ». Chaque échec s'arrête sur le
+   geste unique qui le lève. Deux branches sur trois ont été vérifiées contre
+   l'API réelle (jeton absent, jeton refusé en 401) ; **la troisième — la page
+   non partagée — ne peut pas l'être sans un jeton valide, et reste donc
+   éprouvée par la lecture seule.**
 3. **Tenir le rituel de veille pour de vrai.** Une seule séance existe
    (`veille/seances/2026-09-08.md`), préparée avec l'assistant. Le référentiel
    demande une *récurrence*. Antidater des séances fabriquerait la preuve au lieu
@@ -253,6 +264,51 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
     parties prenantes, et un document versionné n'est pas un partage. C'est un
     acte — l'envoyer au tuteur, l'ouvrir au premier point hebdomadaire.
     C7-43 (accessibilité des sources de veille), qui figurait ici, est clos.
+
+| `(en cours)` | Diagnostic de la connexion Notion, et tests du CLI (33) |
+
+---
+
+## Reprise du 08/09/2026 — Notion
+
+**Ce qui a été fait.** `tools/notion_cli.py` gagne une commande `diagnostic` et
+perd un défaut de conception : `_appel` s'arrêtait sur toute erreur HTTP, donc le
+CLI était structurellement incapable de *diagnostiquer* quoi que ce soit. Un
+`_appel_brut` rend désormais `(code, corps)` sans jamais s'interrompre, et
+`_appel` est bâti dessus — les commandes d'usage courant ne changent pas de
+comportement. `tests/test_notion_cli.py` couvre le CLI pour la première fois :
+**33 tests, tous hors ligne**, aucun jeton requis.
+
+**Ce que cela ne fait pas.** Le tableau n'est **pas** monté. Les quatre critères
+du jury qui en dépendent — C16-116, C16-117, C16-118 et 155 — restent 🟡 et le
+resteront jusqu'à ce que les deux gestes de l'entrée nº 2 soient faits. Le
+travail de cette reprise a rendu l'échec lisible, il n'a pas créé la connexion.
+
+**Trois compteurs qui mentaient, corrigés** en les relevant depuis les fichiers :
+`docs/NOTION_BOARD.md` annonçait « 26 lignes » pour les stories (28) et
+« sprints S1 et S2, 22 tâches » pour `taches.csv` (S1 à S6, 56 tâches) ;
+`docs/notion/schema-stories.json` portait encore « les 26 stories » dans sa
+description, qui devient le titre de la base côté Notion.
+
+**Un test creux, trouvé par mutation.** Le contrôle des valeurs `multi_select`
+écrit pendant cette reprise est du code juste qui ne peut jamais mordre :
+`Compétences` est le seul `multi_select` des trois schémas, et il ne déclare
+aucune option. Injecter `C99-inventee` dans `stories.csv` ne fait échouer aucun
+test — vérifié, pas supposé. Ce n'est pas un défaut du contrôle mais l'absence
+d'options dans le schéma, et Notion crée ces options à la volée à l'import, ce
+qui est légitime. Ce qui ne l'est pas, c'est qu'une sortie verte ressemble à une
+vérification. `test_les_options_absentes_sont_toutes_connues` nomme désormais
+cette dispense : toute propriété à choix qui perdrait ses options sans être
+inscrite ferait échouer la suite. La dispense a elle-même été éprouvée par
+mutation dans les deux sens.
+
+**Leçon de méthode, à retenir pour les prochaines délégations.** Le sous-agent
+local a rapporté « 28 tests » puis « 31 tests » ; les décomptes réels étaient
+27 puis 30. Il a aussi rapporté « aucune valeur non déclarée détectée », ce qui
+était vrai et sans aucune valeur informative, puisque son contrôle ne pouvait
+rien détecter. **Ne pas reprendre un chiffre ni un « rien à signaler » d'un
+sous-agent sans le relever soi-même** — et, pour un test, exiger la mutation qui
+prouve qu'il échoue quand il le doit.
 
 ## À signaler à l'utilisateur au réveil
 

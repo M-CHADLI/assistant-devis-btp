@@ -5,6 +5,7 @@ Jeton : variable d'environnement NOTION_TOKEN (intégration interne Notion).
 Version d'API : NOTION_VERSION, par défaut 2022-06-28.
 
     export NOTION_TOKEN=ntn_xxx
+    python tools/notion_cli.py diagnostic          # pourquoi ça ne marche pas
     python tools/notion_cli.py whoami
     python tools/notion_cli.py search "the-project"
     python tools/notion_cli.py db-create --parent <page_id> --schema docs/notion/schema-stories.json
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import sys
@@ -33,10 +35,30 @@ API = "https://api.notion.com/v1"
 FICHIER_ENV = Path(__file__).resolve().parent.parent / ".env"
 
 
-def _jeton() -> str:
+MODE_D_EMPLOI_JETON = (
+    "  1. Crée une intégration interne sur https://www.notion.so/my-integrations\n"
+    "  2. Copie le « Internal Integration Secret » (il commence par ntn_)\n"
+    "  3. Ajoute la ligne suivante au fichier .env du dépôt (déjà ignoré par git) :\n"
+    "       NOTION_TOKEN=ntn_...\n"
+    "  4. Dans Notion, ouvre la page racine du projet → menu ⋯ → « Connexions »\n"
+    "     → ajoute ton intégration. Sans ce partage, l'API ne voit rien."
+)
+
+
+def _empreinte(secret: str) -> str:
+    """Douze caractères de sha256 : de quoi comparer deux jetons sans en montrer un."""
+    return hashlib.sha256(secret.encode()).hexdigest()[:12]
+
+
+def _jeton_optionnel() -> tuple[str, str] | None:
+    """Rend (jeton, origine), ou None — sans jamais interrompre le programme.
+
+    Chercher le jeton et décider de s'arrêter sont deux gestes distincts : le
+    diagnostic a besoin de constater l'absence, pas de mourir dessus.
+    """
     jeton = os.environ.get("NOTION_TOKEN")
-    if jeton:
-        return jeton.strip().strip('"').strip("'")
+    if jeton and jeton.strip():
+        return jeton.strip().strip('"').strip("'"), "variable d'environnement"
     if FICHIER_ENV.exists():
         for ligne in FICHIER_ENV.read_text(encoding="utf-8", errors="ignore").splitlines():
             ligne = ligne.strip()
@@ -49,19 +71,28 @@ def _jeton() -> str:
                 valeur = ligne[len("NOTION_TOKEN"):].lstrip("= ").strip()
                 valeur = valeur.strip('"').strip("'")
                 if valeur:
-                    return valeur
-    sys.exit(
-        "NOTION_TOKEN introuvable.\n"
-        "  1. Crée une intégration interne sur https://www.notion.so/my-integrations\n"
-        "  2. Copie le « Internal Integration Secret » (il commence par ntn_)\n"
-        "  3. Ajoute la ligne suivante au fichier .env du dépôt (déjà ignoré par git) :\n"
-        "       NOTION_TOKEN=ntn_...\n"
-        "  4. Dans Notion, ouvre la page racine du projet → menu ⋯ → « Connexions »\n"
-        "     → ajoute ton intégration. Sans ce partage, l'API ne voit rien."
-    )
+                    return valeur, f"fichier {FICHIER_ENV.name}"
+    return None
 
 
-def _appel(methode: str, chemin: str, corps: dict | None = None) -> dict:
+def _jeton() -> str:
+    trouve = _jeton_optionnel()
+    if trouve is None:
+        sys.exit("NOTION_TOKEN introuvable.\n" + MODE_D_EMPLOI_JETON)
+    return trouve[0]
+
+
+def _appel_brut(methode: str, chemin: str, corps: dict | None = None) -> tuple[int, dict]:
+    """Appelle l'API et rend (code HTTP, corps décodé), sans jamais s'arrêter.
+
+    Les erreurs de Notion sont porteuses de sens — `unauthorized`,
+    `restricted_resource`, `object_not_found` ne se corrigent pas du même
+    geste. Les faire disparaître dans un `sys.exit` jette le seul indice utile,
+    et c'est ce qui rendait le diagnostic pénible.
+
+    Code 0 : la requête n'a pas atteint Notion (réseau, DNS, proxy). Ce n'est
+    pas une réponse de l'API et il ne faut pas la lire comme telle.
+    """
     jeton = _jeton()
     donnees = json.dumps(corps).encode() if corps is not None else None
     requete = urllib.request.Request(
@@ -76,10 +107,24 @@ def _appel(methode: str, chemin: str, corps: dict | None = None) -> dict:
     )
     try:
         with urllib.request.urlopen(requete, timeout=30) as reponse:
-            return json.loads(reponse.read())
+            return reponse.status, json.loads(reponse.read())
     except urllib.error.HTTPError as erreur:
-        detail = erreur.read().decode(errors="replace")[:500]
-        sys.exit(f"HTTP {erreur.code} sur {methode} {chemin}\n{detail}")
+        brut = erreur.read().decode(errors="replace")
+        try:
+            return erreur.code, json.loads(brut)
+        except json.JSONDecodeError:
+            return erreur.code, {"message": brut[:500]}
+    except urllib.error.URLError as erreur:
+        return 0, {"code": "reseau_indisponible", "message": str(erreur.reason)}
+
+
+def _appel(methode: str, chemin: str, corps: dict | None = None) -> dict:
+    """Variante qui s'arrête sur erreur, pour les commandes d'usage courant."""
+    code, reponse = _appel_brut(methode, chemin, corps)
+    if code != 200:
+        detail = json.dumps(reponse, ensure_ascii=False)[:500]
+        sys.exit(f"HTTP {code} sur {methode} {chemin}\n{detail}")
+    return reponse
 
 
 def _titre(objet: dict) -> str:
@@ -115,6 +160,111 @@ def _valeur(type_propriete: str, brut: str) -> dict | None:
     if type_propriete == "checkbox":
         return {"checkbox": brut.lower() in {"true", "vrai", "oui", "x", "1"}}
     return {"rich_text": [{"text": {"content": brut[:2000]}}]}
+
+
+def cmd_diagnostic(args: argparse.Namespace) -> None:
+    """Répond à « pourquoi ça ne marche pas » en séparant les causes.
+
+    Le piège que cette commande existe pour lever : une intégration
+    parfaitement valide dont on a oublié de partager la page rend une liste
+    **vide**, pas une erreur. Sans ce déroulé, « mauvais jeton » et « page non
+    partagée » produisent la même sortie muette, alors qu'ils ne se corrigent
+    pas du même geste.
+
+    Chaque échec s'arrête sur le geste exact qui le lève, et un seul.
+    """
+    # 1 — Le jeton est-il là, et d'où vient-il ?
+    trouve = _jeton_optionnel()
+    if trouve is None:
+        print("✗ jeton      NOTION_TOKEN introuvable")
+        print()
+        print("Ce qui manque, et rien d'autre :")
+        print(MODE_D_EMPLOI_JETON)
+        sys.exit(1)
+    jeton, origine = trouve
+    if jeton.startswith("ntn_"):
+        forme = "préfixe ntn_, intégration interne"
+    elif jeton.startswith("secret_"):
+        forme = "préfixe secret_, ancien format toujours accepté"
+    else:
+        forme = "préfixe inattendu — vérifier que la copie est complète"
+    print(f"✓ jeton      {origine} · empreinte {_empreinte(jeton)} · {forme}")
+
+    # 2 — Notion l'accepte-t-il ?
+    code, moi = _appel_brut("GET", "/users/me")
+    if code == 0:
+        print(f"✗ réseau     {moi.get('message')}")
+        print()
+        print("La requête n'a pas atteint Notion. Rien ne peut être conclu sur le jeton.")
+        sys.exit(1)
+    if code == 401:
+        print("✗ identité   401 — Notion refuse le jeton")
+        print()
+        print("Causes qui donnent toutes ce 401 : secret révoqué, tronqué à la")
+        print("copie, ou appartenant à un autre espace de travail.")
+        print("Geste : régénère le secret sur https://www.notion.so/my-integrations,")
+        print("        puis remplace la ligne NOTION_TOKEN du .env.")
+        sys.exit(1)
+    if code != 200:
+        print(f"✗ identité   HTTP {code} — {moi.get('code')} · {moi.get('message')}")
+        sys.exit(1)
+    espace = (moi.get("bot") or {}).get("workspace_name") or "(espace non communiqué)"
+    print(f"✓ identité   {moi.get('name') or '(sans nom)'} · {moi.get('type')} · « {espace} »")
+
+    # 3 — Le point décisif. La documentation de /search est explicite : sans
+    #     paramètre « query », la réponse contient TOUT ce qui est partagé avec
+    #     l'intégration. Le paramètre est donc omis, pas envoyé vide — une
+    #     chaîne vide reste une requête, et ne porte pas la même promesse.
+    #     Zéro résultat ne dit alors plus « rien ne correspond » mais « rien ne
+    #     m'est partagé » : l'API ne rend aucune erreur dans ce cas.
+    code, resultat = _appel_brut("POST", "/search", {"page_size": 100})
+    if code != 200:
+        print(f"✗ partage    HTTP {code} — {resultat.get('code')} · {resultat.get('message')}")
+        sys.exit(1)
+    partages = resultat.get("results", [])
+    pages = [o for o in partages if o.get("object") == "page"]
+    # Selon Notion-Version, une base se présente comme « database » (2022-06-28,
+    # le défaut de ce CLI) ou comme « data_source » (versions récentes).
+    bases = [o for o in partages if o.get("object") in ("database", "data_source")]
+    if not partages:
+        print("✗ partage    l'intégration ne voit aucune page et aucune base")
+        print()
+        print("Le jeton est bon : c'est le partage qui manque. Notion ne rend pas")
+        print("d'erreur dans ce cas, seulement une liste vide — d'où cette commande.")
+        print("Geste : dans Notion, ouvre la page racine du projet → menu ⋯ →")
+        print("        « Connexions » → ajoute ton intégration. Les sous-pages")
+        print("        héritent du partage : partager la racine suffit.")
+        sys.exit(1)
+    print(f"✓ partage    {len(pages)} page(s) et {len(bases)} base(s) visibles")
+    for objet in partages[:15]:
+        print(f"             {objet['object'][:4]:5} {objet['id']}  {_titre(objet)}")
+    if len(partages) > 15:
+        print(f"             … et {len(partages) - 15} autre(s)")
+
+    # 4 — La page visée nommément, si elle a été donnée.
+    manques: list[str] = []
+    if args.page:
+        code, page = _appel_brut("GET", f"/pages/{args.page}")
+        if code == 200:
+            print(f"✓ page       accessible — {_titre(page)}")
+        elif code in (400, 404):
+            print(f"✗ page       HTTP {code} — {page.get('code')} · {page.get('message')}")
+            print("             Notion rend le même code pour « identifiant inconnu »")
+            print("             et « page non partagée » : vérifier les deux.")
+            manques.append("la page visée")
+        else:
+            print(f"✗ page       HTTP {code} — {page.get('code')} · {page.get('message')}")
+            manques.append("la page visée")
+
+    print()
+    if manques:
+        print("Diagnostic : jeton et partage bons, mais " + " et ".join(manques) + " échoue.")
+        sys.exit(1)
+    print("Diagnostic : la connexion est utilisable.")
+    print("Le droit d'écriture, lui, ne se lit pas — l'API ne publie pas les")
+    print("capacités d'une intégration. Un db-create refusé rendra 403")
+    print("« restricted_resource » ; cela se corrige en cochant « Insert content »")
+    print("sur l'intégration, puis en repartageant la page.")
 
 
 def cmd_whoami(_: argparse.Namespace) -> None:
@@ -194,6 +344,13 @@ def cmd_raw(args: argparse.Namespace) -> None:
 def main() -> None:
     analyseur = argparse.ArgumentParser(description="CLI Notion minimal du projet.")
     sous = analyseur.add_subparsers(dest="commande", required=True)
+
+    p = sous.add_parser(
+        "diagnostic",
+        help="dit pourquoi la connexion ne marche pas, et quel geste la répare",
+    )
+    p.add_argument("--page", help="identifiant d'une page dont on veut vérifier l'accès")
+    p.set_defaults(fonction=cmd_diagnostic)
 
     sous.add_parser("whoami", help="vérifie le jeton").set_defaults(fonction=cmd_whoami)
 

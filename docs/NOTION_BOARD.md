@@ -14,11 +14,12 @@
 
 | Fichier | Rôle |
 |---|---|
-| `docs/notion/stories.csv` | Les 27 stories, avec épique, file, rang, sprint, points, compétences |
+| `docs/notion/stories.csv` | Les 28 stories, avec épique, file, rang, sprint, points, compétences |
 | `docs/notion/sprints.csv` | Les 7 sprints de deux semaines, alignés sur les jalons de `PLANNING.md` |
-| `docs/notion/taches.csv` | La décomposition technique des sprints S1 et S2 (22 tâches) |
+| `docs/notion/taches.csv` | La décomposition technique des sprints S1 à S6 (56 tâches) |
 | `docs/notion/schema-*.json` | Le schéma de chaque base : nom et type de chaque propriété |
 | `tools/notion_cli.py` | Le CLI qui crée les bases et importe les CSV, sans passer par MCP |
+| `tests/test_notion_cli.py` | Les tests hors ligne : CSV contre schéma, conversion des cellules |
 
 ## Pourquoi un CLI plutôt que le connecteur MCP
 
@@ -36,7 +37,7 @@ Le CLI coûte **zéro jeton de contexte** et fait exactement les six appels néc
 ```
 📁 Assistant BTP vocal — Projet             (page racine existante)
    ├── 🎯 Vue d'ensemble                     (page : objectif, jalons, définition de fini)
-   ├── 🗂️ Backlog — Stories                  (base, 26 lignes)
+   ├── 🗂️ Backlog — Stories                  (base, 28 lignes)
    ├── 🏃 Sprints                            (base, 7 lignes)
    ├── ✅ Tâches                             (base, 22 lignes)
    └── 📈 Rituels                            (page : cadence, rôles, comptes rendus)
@@ -48,10 +49,42 @@ Prérequis : une **intégration interne** Notion (Paramètres → Connexions →
 avec la page racine du projet.
 
 ```bash
-export NOTION_TOKEN=ntn_xxx
-python tools/notion_cli.py whoami                    # vérifie le jeton
-python tools/notion_cli.py search "Projet" --type page   # récupère l'identifiant de la page racine
+export NOTION_TOKEN=ntn_xxx          # ou une ligne NOTION_TOKEN=… dans le .env du dépôt
+python tools/notion_cli.py diagnostic                    # commencer par là
+python tools/notion_cli.py search "Projet" --type page   # identifiant de la page racine
 ```
+
+### Commencer par `diagnostic`, et pourquoi
+
+Les deux conditions — un jeton valide **et** la page partagée avec l'intégration — échouent
+de deux manières qui ne se ressemblent pas :
+
+| Ce qui manque | Ce que l'API répond | Ce que ça donnait avant |
+|---|---|---|
+| Le jeton | rien, l'appel n'est pas tenté | message d'aide correct |
+| Un jeton invalide | `401 unauthorized` | `sys.exit` avec le corps brut |
+| **Le partage de la page** | **`200` et une liste vide** | **rien — l'échec était muet** |
+
+C'est la troisième ligne qui coûtait du temps : une intégration parfaitement valide dont on a
+oublié de partager la page rend une liste vide, **pas une erreur**. `diagnostic` lève
+l'ambiguïté en appelant `/search` **sans paramètre `query`** — la documentation Notion promet
+alors « all pages or data_sources that have been shared with the connection ». Le paramètre est
+*omis*, pas envoyé vide : une chaîne vide reste une requête et ne porte pas cette promesse.
+Zéro résultat n'y signifie donc plus « rien ne correspond » mais « rien ne m'est partagé ».
+Chaque échec s'arrête sur le geste exact qui le lève, et un seul.
+
+Réserve d'honnêteté : que « rien de partagé » donne un `200` avec une liste vide plutôt qu'une
+erreur se déduit du schéma de réponse et des codes d'erreur publiés, où ce cas ne figure pas —
+ce n'est pas une garantie écrite. C'est le comportement observé et attendu, pas un contrat.
+
+`diagnostic --page <id>` ajoute le contrôle d'une page nommément visée. Notion rend le **même**
+code pour « identifiant inconnu » et « page non partagée » : la commande le dit plutôt que de
+choisir à votre place.
+
+**Ce que `diagnostic` ne sait pas dire** : si l'intégration a le droit d'**écrire**. L'API ne
+publie pas les capacités d'une intégration. Un `db-create` refusé rendra `403
+restricted_resource`, qui se corrige en cochant « Insert content » sur l'intégration puis en
+repartageant la page.
 
 Puis, pour chacune des trois bases :
 
