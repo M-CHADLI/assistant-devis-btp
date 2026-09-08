@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
+Dernière mise à jour : **08/09/2026**, commit `5e3f370`.
 
 ---
 
@@ -39,22 +39,24 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
 
 ## État vérifié au 08/09/2026
 
-- **383 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
-  `test_garde_fous` 52, `test_chaine_donnees` 43, `test_front` 38,
-  `test_pipeline` 33, `test_mlops` 33, `test_api` 29, `test_boucle_qualite` 24,
-  `test_api_catalogue` 19, `test_auth` 19, `test_devis` 16, `test_export` 13,
-  `test_transcription` 12, `test_persistance` 12, `test_packaging` 11,
-  `test_observabilite` 11, `test_contrat_api` 10, `test_referentiel` 8.
-- **Stories : 28 au découpage — 21 faites, 4 partielles, 3 à faire** (compté
+- **420 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+  `test_garde_fous` 52, `test_front` 45, `test_chaine_donnees` 43,
+  `test_pipeline` 33, `test_mlops` 33, `test_annuaire` 30, `test_api` 29,
+  `test_boucle_qualite` 24, `test_auth` 19, `test_api_catalogue` 19,
+  `test_devis` 16, `test_export` 13, `test_transcription` 12,
+  `test_persistance` 12, `test_packaging` 11, `test_observabilite` 11,
+  `test_contrat_api` 10, `test_referentiel` 8.
+- **Stories : 28 au découpage — 21 faites, 5 partielles, 2 à faire** (compté
   depuis les lignes de traçabilité de `docs/STORIES.md`, pas depuis un tableau
   recopié).
   - *fait* : US-02, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20,
     21, 22, 23, 24, 25
-  - *partiel* : US-04 (dictée navigateur, transcription locale à faire),
+  - *partiel* : US-01 (tout est écrit et testé sauf l'appel réel, faute de
+    clé d'annuaire), US-04 (dictée navigateur, transcription locale à faire),
     US-26 (chaînes écrites et image construite, aucun `remote` pour les
     exécuter), US-27 (chaîne de données faite, pas branchée sur le devis),
     US-28 (chaîne du modèle faite, entraînement non lancé)
-  - *à faire* : US-01, 03, 17
+  - *à faire* : US-03, 17
 - **Le parcours de bout en bout passe 24/24, cinq fois de suite** (08/09,
   05 h 57 – 06 h 01) contre le serveur réel et `gpt-oss:20b` : 4 lignes de devis,
   620,81 € TTC, `.docx` de 37 579 octets, ~46 s par passage.
@@ -121,8 +123,11 @@ Dernière mise à jour : **08/09/2026**, commit `445a8b8`.
 | `48fc1a9` | Rafraîchissement de ce journal |
 | `8899b4b` | Rituels agiles, parties prenantes et définition de fini (C16) |
 | `743f3ef` | Accessibilité des sources de veille, traitée par le format (C7) |
+| `e0868a2` | Journal remis à l'état vérifié (audit 91 / 35 / 9) |
+| `abadb06` | Comptes de commits corrigés |
+| `5e3f370` | Préremplissage du profil depuis l'annuaire des entreprises (US-01, partiel) |
 
-**Rien n'est poussé.** **Quarante-six commits cette nuit** (depuis `87cfb07`), cinquante-cinq sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
+**Rien n'est poussé.** **Quarante-neuf commits cette nuit** (depuis `87cfb07`), cinquante-huit sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
 
 **L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
 82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
@@ -170,7 +175,15 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
 
 ### Ce qui reste à coder
 
-7. **US-01** — compte artisan par SIRET (API Pappers). Demande une clé.
+7. **US-01 — il ne manque plus que la clé.** Tout le reste est écrit et testé :
+   validation locale du SIRET (quatorze chiffres, clé de contrôle, exception
+   La Poste), préremplissage des six champs légaux, origines de champ qui
+   survivent au rechargement, repli sur la saisie manuelle en 200 quand
+   l'annuaire est muet. Ce qui manque tient en une variable,
+   `BTP_PAPPERS_CLE` : **le scénario nominal n'a jamais été joué contre
+   l'annuaire réel**, et la correspondance des noms de champs JSON vient de la
+   documentation publiée, pas d'une réponse observée. La story reste donc
+   marquée *partiel*, pas *fait*.
 8. **US-03** — OCR d'un devis image/PDF vers Markdown, par API externe, jamais
    par le modèle.
 9. **US-17** — confort métier réel, aucun apport de preuve : à faire en dernier.
@@ -199,6 +212,10 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
   fichier est ignoré par git et n'a **jamais** été committé — vérifié sur tout
   l'historique. Mais elles se sont affichées en clair dans la sortie terminal de
   cette session : si elle a été partagée ou conservée, faire tourner les clés.
+- **`BTP_PAPPERS_CLE` est la seule chose qui manque à US-01.** Un jeton d'API
+  Pappers suffit à jouer le scénario nominal et à vérifier la correspondance des
+  champs. Sans elle, l'application ne casse pas : elle bascule sur la saisie
+  manuelle en le disant.
 - **Aucun `remote` git** n'est configuré : neuf critères du jury (revue de code,
   CI observable, collaboration) restent bloqués tant que le dépôt est local.
 - Point non tranché qui appartient à l'utilisateur : **Gladia (distant) contre
@@ -239,3 +256,16 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
   verbe seul, pour ne pas couper l'artisan sur « passe-moi la truelle ».
 - Identifiant de projet par cookie `httponly`, 30 jours. Ce n'est **plus** la
   sécurité de l'application (US-23 l'a remplacée), seulement la reprise de projet.
+- **US-01 codée alors que la file la disait bloquée.** Elle y figurait sous
+  « demande une clé » ; en la relisant, trois de ses quatre scénarios — SIRET mal
+  formé, annuaire indisponible, aucun secret au dépôt — et la totalité de ses
+  critères d'accessibilité n'en demandent aucune, et le scénario nominal se teste
+  derrière un transport injecté. Le choix a été de l'écrire entièrement plutôt que
+  de la sauter, **et de la marquer *partiel*** : ce qui n'a pas été vérifié contre
+  l'annuaire réel est nommé comme tel dans le code, dans les tests et dans la story.
+- **Trois arbitrages dans US-01, tous inscrits dans `docs/STORIES.md`** : la
+  validation locale précède le réseau (un numéro mal recopié ne coûte pas
+  d'aller-retour) ; l'indisponibilité de l'annuaire répond **200 et non 5xx**
+  (faire échouer une inscription parce qu'un tiers est en panne serait le mauvais
+  arbitrage) ; un champ prérempli qu'on enregistre sans y toucher garde l'origine
+  `annuaire` et reste écrasable — **accepter sans relire n'est pas décider**.
