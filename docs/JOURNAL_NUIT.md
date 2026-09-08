@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **08/09/2026**, commit `d783b9a`.
+Dernière mise à jour : **08/09/2026**, commit `8270c9f`.
 
 ---
 
@@ -20,7 +20,8 @@ Dernière mise à jour : **08/09/2026**, commit `d783b9a`.
   l'utilisateur. Ne pas trancher à sa place ; les lister et attendre.
 - **Aucun secret** recopié nulle part : ni valeur de `.env`, ni clé, ni jeton.
 - Git est sur un montage OneDrive : préfixer par `git -c core.fsmonitor=false`.
-- Commande de test : `VIRTUAL_ENV=~/.venvs/the-project uv run --no-sync pytest`
+- Commande de test :
+  `BTP_DONNEES=<répertoire jetable> VIRTUAL_ENV=~/.venvs/the-project uv run --no-sync pytest`
 
 ## Comment ne pas rester bloqué
 
@@ -38,14 +39,25 @@ Dernière mise à jour : **08/09/2026**, commit `d783b9a`.
 
 ## État vérifié au 08/09/2026
 
-- **62 tests, tous verts** (`62 passed`). Suites : `test_referentiel` 8,
-  `test_devis` 12, `test_pipeline` 21, `test_persistance` 9, `test_api` 12.
-- L'application démarre depuis n'importe quel répertoire, sert `/`, expose
-  `/`, `/api/devis`, `/api/message`, `/api/corriger`, `/api/quantite`,
-  `/api/reset`, `/api/export`, plus `/docs` et `/openapi.json`.
-- Ollama répond sur `localhost:11434` et sert `gpt-oss:20b`.
+- **245 tests, tous verts.** Répartition : `test_garde_fous` 52, `test_api` 29,
+  `test_boucle_qualite` 24, `test_front` 24, `test_pipeline` 23, `test_auth` 19,
+  `test_devis` 12, `test_transcription` 12, `test_export` 11,
+  `test_observabilite` 11, `test_persistance` 11, `test_contrat_api` 9,
+  `test_referentiel` 8.
+- **Stories : 16 faites, 7 partielles, 3 à faire** (compté depuis les lignes de
+  traçabilité de `docs/STORIES.md`, pas depuis un tableau recopié).
+  - *fait* : US-02, 05, 08, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 23, 24, 25
+  - *partiel* : US-04, 06, 07, 09, 14, 18, 26
+  - *à faire* : US-01, 03, 17
+- L'application démarre depuis n'importe quel répertoire et **exige désormais une
+  authentification** : seuls `/` et `POST /api/session` sont ouverts, tout le
+  reste répond 401 sans jeton — y compris `/docs` et `/openapi.json`.
+  Sans `BTP_MOT_DE_PASSE`, une phrase de passe aléatoire est tirée et **affichée
+  une fois au démarrage** ; elle change à chaque redémarrage.
 - Le JavaScript du front passe `node --check`
   (node en `~/.nvm/versions/node/v22.22.2/bin`, pas dans le PATH par défaut).
+- `tools/verifier_accessibilite_docs.py` : **17 documents conformes**.
+- Ollama répond sur `localhost:11434` et sert `gpt-oss:20b`.
 
 ## Fait cette nuit
 
@@ -56,58 +68,71 @@ Dernière mise à jour : **08/09/2026**, commit `d783b9a`.
 | `e669883` | `app/` et `tests/` versionnés pour la première fois + anomalies S1 |
 | `7662a44` | Bornes de plausibilité (US-11), plafond de clarification (US-07) |
 | `d783b9a` | Accessibilité RGAA 4.1 du front + arbitrage des quantités côté interface |
+| `a019878` | Ce journal de reprise |
+| `3c04c02` | Audit des 135 critères du jury (`docs/AUDIT_JURY.md`) |
+| `7d29b6f` | Chaîne d'intégration continue (US-26, partiel : pas de remote) |
+| `e7eb90b` | Règle d'accessibilité documentaire + son vérificateur |
+| `a51e647` | Journal des incidents, sept défauts déjà corrigés |
+| `7fdd6f7` | Profil artisan, régime de TVA, mentions obligatoires (US-02, US-15) |
+| `9bd62b0` | HITL-0, relecture de la dictée avant traitement (US-05) |
+| `1396730` | HITL-2, structure validée avant chiffrage (US-12) |
+| `6bc8ddc` | Garde-fous d'entrée : périmètre et injection (US-19, US-20) |
+| `ec4ebcd` | Arbitrage des quantités et reprise de projet (US-11, US-16) |
+| `c7c551e` | Observabilité : journal applicatif et tableau de bord (US-24) |
+| `7e3675a` | API contractuelle : modèles de sortie et erreurs déclarées (US-22) |
+| `807171b` | Signal qualité exportable, jamais hors de la machine (US-25) |
+| `0442fbe` | Authentification, application fermée par défaut (US-23) |
+| `8270c9f` | Escalade demandée par l'artisan lui-même (US-21) |
 
-Détail des anomalies fermées : branche `quantitatif` manquante au routeur ;
-reprises de `llm` et `pipeline` qui se composaient (jusqu'à 4 appels modèle par
-message, désormais 2) ; escalades sans motif ; `Session` unique de module
-partagée par tous les visiteurs et perdue au redémarrage ; `index.html` ouvert
-par chemin relatif ; Ollama arrêté qui provoquait un 500.
+**Rien n'est poussé.** Vingt commits sur `docs/pivot-btp-vocal-docs`, aucun `push`.
 
 ---
 
 ## File de travail — prendre dans l'ordre
 
-1. **Audit des critères du jury** contre `reference/referentiel-rncp-ai-engineer.xlsx`
-   (le fichier source, pas sa paraphrase dans `docs/LIVRABLES.md`). Produire un
-   tableau compétence par compétence : couverte / partielle / absente, avec la
-   preuve dans le dépôt. Mettre à jour `docs/LIVRABLES.md` ensuite.
-2. **Conformité du devis** (`app/export.py`, US-15) : délai d'exécution, identité
-   du client, adresse de chantier, RCS, code APE/NAF, TVA intracommunautaire, et
-   surtout le cas **article 293 B** (franchise de base) — aujourd'hui la TVA est
-   appliquée inconditionnellement.
-3. **Régime de TVA de l'artisan** (US-02) : le stocker au profil, le faire porter
-   par le devis. Prérequis de la tâche 2.
-4. **HITL-0, relecture de la transcription** (US-05) : écran de relecture avant
-   traitement, et journalisation de l'écart transcrit/corrigé comme signal qualité.
-5. **HITL-2, validation avant chiffrage** (US-12) : séparer la construction de la
-   structure et l'injection des prix. Aujourd'hui le chiffrage est immédiat.
-6. **Neutralisation des injections de prompt** (US-20, `DISPOSITIF_AGENT.md` §3.1) :
-   neutraliser **et journaliser** — la journalisation compte autant.
-7. **Détection du hors périmètre** (US-19).
-8. **Authentification** (US-23, C9/C17/C21), **observabilité** (US-24, C11/C20),
-   **OpenAPI contractuel** (US-22, C5/C9).
-9. **Chaîne d'intégration continue** (US-26, C18/C19).
-10. **Séance de veille tracée** dans `veille/seances/` — le dossier est **vide**,
-    et C6 exige une trace hebdomadaire. Suivre `veille/GABARIT-SEANCE.md`.
-11. **Fragilité des tests** : `tests/test_devis.py` recopie en dur des valeurs du
-    référentiel et du catalogue (taux de chute 0,05, rendement 0,1, contenance 10,
-    prix 34,90, promo 0,10). Le jour où une valeur métier bouge, le test casse
-    alors que le code est juste. Les lire depuis la source.
-12. **Mettre à jour `docs/STORIES.md`** (lignes de traçabilité « état du code
-    constaté ») et les CSV de `docs/notion/`. C'est dans la définition de fini.
+Les douze premières tâches de la file initiale sont **faites**, sauf celles
+listées ci-dessous. Nouvelle file :
+
+1. **Transposer sur Notion** — les CSV de `docs/notion/` sont à jour de cette
+   nuit. Bloqué sur `NOTION_TOKEN` + partage de la page racine avec l'intégration
+   (menu `⋯` → Connexions). Sans ce partage l'API rend une liste vide, pas une erreur.
+2. **Séances de veille** (C6) : `veille/seances/` est **vide** et le référentiel
+   exige une trace hebdomadaire. Quatre séances à écrire d'après
+   `veille/GABARIT-SEANCE.md`, thématique Unsloth / fine-tuning MoE.
+3. **RGPD** (C4-26/27/28) : registre des traitements et procédures de tri des
+   données. `donnees/` contient des noms et adresses de clients — voir l'alerte
+   plus bas.
+4. **Modèle de données Merise** (C4-19, C14-103) et **maquettes** (C14-104,
+   C17-121) : deux livrables attendus, absents du dépôt.
+5. **Benchmark STT** avec colonne éco-responsabilité (C7, C15-110, C17-126).
+   Dépend de l'arbitrage Gladia contre Whisper local, qui appartient à l'utilisateur.
+6. **Stories partielles** : US-04, US-06, US-07, US-09, US-14, US-18, US-26.
+7. **Fragilité des tests** : `tests/test_devis.py` recopie en dur des valeurs du
+   référentiel et du catalogue (taux de chute 0,05, rendement 0,1, contenance 10,
+   prix 34,90, promo 0,10). Le jour où une valeur métier bouge, le test casse
+   alors que le code est juste. Les lire depuis la source.
+8. **Stories à faire** : US-01 (compte par SIRET, API Pappers), US-03, US-17.
 
 ## À signaler à l'utilisateur au réveil
 
+- **`donnees/` est dans le dépôt, donc synchronisé par OneDrive.** Il contient les
+  projets persistés : nom, adresse et coordonnées des clients finaux. Le déplacer
+  hors du montage est un **arbitrage de cadrage**, pas une correction technique —
+  laissé à l'utilisateur, rien n'a été déplacé. Le même constat a fait sortir
+  l'export du signal qualité du dépôt (US-25) : `app/boucle_qualite.py` refuse
+  d'écrire sur un système de fichiers distant ou synchronisé, `fuse.rclone` compris.
 - `.env` contient des clés qui ont l'air vivantes (Gladia, Azure AI Foundry). Le
   fichier est ignoré par git et n'a **jamais** été committé — vérifié sur tout
   l'historique. Mais elles se sont affichées en clair dans la sortie terminal de
   cette session : si elle a été partagée ou conservée, faire tourner les clés.
-- Le CLI Notion attend un `NOTION_TOKEN` dans `.env`, plus le partage de la page
-  racine avec l'intégration (menu `⋯` → Connexions). Sans ce partage l'API
-  renvoie une liste vide, pas une erreur.
+- **Aucun `remote` git** n'est configuré : neuf critères du jury (revue de code,
+  CI observable, collaboration) restent bloqués tant que le dépôt est local.
 - Point non tranché qui appartient à l'utilisateur : **Gladia (distant) contre
   Whisper local**. Le prototype actuel utilise la Web Speech API du navigateur,
   qui envoie l'audio à l'éditeur — contradiction avec la règle « 100 % local ».
+- Les tâches cron programmées cette nuit **vivent dans cette session seulement** et
+  expirent d'elles-mêmes au bout de sept jours. Elles ne survivront pas à la
+  fermeture de la session.
 
 ## Décisions prises seul (à faire relire)
 
@@ -120,5 +145,13 @@ par chemin relatif ; Ollama arrêté qui provoquait un 500.
   pour `SOL_POSE_CARRELAGE`. Chiffres d'un logement résidentiel.
 - Persistance en JSON à plat sur disque plutôt qu'une base de données, avec
   écriture atomique. Pas de migration à gérer, fichier lisible à l'œil.
-- Identifiant de projet par cookie `httponly`, 30 jours. Ce n'est pas de
-  l'authentification — celle-ci reste à faire (US-23).
+- **Authentification par phrase de passe unique** (`hashlib.scrypt` + jeton signé
+  HMAC en cookie `HttpOnly`, `SameSite=strict`), sans nouvelle dépendance et sans
+  mode ouvert : pas de phrase configurée ⇒ phrase tirée au hasard, jamais
+  d'application accessible sans jeton. Convient à un poste de démo, pas à un
+  multi-utilisateurs — US-01 changera cela.
+- **Escalade détectée par expression régulière**, pas par le modèle : la demande
+  exige une cible humaine (« humain », « conseiller », « technicien »), jamais le
+  verbe seul, pour ne pas couper l'artisan sur « passe-moi la truelle ».
+- Identifiant de projet par cookie `httponly`, 30 jours. Ce n'est **plus** la
+  sécurité de l'application (US-23 l'a remplacée), seulement la reprise de projet.

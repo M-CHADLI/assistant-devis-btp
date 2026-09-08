@@ -134,11 +134,17 @@ L'import CSV écrit `Story` et `Sprint` comme du texte. Pour obtenir de vraies l
 | | |
 |---|---|
 | Stories | 26, réparties sur 7 épiques |
-| Terminées | 2 (US-08, US-13) — US-10 en cours |
-| Sprint en cours | S1 — 01/09 → 14/09 |
-| Points au sprint S1 | 18 |
-| Points restants au total | 114 sur 122 |
-| Tâches décomposées | 22, sur S1 et S2 |
+| Terminées | 16 · en cours 7 · à faire 3 |
+| Sprints clos | S1 à S4, **clos par anticipation** le 08/09 |
+| Sprints ouverts | S5 et S6, entamés en avance sur le calendrier |
+| Points restants au total | 44 sur 122 |
+| Tâches décomposées | 50, dont 43 terminées |
 
-Le reste des sprints porte des stories, pas encore des tâches : décomposer S3 à S7 maintenant
-serait de la planification fictive, révisée avant d'être exécutée.
+L'avance sur le calendrier de `PLANNING.md` est réelle, pas déclarative : l'état de chaque story
+est repris de sa ligne de traçabilité dans `docs/STORIES.md`, qui dit l'état du code **constaté**,
+et les CSV de `docs/notion/` sont régénérés depuis ce fichier plutôt que tenus à la main. Les
+dates de sprint, elles, n'ont pas été retouchées : un sprint clos avant sa date de fin se lit
+mieux qu'un calendrier réécrit après coup.
+
+S7 porte encore des stories sans tâches : le décomposer maintenant serait de la planification
+fictive, révisée avant d'être exécutée.
