@@ -32,5 +32,14 @@ data/raw/
 *.dump
 *.sql
 
-# Devis persistés par le registre de projets (app/persistance.py)
-donnees/
+# Devis persistés par le registre de projets (app/persistance.py).
+# Ancré à la racine : sans la barre oblique de tête, la règle attrapait aussi
+# tools/donnees/, et la chaîne de données entière disparaissait des commits.
+/donnees/
+
+# Chaîne de données catalogue : artefacts reconstructibles.
+# Les extraits bruts (catalogue/brut/*.json) et le jeu agrégé sont versionnés —
+# ce sont eux qui rendent la chaîne rejouable sans réseau. La page HTML mise en
+# cache et la base SQLite s'en déduisent, et n'ont pas à peser dans l'historique.
+catalogue/sources/*.html
+catalogue/*.sqlite3

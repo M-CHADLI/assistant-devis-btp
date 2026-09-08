@@ -1,0 +1,539 @@
+{
+  "source": "Wikipédia (fr) — https://fr.wikipedia.org/wiki/Masse_volumique",
+  "licence": "CC BY-SA 4.0 — contributeurs de Wikipédia",
+  "extrait_le": "2026-09-08T02:53:33Z",
+  "nombre_de_lignes": 106,
+  "notes": "Cinq tableaux retenus sur sept (gaz et humidité des bois écartés). Valeurs laissées telles quelles : intervalles, renvois de note et espaces insécables sont normalisés à l'agrégation, pas ici.",
+  "lignes": [
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "ardoise",
+      "masse_volumique_brut": "2 700–2 800"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "amiante",
+      "masse_volumique_brut": "2 500"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "argile",
+      "masse_volumique_brut": "1 300–1 700"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "béton",
+      "masse_volumique_brut": "2 200 (armé 2 500)"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "béton bitumineux dit enrobé",
+      "masse_volumique_brut": "2 350"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "calcaire",
+      "masse_volumique_brut": "2 000–2 800"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "carbone (diamant)",
+      "masse_volumique_brut": "3 508"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "carbone (graphite)",
+      "masse_volumique_brut": "2 250"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "compost",
+      "masse_volumique_brut": "550 - 600[8],[9]"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "craie",
+      "masse_volumique_brut": "1 700–2 100"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "diamant",
+      "masse_volumique_brut": "3 517"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "granit",
+      "masse_volumique_brut": "1 800 (altéré) – 2 500"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "granite",
+      "masse_volumique_brut": "2 700"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "grès",
+      "masse_volumique_brut": "1 600–1 900"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "kaolin",
+      "masse_volumique_brut": "2 260"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "marbre",
+      "masse_volumique_brut": "2 650–2 750"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "quartz",
+      "masse_volumique_brut": "2 650"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "pierre ponce",
+      "masse_volumique_brut": "910"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "porcelaine",
+      "masse_volumique_brut": "2 500"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "sable",
+      "masse_volumique_brut": "1 600 (sec) – 2 000 (saturé)"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "silicium",
+      "masse_volumique_brut": "2 330"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "terre végétale",
+      "masse_volumique_brut": "1 250"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "verre à vitres",
+      "masse_volumique_brut": "2 530"
+    },
+    {
+      "famille_source": "materiau_usuel",
+      "materiau": "coton",
+      "masse_volumique_brut": "20 - 60"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "acier",
+      "masse_volumique_brut": "7 500 - 8 100[10],[11]"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "acier rapide HSS",
+      "masse_volumique_brut": "8 400 - 9 000"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "fonte",
+      "masse_volumique_brut": "6 800 - 7 400"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "aluminium",
+      "masse_volumique_brut": "2 700"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "argent",
+      "masse_volumique_brut": "10 500"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "béryllium",
+      "masse_volumique_brut": "1 848"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "bronze",
+      "masse_volumique_brut": "8 400 - 9 200"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "constantan",
+      "masse_volumique_brut": "8 910"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "cuivre",
+      "masse_volumique_brut": "8 960[12]"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "duralium",
+      "masse_volumique_brut": "2 900"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "étain",
+      "masse_volumique_brut": "7 290"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "fer",
+      "masse_volumique_brut": "7 860"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "iridium",
+      "masse_volumique_brut": "22 560"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "laiton",
+      "masse_volumique_brut": "7 300 - 8 800"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "lithium",
+      "masse_volumique_brut": "530"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "magnésium",
+      "masse_volumique_brut": "1 750"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "mercure",
+      "masse_volumique_brut": "13 545"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "molybdène",
+      "masse_volumique_brut": "10 200"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "néodyme",
+      "masse_volumique_brut": "7 008"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "nickel",
+      "masse_volumique_brut": "8 900"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "or",
+      "masse_volumique_brut": "19 300"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "osmium",
+      "masse_volumique_brut": "22 610"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "palladium",
+      "masse_volumique_brut": "12 000"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "platine",
+      "masse_volumique_brut": "21 450"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "plomb",
+      "masse_volumique_brut": "11 350"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "potassium",
+      "masse_volumique_brut": "850"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "samarium",
+      "masse_volumique_brut": "7 520"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "tantale",
+      "masse_volumique_brut": "16 600"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "titane",
+      "masse_volumique_brut": "4 500"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "tungstène",
+      "masse_volumique_brut": "19 300"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "uranium",
+      "masse_volumique_brut": "19 100"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "vanadium",
+      "masse_volumique_brut": "6 100"
+    },
+    {
+      "famille_source": "metal",
+      "materiau": "zinc",
+      "masse_volumique_brut": "7 150"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "acétone",
+      "masse_volumique_brut": "790"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "acide acétique",
+      "masse_volumique_brut": "1 049"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "azote liquide à −195 °C",
+      "masse_volumique_brut": "810"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "brome à 0 °C",
+      "masse_volumique_brut": "3 087"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "eau à 4 °C",
+      "masse_volumique_brut": "1 000[13]"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "eau de mer",
+      "masse_volumique_brut": "1 000–1 032[14]"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "essence",
+      "masse_volumique_brut": "750"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "éthanol",
+      "masse_volumique_brut": "789"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "éther",
+      "masse_volumique_brut": "710"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "gazole",
+      "masse_volumique_brut": "850"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "glycérine",
+      "masse_volumique_brut": "1 260"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "hélium liquide à −269 °C",
+      "masse_volumique_brut": "150"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "huile d'olive, huile de raisin, huile de sésame, et beaucoup d'autres huiles végétales",
+      "masse_volumique_brut": "920"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "hydrogène liquide à −252 °C",
+      "masse_volumique_brut": "70"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "oxygène liquide à −184 °C",
+      "masse_volumique_brut": "1 140"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "lait",
+      "masse_volumique_brut": "1 030"
+    },
+    {
+      "famille_source": "liquide",
+      "materiau": "sang humain",
+      "masse_volumique_brut": "1 056–1 066"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PP",
+      "masse_volumique_brut": "850 - 920"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PEBD",
+      "masse_volumique_brut": "890 - 930"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PEHD",
+      "masse_volumique_brut": "940 - 980"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "ABS",
+      "masse_volumique_brut": "1 040–1 060"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PS[15]",
+      "masse_volumique_brut": "1 040–1 060"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "nylon 6,6",
+      "masse_volumique_brut": "1 120–1 160"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PMA",
+      "masse_volumique_brut": "1 160–1 200"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PLA",
+      "masse_volumique_brut": "1 250"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PMMA, Plexiglas",
+      "masse_volumique_brut": "1 180–1 190"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PVC souple (plastifié)",
+      "masse_volumique_brut": "1 190–1 350"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "Bakélite",
+      "masse_volumique_brut": "1 350–1 400"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PET",
+      "masse_volumique_brut": "1 380–1 410"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "PVC rigide",
+      "masse_volumique_brut": "1 380–1 410"
+    },
+    {
+      "famille_source": "plastique",
+      "materiau": "caoutchouc",
+      "masse_volumique_brut": "920–2 200"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "acajou",
+      "masse_volumique_brut": "700"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "balsa",
+      "masse_volumique_brut": "140"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "buis",
+      "masse_volumique_brut": "910 - 1 320"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "cèdre",
+      "masse_volumique_brut": "490"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "châtaignier",
+      "masse_volumique_brut": "560 - 700"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "charme",
+      "masse_volumique_brut": "700 - 850"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "chêne",
+      "masse_volumique_brut": "610 - 980"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "chêne (cœur)",
+      "masse_volumique_brut": "1 170"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "contreplaqué",
+      "masse_volumique_brut": "440 - 880"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "ébène",
+      "masse_volumique_brut": "1 150"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "frêne",
+      "masse_volumique_brut": "840"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "hêtre",
+      "masse_volumique_brut": "800"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "liège",
+      "masse_volumique_brut": "240"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "peuplier",
+      "masse_volumique_brut": "390"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "pin",
+      "masse_volumique_brut": "500"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "platane",
+      "masse_volumique_brut": "650"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "sapin",
+      "masse_volumique_brut": "450"
+    },
+    {
+      "famille_source": "bois",
+      "materiau": "teck",
+      "masse_volumique_brut": "860"
+    }
+  ]
+}

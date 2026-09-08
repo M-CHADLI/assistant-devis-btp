@@ -34,9 +34,11 @@ docs/MODELE_DONNEES.md le modèle de données — conceptuel constaté, logique 
 docs/MAQUETTES.md      parcours utilisateur et maquettes filaires annotées
 docs/BENCHMARK_STT.md  le banc d'essai reconnaissance vocale — instruit, non tranché
 docs/RGPD.md           registre des traitements et procédures de tri
+docs/CHAINE_DONNEES.md la chaîne de collecte, nettoyage et mise en base du catalogue
 app/                   l'implémentation (FastAPI, moteur de devis, front)
 tests/                 la suite pytest
-tools/                 outillage hors produit (CLI Notion)
+tools/                 outillage hors produit (CLI Notion, chaîne de données)
+catalogue/             la chaîne de données : sources, extraits bruts, jeu agrégé
 veille/                livrables de veille
 reference/             référentiel de compétences
 archive/renoassistant/ conception précédente
@@ -73,6 +75,15 @@ archive/renoassistant/ conception précédente
   connecteur MCP, qui charge 42 outils pour six appels utiles.
 - **`docs/NOTES.md`** — bloc-notes des idées non encore arbitrées. Ce qui y est tranché remonte
   dans les documents de conception, et la note est retirée.
+- **`docs/CHAINE_DONNEES.md`** — la chaîne qui va de trois sources hétérogènes (export
+  fournisseur simulé, API Base Carbone de l'ADEME, page Wikipédia) à une base SQLite
+  interrogeable. Modules dans `tools/donnees/`, tests dans `tests/test_chaine_donnees.py`.
+  **Deux règles y sont non négociables** : rien n'est rejeté en silence (chaque ligne écartée
+  est comptée avec son motif) et aucune valeur n'est inventée (les peintures n'ont pas de masse
+  volumique publiée, le champ reste vide et porte sa réserve). La colonne
+  `qualite_correspondance` dit `exacte`, `proxy` ou `absente` — ne jamais laisser l'aval prendre
+  un proxy pour une mesure. La chaîne **n'alimente pas encore** `app/catalogue.py` : la couture
+  est décrite au §8 du document.
 - **`docs/SOURCES_DONNEES.md`** — ancienne conception *RenoAssistant*, **périmée en tant
   qu'architecture**, mais conservée car toujours utile : structure du dump catalogue Leroy Merlin
   et contrainte légale sur les données (structure réelle, valeurs simulées). Ne pas la traiter
