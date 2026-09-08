@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **08/09/2026**, commit `5e3f370`.
+Dernière mise à jour : **08/09/2026**, commit `541544c`.
 
 ---
 
@@ -39,14 +39,16 @@ Dernière mise à jour : **08/09/2026**, commit `5e3f370`.
 
 ## État vérifié au 08/09/2026
 
-- **420 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
-  `test_garde_fous` 52, `test_front` 45, `test_chaine_donnees` 43,
-  `test_pipeline` 33, `test_mlops` 33, `test_annuaire` 30, `test_api` 29,
-  `test_boucle_qualite` 24, `test_auth` 19, `test_api_catalogue` 19,
-  `test_devis` 16, `test_export` 13, `test_transcription` 12,
-  `test_persistance` 12, `test_packaging` 11, `test_observabilite` 11,
-  `test_contrat_api` 10, `test_referentiel` 8.
-- **Stories : 28 au découpage — 21 faites, 5 partielles, 2 à faire** (compté
+- **466 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+  `test_garde_fous` 52, `test_front` 50, `test_chaine_donnees` 43,
+  `test_gabarit` 41, `test_pipeline` 33, `test_mlops` 33, `test_annuaire` 30,
+  `test_api` 29, `test_boucle_qualite` 24, `test_auth` 19,
+  `test_api_catalogue` 19, `test_devis` 16, `test_export` 13,
+  `test_transcription` 12, `test_persistance` 12, `test_packaging` 11,
+  `test_observabilite` 11, `test_contrat_api` 10, `test_referentiel` 8.
+- **Vingt-quatre opérations d'API**, comptées sur l'OpenAPI (`app.openapi()`),
+  pas sur les routes.
+- **Stories : 28 au découpage — 21 faites, 6 partielles, 1 à faire** (compté
   depuis les lignes de traçabilité de `docs/STORIES.md`, pas depuis un tableau
   recopié).
   - *fait* : US-02, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20,
@@ -55,8 +57,9 @@ Dernière mise à jour : **08/09/2026**, commit `5e3f370`.
     clé d'annuaire), US-04 (dictée navigateur, transcription locale à faire),
     US-26 (chaînes écrites et image construite, aucun `remote` pour les
     exécuter), US-27 (chaîne de données faite, pas branchée sur le devis),
-    US-28 (chaîne du modèle faite, entraînement non lancé)
-  - *à faire* : US-03, 17
+    US-28 (chaîne du modèle faite, entraînement non lancé), US-03 (tout est
+    écrit et testé sauf l'appel réel, faute de clé d'OCR)
+  - *à faire* : US-17
 - **Le parcours de bout en bout passe 24/24, cinq fois de suite** (08/09,
   05 h 57 – 06 h 01) contre le serveur réel et `gpt-oss:20b` : 4 lignes de devis,
   620,81 € TTC, `.docx` de 37 579 octets, ~46 s par passage.
@@ -126,8 +129,11 @@ Dernière mise à jour : **08/09/2026**, commit `5e3f370`.
 | `e0868a2` | Journal remis à l'état vérifié (audit 91 / 35 / 9) |
 | `abadb06` | Comptes de commits corrigés |
 | `5e3f370` | Préremplissage du profil depuis l'annuaire des entreprises (US-01, partiel) |
+| `862e9ad` | Journal remis à l'état vérifié après US-01 |
+| `7ad76d6` | Reprise de la mise en page d'un ancien devis déposé (US-03, partiel) |
+| `541544c` | US-03 répercutée dans la conception, le registre RGPD (T5) et l'audit |
 
-**Rien n'est poussé.** **Quarante-neuf commits cette nuit** (depuis `87cfb07`), cinquante-huit sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
+**Rien n'est poussé.** **Cinquante et un commits cette nuit** (depuis `87cfb07`), soixante sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
 
 **L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
 82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
@@ -184,8 +190,17 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
    l'annuaire réel**, et la correspondance des noms de champs JSON vient de la
    documentation publiée, pas d'une réponse observée. La story reste donc
    marquée *partiel*, pas *fait*.
-8. **US-03** — OCR d'un devis image/PDF vers Markdown, par API externe, jamais
-   par le modèle.
+8. **US-03 — il ne manque plus que la clé,** comme US-01. Tout est écrit et
+   testé : validation locale du dépôt sur les octets de tête (jamais sur
+   l'extension) avant tout appel, extraction de la structure, sept motifs de
+   panne nommés, repli systématique sur le gabarit par défaut, révocation d'un
+   bouton, transfert annoncé avant le sélecteur. Ce qui manque tient en une
+   variable, `BTP_OCR_CLE` : **le scénario nominal n'a jamais été joué contre
+   un service d'OCR réel**, et la forme de la réponse vient de la documentation
+   publiée, pas d'une réponse observée. La story est marquée *partiel*.
+   Avant toute exploitation réelle, le point RGPD du §« Ce qui manque » de
+   `docs/RGPD.md` est un préalable : contrat de sous-traitance, localisation
+   des traitements, rétention côté service.
 9. **US-17** — confort métier réel, aucun apport de preuve : à faire en dernier.
 10. **Brancher le devis sur la base catalogue.** La chaîne de données alimente
     l'API mais **pas encore le moteur de devis**, qui lit toujours le
@@ -236,6 +251,28 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
   (`docs/CONCLUSION_POC.md`) explique aussi pourquoi le produit tient quand même.
 
 ## Décisions prises seul (à faire relire)
+
+- **US-03 codée comme US-01, et pour la même raison.** La file la donnait comme
+  du reste à coder sans dire qu'elle demandait une clé ; deux de ses trois
+  scénarios (photo illisible, document qui n'est pas un devis) et tous ses
+  critères d'accessibilité s'écrivent et se testent sans. Écrite entièrement,
+  marquée *partiel*.
+- **Quatre partis pris dans US-03, tous inscrits dans `docs/STORIES.md` et au
+  registre RGPD (T5).** (1) *Rien du document déposé n'est conservé* : le
+  gabarit ne retient que des clés de notre propre dictionnaire et lequel de nos
+  propres synonymes chacune a reconnu — un ancien devis porte le nom, l'adresse
+  et les montants d'un **autre** client, qui n'a consenti à rien, et la
+  promesse est rendue vérifiable mécaniquement plutôt qu'affirmée. (2) *Un
+  gabarit réordonne et renomme, il ne retire jamais* : laisser un vieux devis
+  mal fait supprimer une mention obligatoire rendrait le suivant inopposable.
+  (3) *Un document illisible ou qui n'est pas un devis répond 200, pas 5xx* :
+  le produit n'est pas en panne, c'est le document qui ne convient pas. (4) *Le
+  fichier sort de la machine, et cela se dit avant le dépôt* — l'avertissement
+  précède le sélecteur dans l'ordre du DOM, et un test le tient.
+- **`Gabarit.depuis_dict` ne garde un intitulé que si son bloc est retenu.**
+  Corrigé en écrivant le test : un intitulé orphelin est du poids mort, et
+  toute surface de stockage non nécessaire est une surface où quelque chose
+  peut entrer.
 
 - Quatre hypothèses par défaut concrètes quand le plafond de clarification est
   atteint : TVA à 10 %, hauteur sous plafond 2,50 m, supports sains, surfaces
