@@ -4,7 +4,7 @@
 > niveau de la *compétence*. Ici on descend d'un cran : les **135 critères
 > d'évaluation** que le jury coche un par un, extraits de
 > `reference/referentiel-rncp-ai-engineer.xlsx`, confrontés à l'**état constaté
-> du dépôt** au commit `d29b444` (08/09/2026).
+> du dépôt** au commit `9a4b6b3` (08/09/2026).
 >
 > Même règle que la grille de contrôle : **on ne dénature pas le projet pour
 > cocher une case.** Un critère hors périmètre est écrit comme tel, avec la
@@ -25,12 +25,12 @@ chose de nommé · ❌ absent · ➖ écarté, avec motif assumé.
 
 | Livrable | Critères | ✅ | 🟡 | ❌ | ➖ |
 |---|---|---|---|---|---|
-| E1 — Données (C1-C5) | 28 | 7 | 6 | 14 | 1 |
+| E1 — Données (C1-C5) | 28 | 17 | 8 | 2 | 1 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 23 | 6 | 10 | 0 |
 | E4 — Application (C14-C19) | 36 | 19 | 8 | 9 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **71** | **29** | **34** | **1** |
+| **Total** | **135** | **81** | **31** | **22** | **1** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -76,32 +76,38 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 |---|---|---|---|
 | 3 | Présentation du projet et du contexte : acteurs, objectifs, environnements, contraintes, budget, organisation, planification | 🟡 | `docs/CADRAGE_MODELE.md` et `PLANNING.md` couvrent acteurs, objectifs, contraintes techniques et planification. **Le budget n'est chiffré nulle part.** |
 | 4 | Spécifications techniques : technologies, outils, services externes, langages, accessibilité | 🟡 | Technologies et contraintes matérielles sont précises (`CADRAGE_MODELE.md` §Contraintes). Les services externes (Gladia, Pappers, OCR) sont cités sans spécification. |
-| 5 | Périmètre complet des spécifications d'extraction et d'agrégation | ❌ | `docs/SOURCES_DONNEES.md` porte la structure du dump catalogue, pas une spécification d'extraction. |
-| 6 | Script d'extraction fonctionnel | ❌ | Aucun script d'extraction dans le dépôt. |
-| 7 | Le script comprend point de lancement, dépendances, connexions, règles, gestion d'erreurs, sauvegarde | ❌ | Sans objet tant que le script n'existe pas. |
+| 5 | Périmètre complet des spécifications d'extraction et d'agrégation | ✅ | `docs/CHAINE_DONNEES.md` — les trois sources avec leur licence, les six étapes, ce que le nettoyage jette et pourquoi, le schéma de destination. Le §8 énonce en outre les trois choses que la chaîne **ne fait pas**, pour qu'elles ne passent pas pour des oublis. |
+| 6 | Script d'extraction fonctionnel | ✅ | Trois scripts, un par type de source : `tools/donnees/extraire_fichier.py`, `extraire_api.py` (Base Carbone de l'ADEME, 292 facteurs), `extraire_scraping.py` (Wikipédia, 106 masses volumiques). Exécutés, sorties versionnées dans `catalogue/brut/`. |
+| 7 | Le script comprend point de lancement, dépendances, connexions, règles, gestion d'erreurs, sauvegarde | ✅ | Chaque module porte sa commande de lancement dans sa docstring, un `main()` qui rend un code de sortie, des reprises avec temporisation sur l'API, et une écriture **atomique** avec en-tête de provenance (source, licence, date, nombre de lignes) — `tools/donnees/commun.py`. |
 | 8 | Script versionné et accessible depuis un dépôt Git | ❌ | Voir le constat nº 1 : **pas de remote**. |
-| 9 | Mix d'au moins : API REST, fichier, scraping, base de données, big data | ❌ | Le pivot a retiré au référentiel d'entraînement son rôle de collecte. Le scraping des fiches fabricants est maintenu comme exercice à part entière (`LIVRABLES.md` E1) mais **n'est pas écrit**. |
+| 9 | Mix d'au moins : API REST, fichier, scraping, base de données, big data | 🟡 | Trois types sur cinq, réellement différents : fichier CSV, API REST publique paginée, analyse de page web. La base de données n'est ici que **destination**, pas source — le dire autrement serait tricher. Le big data est écarté : 539 lignes brutes n'en relèvent pas, et fabriquer du volume pour cocher la case dénaturerait le cadrage. |
 
 ### C2 — Requêtes SQL
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 11 | Requêtes SQL fonctionnelles | ❌ | Il n'y a pas de base de données. Le catalogue est un dictionnaire Python (`app/catalogue.py`, 67 lignes). |
-| 12 | Documentation des choix : sélections, filtrages, jointures | ❌ | Sans objet. |
-| 13 | Documentation des optimisations | ❌ | Sans objet. |
+| 11 | Requêtes SQL fonctionnelles | ✅ | `tools/donnees/requetes.py` — sept requêtes nommées sur `catalogue/catalogue.sqlite3` (104 produits, 14 familles), dont une jointure externe et une agrégation. Éprouvées par `tests/test_chaine_donnees.py`, y compris sur une référence hostile : les valeurs passent par des paramètres liés, jamais par concaténation. |
+| 12 | Documentation des choix : sélections, filtrages, jointures | ✅ | Chaque requête porte sa justification en docstring, et `docs/CHAINE_DONNEES.md` §7 les récapitule. Exemple du genre de choix documenté : le classement se fait sur le prix **remisé**, jamais sur le prix affiché, sinon un produit à 40 € remisé de 30 % passerait derrière un produit à 32 € sans promotion. |
+| 13 | Documentation des optimisations | 🟡 | Les deux index sont écrits avec le motif de leur existence (les deux accès réels : « tous les produits de cette famille », « cette référence »), et le prix remisé est une **vue** plutôt qu'une colonne, pour qu'une remise ne puisse pas se désynchroniser. Mais aucune mesure : à 104 lignes, un plan d'exécution ne prouverait rien. |
 
-> **Le vrai enjeu de C2.** Le catalogue en dur est légitime pour un prototype,
-> mais il ne produit aucune preuve pour C2 *ni* pour C4. Le porter en SQLite ou
-> PostgreSQL est le seul geste qui débloque les deux compétences à la fois — et
-> il est petit : le module `app/catalogue.py` a déjà la forme d'une table.
+> **Ce que la mise en base a coûté, et rapporté.** Le geste attendu ici était
+> petit — porter `app/catalogue.py` en SQLite. Il a été fait autrement : une
+> chaîne complète, de trois sources hétérogènes jusqu'à la base. Le gain n'est
+> pas le SQL, qui est trivial, mais ce que la collecte a fait apparaître —
+> l'ADEME publie au kilogramme quand le fournisseur vend au litre, et aucune
+> source publique ne donne la masse volumique d'une peinture. Ces trous sont
+> maintenant des données, interrogeables par `familles_incompletes()`.
+> **Reste que le moteur de devis n'est pas encore branché dessus** : les codes
+> de lot du référentiel métier et les familles du dump ne coïncident pas, et
+> inventer la correspondance aurait été plus coûteux que de la nommer.
 
 ### C3 — Agrégation des données
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 15 | Script d'agrégation fonctionnel (nettoyage, normalisation) | ❌ | Absent. |
+| 15 | Script d'agrégation fonctionnel (nettoyage, normalisation) | ✅ | `tools/donnees/agreger.py` — 539 lignes brutes en entrée, 104 produits en sortie. Prix, unités, libellés, dates et doublons normalisés ; facteurs d'émission ramenés au kilogramme et réduits à une médiane publiée avec son étendue ; masses volumiques lues depuis des intervalles écrits en toutes lettres. |
 | 16 | Script versionné sur dépôt Git | ❌ | Voir constat nº 1. |
-| 17 | Documentation : dépendances, commandes, algorithme, choix de nettoyage | ❌ | Absente. |
+| 17 | Documentation : dépendances, commandes, algorithme, choix de nettoyage | ✅ | `docs/CHAINE_DONNEES.md` §3 et §4 : les six étapes, les commandes, le tableau défaut semé → traitement, et le bilan chiffré des rejets. Le §5 documente le choix le plus lourd de conséquences — **déclarer le manque plutôt que l'interpoler** — et la colonne `qualite_correspondance` qui empêche l'aval de prendre un proxy pour une mesure. |
 
 ### C4 — Base de données et RGPD
 
@@ -109,11 +115,11 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 |---|---|---|---|
 | 19 | Modélisations respectant Merise | ✅ | `docs/MODELE_DONNEES.md` — modèle conceptuel Merise (neuf entités, cardinalités justifiées), dictionnaire des données champ par champ avec le module qui le définit, modèle logique en tables. Le niveau conceptuel et le dictionnaire **décrivent le code**, pas une intention ; le niveau logique est marqué comme cible. |
 | 20 | Modèle physique fonctionnel | 🟡 | Le modèle physique n'est pas écrit, et le document dit pourquoi : il n'a pas lieu d'être avant que la migration en base soit décidée. Les quatre déclencheurs de cette décision sont nommés. |
-| 21 | Base choisie au regard de la modélisation et des contraintes | ❌ | La persistance actuelle est du JSON à plat (`app/persistance.py`), choix assumé pour le prototype mais non argumenté comme choix de base. |
-| 22 | Procédures d'installation reproductibles (base + API) | 🟡 | L'API s'installe et se lance (`README.md`, `CLAUDE.md`). Rien pour une base. |
-| 23 | Script d'import fonctionnel | ❌ | Absent. |
-| 24 | Documentation du script d'import versionnée à la racine du dépôt | ❌ | Absente. |
-| 25 | Documentations couvrant dépendances et commandes d'exécution | 🟡 | Couvert pour l'application, pas pour des scripts de données inexistants. |
+| 21 | Base choisie au regard de la modélisation et des contraintes | 🟡 | Le catalogue est en SQLite, avec l'argument écrit (`docs/CHAINE_DONNEES.md` §6) : schéma en troisième forme normale dont le déterminant est la **famille** et non la matière — stratifié et parquet sont tous deux du bois sans partager leur densité, une table `matiere` aurait posé une dépendance fonctionnelle inexistante. Contraintes exécutoires (clé étrangère, `CHECK` sur unité, prix et taux), quatre tests les éprouvent en écriture. **Les devis, eux, restent en JSON à plat.** |
+| 22 | Procédures d'installation reproductibles (base + API) | ✅ | L'API s'installe et se lance (`README.md`, `CLAUDE.md`) ; la base se reconstruit en deux commandes depuis des extraits versionnés, **sans réseau** (`docs/CHAINE_DONNEES.md` §3). |
+| 23 | Script d'import fonctionnel | ✅ | `tools/donnees/importer.py`, idempotent : la base est reconstruite depuis zéro à chaque exécution, le jeu agrégé faisant foi. L'application l'ouvre ensuite en **lecture seule**, pour que cette règle tienne à l'exécution et pas seulement dans la documentation. |
+| 24 | Documentation du script d'import versionnée à la racine du dépôt | 🟡 | `docs/CHAINE_DONNEES.md` §6, versionné et référencé depuis `CLAUDE.md`. Le critère demande la racine du dépôt : le document est dans `docs/`, avec tous les autres — et le dépôt n'a toujours pas de remote (constat nº 1). |
+| 25 | Documentations couvrant dépendances et commandes d'exécution | ✅ | `docs/CHAINE_DONNEES.md` §3 donne les trois commandes de rejeu, chaque module porte la sienne en docstring, et la chaîne ne dépend que de la bibliothèque standard plus `requests` — déjà au `pyproject.toml`. |
 | 26 | Registre des traitements de données personnelles | ✅ | `docs/RGPD.md` — quatre traitements (devis, dictée, signal qualité, journalisation), chacun avec finalité, base légale, personnes concernées, destinataires, conservation et mesures de sécurité. Écrit **depuis le code**, chaque donnée citée avec son module. |
 | 27 | Procédures de tri RGPD rédigées | ✅ | `docs/RGPD.md` — tri à la collecte (ce qui n'entre pas), tri avant réutilisation (ce qui ne part pas à l'entraînement), tri à la sortie. Chaque règle porte son état : tenue par le code, ou à faire. |
 | 28 | Procédures détaillant traitements et fréquence | ✅ | `docs/RGPD.md` — tableau des opérations, chacune avec son déclencheur, sa fréquence et sa trace. Les deux purges absentes y figurent comme absentes, pas comme prévues. |
@@ -399,14 +405,17 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 9. ~~**Wireframes** de l'interface existante.~~ **Fait** : `docs/MAQUETTES.md`, six maquettes annotées. C14-104, C17-121 et C10-72 fermés, quatre tests d'accessibilité ajoutés au passage.
 10. ~~**Benchmark STT** avec colonne éco-responsable.~~ **Fait** : `docs/BENCHMARK_STT.md`. Six des sept critères de C7 fermés, C7-48 reste 🟡 faute de mesure ; C15-110 et C17-126 passent à partiel. Le protocole de mesure est écrit et attend un corpus de trente dictées.
 
+11. ~~**Chaîne de données** : collecte multi-sources, agrégation, base, requêtes.~~ **Fait** : `tools/donnees/` et `docs/CHAINE_DONNEES.md`. E1 passe de 14 ❌ à 2, C2 et C3 sont fermés, C4-21 à C4-25 avancent. Le moteur de devis n'est pas encore branché sur la base : c'est une décision de conception, nommée au §8 du document.
+
 **Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
 protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
 mi-chemin), et la chaîne MLOps de C13 (sept) — le reste est du rituel à tenir,
-pas du travail à inventer. Les quatre gisements documentaires de la liste
-ci-dessus sont fermés.
+pas du travail à inventer. Les cinq gisements documentaires de la liste
+ci-dessus sont fermés, et E1, qui était le plus gros trou du référentiel, n'en
+est plus un.
 
 ---
 
 *Audit établi le 08/09/2026, révisé le même jour sur le dépôt à l'état du
-commit `4ee3870`. Les statuts décrivent ce qui est dans le dépôt à ce
+commit `9a4b6b3`. Les statuts décrivent ce qui est dans le dépôt à ce
 commit-là, pas ce qui est prévu — et pas ce qui a été écrit depuis.*
