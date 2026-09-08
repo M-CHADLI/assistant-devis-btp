@@ -19,6 +19,7 @@ from app.api_schema import (DepotGabaritSortie, Erreur401, Erreur404,
                             Erreur503, FamilleIncomplete, FamilleSynthese,
                             MetriquesSortie, ProduitCatalogue, ProfilSortie,
                             RechercheSiretSortie, ReponseDevis,
+                            ReponseDuplication,
                             ReponseRelecture, ReponseTour, ReponseTourTranscrit,
                             SessionOuverte, SourceDonnees)
 from app import catalogue_base
@@ -379,6 +380,40 @@ def api_quantite(arb: ArbitrageQuantite, request: Request, response: Response) -
     REGISTRE.enregistrer(projet_id, session)
     _poser_cookie(response, projet_id)
     return {"projet_id": projet_id, "devis": _serialiser_devis(session)}
+
+
+@app.post("/api/projet/dupliquer", response_model=ReponseDuplication,
+          tags=["Devis"],
+          summary="Repartir de ce devis pour un chantier voisin")
+def api_dupliquer(request: Request, response: Response) -> dict:
+    """Ouvre un nouveau projet à partir du courant (US-17).
+
+    La copie reprend la structure et laisse les prix : le catalogue est
+    volatil, la structure ne l'est pas. Elle repart donc non chiffrée et à
+    revalider — les surfaces vont changer, c'est le but de la duplication.
+
+    Corrections et escalades ne suivent pas : elles appartiennent à
+    l'historique de l'autre chantier.
+    """
+    source_id, _ = _projet(request)
+    projet_id, session = REGISTRE.dupliquer(source_id)
+    JOURNAL.enregistrer("projet_duplique", lignes=len(session.devis.lignes))
+    # Le navigateur bascule sur le nouveau projet : c'est celui qu'on édite.
+    _poser_cookie(response, projet_id)
+    return {
+        "projet_id": projet_id,
+        "devis": _serialiser_devis(session),
+        "numero_devis": session.numero_devis,
+        "date_emission": session.date_emission,
+        "source_projet_id": source_id,
+        "repris": ["vos mentions légales", "le client et l'adresse du chantier",
+                   "le délai d'exécution", "les pièces",
+                   "les lots et les quantités"],
+        "non_repris": ["les prix, à recalculer sur le catalogue du jour",
+                       "la validation de structure, à refaire",
+                       "les corrections et les escalades du chantier d'origine",
+                       "l'historique des dictées"],
+    }
 
 
 @app.post("/api/reset", response_model=ReponseDevis, tags=["Devis"],
@@ -796,9 +831,15 @@ def api_export(request: Request) -> Response:
             "manquantes": [],
         })
     try:
-        contenu = generer_docx(session.devis, session.pieces, session.profil,
-                               session.client, session.delai_execution,
-                               gabarit=session.profil.gabarit)
+        contenu = generer_docx(
+            session.devis, session.pieces, session.profil, session.client,
+            session.delai_execution,
+            # L'identité est celle du projet, fixée à son ouverture : un devis
+            # réexporté doit être le même document (US-17).
+            aujourd_hui=(dt.date.fromisoformat(session.date_emission)
+                         if session.date_emission else None),
+            gabarit=session.profil.gabarit,
+            numero_devis=session.numero_devis)
     except MentionsIncompletes as exc:
         # 409 et non 400 : la requête est correcte, c'est l'état du projet qui
         # ne permet pas encore un document légalement recevable (US-15, dégradé).

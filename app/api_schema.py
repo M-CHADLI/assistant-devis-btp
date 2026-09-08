@@ -98,6 +98,18 @@ class ReponseDevis(BaseModel):
     devis: DevisSortie
 
 
+class ReponseDuplication(ReponseDevis):
+    """Ce qu'une duplication a repris, et ce qu'elle a laissé (US-17)."""
+    numero_devis: str
+    date_emission: str
+    source_projet_id: str
+    # Dit en toutes lettres ce qui n'a pas suivi. Une copie silencieusement
+    # amputée serait pire qu'une copie refusée : l'artisan croirait avoir son
+    # chiffrage.
+    repris: list[str]
+    non_repris: list[str]
+
+
 class ReponseTour(ReponseDevis):
     """Un tour de dialogue rendu au navigateur."""
     intent: str

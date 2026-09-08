@@ -11,15 +11,17 @@ schéma qu'il faudrait migrer à chaque évolution du devis.
 """
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import json
 import os
 import re
 import uuid
+from dataclasses import replace
 from pathlib import Path
 
 from app.catalogue import Produit
-from app.devis import Devis, LigneChiffree
+from app.devis import Devis, LigneChiffree, numero_de_devis
 from app.pipeline import Correction, Escalade, LigneEnAttente, Session
 from app.gabarit import Gabarit
 from app.profil import Client, Decennale, ProfilArtisan, RegimeTVA
@@ -37,6 +39,13 @@ MOTIF_ID = re.compile(r"^[a-z0-9]{8,32}$")
 
 class ProjetIntrouvable(Exception):
     pass
+
+
+def _identifier(projet_id: str, session: Session, jour: dt.date | None = None) -> None:
+    """Fixe le numéro et la date d'émission du devis, une fois pour toutes."""
+    jour = jour or dt.date.today()
+    session.numero_devis = numero_de_devis(projet_id, jour)
+    session.date_emission = jour.isoformat()
 
 
 def nouvel_identifiant() -> str:
@@ -162,6 +171,10 @@ def serialiser_session(session: Session) -> dict:
                    "adresse_chantier": session.client.adresse_chantier},
         "delai_execution": session.delai_execution,
         "structure_validee": session.structure_validee,
+        # Version 5 : l'identité du devis (US-17). Sans elle, un devis
+        # réexporté changerait de numéro et de date de validité.
+        "numero_devis": session.numero_devis,
+        "date_emission": session.date_emission,
     }
 
 
@@ -200,6 +213,10 @@ def deserialiser_session(brut: dict) -> Session:
         # aussi ses prix — le relire comme « structure non validée » masquerait
         # un chiffrage déjà fait.
         structure_validee=brut.get("structure_validee", devis.chiffre),
+        # Projets antérieurs à la version 5 : le registre leur attribue une
+        # identité à la relecture, il ne l'invente pas ici.
+        numero_devis=brut.get("numero_devis", ""),
+        date_emission=brut.get("date_emission", ""),
     )
 
 
@@ -218,9 +235,53 @@ class Registre:
     def creer(self) -> tuple[str, Session]:
         projet_id = nouvel_identifiant()
         session = Session()
+        _identifier(projet_id, session)
         self._cache[projet_id] = session
         self.enregistrer(projet_id, session)
         return projet_id, session
+
+    def dupliquer(self, source_id: str) -> tuple[str, Session]:
+        """Repart d'un devis pour un chantier voisin (US-17).
+
+        Ce qui est repris : le profil, le client, le délai, les pièces, les
+        lots et **la structure du devis** — lot, produit, quantité.
+
+        Ce qui ne l'est pas, et pourquoi :
+
+        - **Les prix.** Le catalogue est volatil, la structure ne l'est pas
+          (`docs/CADRAGE_MODELE.md`). Recopier le chiffrage de la semaine
+          dernière et le présenter comme celui d'aujourd'hui produirait
+          exactement le prix faux que tout le projet s'interdit. La copie
+          revient donc non chiffrée, structure à revalider (HITL-2) : les
+          surfaces vont changer, c'est le but même de la duplication.
+        - **Les corrections et les escalades.** Elles appartiennent à
+          l'historique de l'autre chantier. Les recopier gonflerait le signal
+          qualité de doublons qui n'ont jamais été dictés (US-25), et ferait
+          porter au nouveau devis des arbitrages pris sur un autre.
+        - **L'historique de conversation.** Même raison, et il porte les
+          dictées, donc le nom de l'autre client.
+        - **Le numéro et la date.** Un devis distinct porte un numéro distinct
+          et une date d'émission d'aujourd'hui.
+        """
+        source = self.obtenir(source_id)
+        projet_id = nouvel_identifiant()
+        copie = Session(
+            pieces=list(source.pieces),
+            lots_presents=list(source.lots_presents),
+            profil=copy.deepcopy(source.profil),
+            client=copy.deepcopy(source.client),
+            delai_execution=source.delai_execution,
+            devis=Devis(mentions=set(source.devis.mentions)),
+            structure_validee=False,
+        )
+        for ligne in source.devis.lignes:
+            copie.devis.lignes.append(replace(
+                ligne, produit=None, prix_unitaire_ht=0.0, prix_ht=0.0,
+                chiffree=False))
+        _identifier(projet_id, copie)
+        self._cache[projet_id] = copie
+        self.enregistrer(projet_id, copie)
+        return projet_id, copie
 
     def obtenir(self, projet_id: str) -> Session:
         if projet_id in self._cache:
@@ -229,6 +290,12 @@ class Registre:
         if not chemin.exists():
             raise ProjetIntrouvable(projet_id)
         session = deserialiser_session(json.loads(chemin.read_text(encoding="utf-8")))
+        if not session.numero_devis:
+            # Projet écrit avant la version 5. Lui attribuer son identité une
+            # fois et l'écrire vaut mieux que la recalculer à chaque export :
+            # sinon le même devis changerait de numéro d'un export à l'autre.
+            _identifier(projet_id, session)
+            self.enregistrer(projet_id, session)
         self._cache[projet_id] = session
         return session
 
@@ -256,6 +323,7 @@ class Registre:
 
     def reinitialiser(self, projet_id: str) -> Session:
         session = Session()
+        _identifier(projet_id, session)
         self.enregistrer(projet_id, session)
         return session
 

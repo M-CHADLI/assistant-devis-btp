@@ -450,3 +450,46 @@ def test_la_mise_en_page_reprise_est_revocable_depuis_l_ecran(html):
     assert 'id="btn-gabarit-oubli"' in html
     assert "'/api/profil/gabarit'" in html
     assert "method: 'DELETE'" in html
+
+
+# --- US-17 — repartir d'un devis pour un chantier voisin ---------------------
+
+def test_le_bouton_de_duplication_est_un_bouton_et_porte_un_intitule(html):
+    """RGAA 7.1 — une action est un `<button>`, pas une icône cliquable.
+
+    Le pictogramme ⧉ ne porte rien : c'est le texte qui dit l'action, et un
+    lecteur d'écran n'annoncerait qu'un caractère sans lui.
+    """
+    bouton = re.search(r'<button[^>]*id="btn-dupliquer"[^>]*>(.*?)</button>', html)
+    assert bouton, "bouton de duplication introuvable"
+    assert "Repartir de ce devis" in bouton.group(1)
+
+
+def test_la_description_du_bouton_de_duplication_ne_pointe_pas_dans_le_vide(html):
+    bouton = re.search(r'<button[^>]*id="btn-dupliquer"[^>]*>', html).group(0)
+    cibles = re.search(r'aria-describedby="([^"]+)"', bouton)
+    assert cibles, "le bouton de duplication n'est pas décrit"
+    for cible in cibles.group(1).split():
+        assert f'id="{cible}"' in html, f"aria-describedby pointe dans le vide : {cible}"
+
+
+def test_le_bilan_de_duplication_est_annonce_sans_voler_le_focus(html):
+    """WCAG 4.1.3 — la copie change le devis affiché ; le dire est obligatoire,
+    déplacer le focus ne l'est pas."""
+    zone = re.search(r'<p[^>]*id="duplication-retour"[^>]*>', html).group(0)
+    assert 'role="status"' in zone
+    assert 'aria-live="polite"' in zone
+
+
+def test_le_bilan_de_duplication_nomme_ce_qui_n_a_pas_suivi(html):
+    """RGAA 3.1 — le bilan est du texte. Une copie amputée en silence ferait
+    croire à l'artisan qu'il tient son chiffrage."""
+    assert "d.repris.join" in html
+    assert "d.non_repris.join" in html
+    assert "Non repris" in html
+
+
+def test_l_echec_de_duplication_dit_que_le_devis_courant_est_intact(html):
+    """Cas dégradé : sans cette phrase, l'artisan ne sait pas s'il a perdu son
+    travail en cours."""
+    assert html.count("La duplication a échoué. Le devis courant est intact.") == 2

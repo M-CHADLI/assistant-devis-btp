@@ -115,8 +115,13 @@
   <div class="barre-actions">
     <button id="btn-dicter">🎤 Dicter (prototype navigateur)</button>
     <button id="btn-reset">↺ Nouveau chantier</button>
+    <button id="btn-dupliquer" aria-describedby="duplication-retour">⧉ Repartir de ce devis</button>
     <a href="/metriques">📊 Métriques d'exploitation</a>
   </div>
+  <!-- US-17. Le bilan de la duplication est un texte, pas une icône ni une
+       couleur : il dit ce qui a suivi et ce qui n'a pas suivi (RGAA 3.1), et
+       il s'annonce sans voler le focus (WCAG 4.1.3). -->
+  <p class="consequence" id="duplication-retour" role="status" aria-live="polite"></p>
   <div class="fil" id="fil" aria-live="polite" aria-atomic="false"></div>
   <section class="relecture" id="relecture" hidden aria-labelledby="relecture-titre">
     <h2 id="relecture-titre">Relis ta dictée avant que je la traite</h2>
@@ -560,6 +565,29 @@ document.getElementById('btn-reset').onclick = async () => {
   rendreDevis({lignes: [], structure_validee: false, total_ht: null,
                ventilation_tva: {}, total_ttc: null, acompte_30_pct: null,
                mentions: [], corrections: [], a_confirmer: []});
+};
+
+// US-17 — repartir d'un devis pour un chantier voisin. Le bilan est écrit en
+// toutes lettres : une copie silencieusement amputée ferait croire à l'artisan
+// qu'il tient son chiffrage.
+document.getElementById('btn-dupliquer').onclick = async () => {
+  const bouton = document.getElementById('btn-dupliquer');
+  const zone = document.getElementById('duplication-retour');
+  bouton.disabled = true;
+  zone.textContent = 'Duplication en cours…';
+  try {
+    const resp = await fetch('/api/projet/dupliquer', {method: 'POST'});
+    if (!resp.ok) { zone.textContent = 'La duplication a échoué. Le devis courant est intact.'; return; }
+    const d = await resp.json();
+    fil.innerHTML = '';
+    rendreDevis(d.devis);
+    zone.textContent = 'Nouveau devis ' + d.numero_devis + '. Repris : '
+      + d.repris.join(', ') + '. Non repris : ' + d.non_repris.join(', ') + '.';
+  } catch (e) {
+    zone.textContent = 'La duplication a échoué. Le devis courant est intact.';
+  } finally {
+    bouton.disabled = false;
+  }
 };
 
 document.getElementById('btn-export').onclick = async () => {

@@ -122,6 +122,13 @@ class Session:
     # Compteur de reprises du dernier tour — sert au journal (§4.3), pas à la
     # logique métier : il n'est donc pas persisté.
     reprises_du_tour: int = 0
+    # Identité du devis (US-17). Elle est fixée à l'ouverture du projet et
+    # **ne bouge plus** : la recalculer à chaque export ferait changer le
+    # numéro et la date de validité d'un devis déjà remis au client, alors
+    # qu'un devis remis engage sur une durée. Vide pour les projets écrits
+    # avant la version 5 ; le registre leur en attribue une à la relecture.
+    numero_devis: str = ""
+    date_emission: str = ""    # ISO, pour que le JSON reste lisible à l'œil
 
 
 @dataclass

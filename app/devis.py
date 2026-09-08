@@ -5,6 +5,7 @@ ventile la TVA. Aucune fonction ici n'est jamais appelée par le modèle.
 """
 from __future__ import annotations
 
+import datetime as dt
 import math
 from dataclasses import dataclass, field
 
@@ -37,6 +38,20 @@ class LigneChiffree:
     # détecter une reconfirmation orale identique et de l'ignorer (idempotence).
     dimension_type: str | None = None
     dimension_valeur: float | None = None
+
+
+def numero_de_devis(projet_id: str, jour: dt.date) -> str:
+    """Le numéro porté par le devis : `DEV-AAAAMMJJ-xxxxxx`.
+
+    Le suffixe est le début de l'identifiant du projet, ce qui rend le numéro
+    **unique sans compteur partagé**. Un compteur incrémental supposerait un
+    état mutable commun à tous les projets : deux devis ouverts le même jour se
+    disputeraient le même rang, ou en sauteraient un. La numérotation continue
+    sans rupture est une obligation de *facturation* ; d'un devis, on attend
+    qu'il soit identifiable de façon univoque, et de le retrouver — ici, le
+    numéro dit le fichier où il vit.
+    """
+    return f"DEV-{jour:%Y%m%d}-{projet_id[:6]}"
 
 
 @dataclass

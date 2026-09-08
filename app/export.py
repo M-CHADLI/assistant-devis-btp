@@ -41,7 +41,8 @@ class MentionsIncompletes(Exception):
 def generer_docx(devis: Devis, pieces: list[str], profil: ProfilArtisan,
                   client: Client, delai_execution: str,
                   aujourd_hui: dt.date | None = None,
-                  gabarit: Gabarit | None = None) -> bytes:
+                  gabarit: Gabarit | None = None,
+                  numero_devis: str = "") -> bytes:
     """Le devis en `.docx`, dans l'ordre et sous les intitulés de l'artisan.
 
     Le `gabarit` (US-03) ne fait que **réordonner et renommer** les sections.
@@ -63,7 +64,11 @@ def generer_docx(devis: Devis, pieces: list[str], profil: ProfilArtisan,
 
     def bloc_identification() -> None:
         doc.add_heading(gabarit.libelle("identification"), level=2)
-        doc.add_paragraph(f"N° de devis : DEV-{jour:%Y%m%d}-001")
+        # Le numéro vient du projet (US-17). À défaut — un appel direct, hors
+        # de l'application — on en dérive un du jour plutôt que d'en inventer
+        # un fixe : deux devis du même jour portaient le même « -001 ».
+        doc.add_paragraph(
+            f"N° de devis : {numero_devis or f'DEV-{jour:%Y%m%d}-000000'}")
         doc.add_paragraph(f"Date d'émission : {jour:%d/%m/%Y}")
         doc.add_paragraph(
             f"Date de validité : {jour + dt.timedelta(days=30):%d/%m/%Y}")
