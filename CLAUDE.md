@@ -42,6 +42,7 @@ docs/RGPD.md           registre des traitements et procédures de tri
 docs/CHAINE_DONNEES.md la chaîne de collecte, nettoyage et mise en base du catalogue
 docs/CHAINE_MLOPS.md   la chaîne du modèle : test des données, préparation, entraînement
 docs/CONCLUSION_POC.md ce que la preuve de concept a établi, et ce qu'elle décide
+docs/RITUELS.md        objectifs et modalités des rituels, et la définition de fini
 app/                   l'implémentation (FastAPI, moteur de devis, front)
 tests/                 la suite pytest
 tools/                 outillage hors produit (CLI Notion, chaînes données et modèle)
@@ -93,6 +94,12 @@ archive/renoassistant/ conception précédente
   `qualite_correspondance` dit `exacte`, `proxy` ou `absente` — ne jamais laisser l'aval prendre
   un proxy pour une mesure. La chaîne **n'alimente pas encore** `app/catalogue.py` : la couture
   est décrite au §8 du document.
+- **`docs/RITUELS.md`** — les cinq rituels du projet et la **définition de fini** qui vaut
+  pour toute story : comportement **et** cas dégradé, critères d'accessibilité satisfaits,
+  tests sur le nominal et le dégradé, ligne de traçabilité de `docs/STORIES.md` mise à jour
+  avec l'état **constaté**, décisions écrites dans le document de conception concerné. Le
+  point le plus souvent oublié est l'avant-dernier, et c'est le seul qui permette de répondre
+  « où en est-on » sans relire le code.
 - **`docs/CONCLUSION_POC.md`** — la conclusion de la preuve de concept, adossée à cinq
   exécutions de `tools/parcours_bout_en_bout.py` relevées le 08/09/2026. **Le chiffre à
   connaître** : `gpt-oss:20b` brut produit du JSON conforme dans **71,4 %** des cas (15 sur

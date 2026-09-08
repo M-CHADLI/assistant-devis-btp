@@ -30,9 +30,9 @@ l'absence de jeu de données à exposer, et cette absence a cessé.
 | E1 — Données (C1-C5) | 28 | 18 | 8 | 2 | 0 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 27 | 8 | 4 | 0 |
-| E4 — Application (C14-C19) | 36 | 23 | 9 | 4 | 0 |
+| E4 — Application (C14-C19) | 36 | 23 | 10 | 3 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **90** | **34** | **11** | **0** |
+| **Total** | **135** | **90** | **35** | **10** | **0** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -310,12 +310,14 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 |---|---|---|---|
 | 115 | Cycles, étapes, rôles, rituels et outils de la méthode respectés | 🟡 | Le découpage agile est réel — 28 stories, 7 épiques, deux files de priorité, sprints dans `PLANNING.md`. Les **rituels ne sont pas tenus ni tracés** (pas de revue de sprint, pas de rétrospective écrite). |
 | 116 | Outils de pilotage disponibles (kanban, burndown, backlog) | 🟡 | Le backlog existe et fait autorité. Le kit de transposition Notion est prêt (`docs/NOTION_BOARD.md`, CSV, CLI) mais **le tableau n'est pas encore monté**. |
-| 117 | Objectifs et modalités des rituels partagés aux parties prenantes | ❌ | Non écrits. |
-| 118 | Éléments de pilotage accessibles à toutes les parties tout au long du projet | 🟡 | Accessibles dans le dépôt ; pas de vue partagée hors dépôt tant que Notion n'est pas monté. |
+| 117 | Objectifs et modalités des rituels partagés aux parties prenantes | 🟡 | `docs/RITUELS.md` — cinq rituels avec objectif, modalités, production et destinataires, plus la définition de fini et le tableau des canaux de partage. Il **nomme la difficulté** plutôt que de la masquer : les rituels agiles supposent une équipe, et le projet est conduit à une personne ; chacun garde son objectif et change de modalités. Reste 🟡 : le document énonce, il ne prouve pas — et le canal de partage principal (Notion) n'est pas monté. |
+| 118 | Éléments de pilotage accessibles à toutes les parties tout au long du projet | 🟡 | Accessibles dans le dépôt ; `docs/RITUELS.md` en donne désormais le tableau des canaux et de leurs destinataires. Pas de vue partagée hors dépôt tant que Notion n'est pas monté. |
 
 > C16 se joue sur des **traces**, pas sur du code : un tableau Notion vivant,
 > des revues de sprint datées, une rétrospective. Le projet est conduit de façon
-> agile ; il ne le **prouve** pas encore.
+> agile, et ses modalités sont désormais écrites ; il ne le **prouve** pas encore.
+> Les trois 🟡 de C16 tomberont ensemble, du jour où le tableau sera monté et où
+> une première revue sera déposée dans `docs/revues/`.
 
 ### C17 — Développement des composants et interfaces
 
@@ -417,13 +419,15 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 14. ~~**Conclusion de la preuve de concept.**~~ **Fait** : `docs/CONCLUSION_POC.md`, adossé à cinq exécutions relevées, pas à un souvenir. C15-113 fermé. Le relevé qui compte : **71,4 % de JSON valide** sur `gpt-oss:20b` brut, contre 98 % visés — la valeur de référence du fine-tuning existe désormais, et elle est datée.
 
+15. ~~**Objectifs et modalités des rituels.**~~ **Fait** : `docs/RITUELS.md`. C16-117 passe à partiel, C16-118 s'appuie dessus. Le document refuse le rituel de façade — il adapte les modalités à un projet conduit à une personne au lieu de mimer une équipe, et dit ce qui n'est pas encore tenu.
+
 **Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
 protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
 mi-chemin), et **écrire le dataset à la main** — le reste est du rituel à
 tenir, pas du travail à inventer. Les six gisements documentaires de la liste
 ci-dessus sont fermés, et il ne reste plus de gisement de ❌ : les douze
-restants sont **neuf dépendances au dépôt distant** et deux constats isolés
-(C7-43 l'accessibilité des sources de veille, C16-117 les rituels à partager).
+restants sont **neuf dépendances au dépôt distant** et un seul constat isolé,
+C7-43 — l'accessibilité des sources de veille.
 Ce qui bloque le projet n'est plus de l'outillage, c'est de la matière — les
 2000 exemples que personne ne peut écrire à ma place.
 
