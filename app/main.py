@@ -17,7 +17,8 @@ from pydantic import BaseModel
 from app.export import MentionsIncompletes, generer_docx
 from app.persistance import Registre
 from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
-                          corriger_ligne, traiter_message, valider_transcription)
+                          corriger_ligne, traiter_message, valider_structure,
+                          valider_transcription)
 from app.profil import Client, RegimeTVA, champs_manquants
 from app.transcription import relire
 
@@ -44,26 +45,47 @@ def _poser_cookie(response: Response, projet_id: str) -> None:
 
 
 def _serialiser_devis(session: Session) -> dict:
+    """Sérialise le devis pour le navigateur.
+
+    Avant HITL-2 (docs/STORIES.md US-12), **aucune clé de prix n'existe dans la
+    réponse** : ni prix unitaire, ni total, ni ventilation. Ce n'est pas un
+    masquage d'affichage — rien n'a été calculé côté serveur non plus.
+    """
+    validee = session.structure_validee
+    lignes = []
+    for l in session.devis.lignes:
+        ligne = {
+            "lot_code": l.lot_code,
+            "designation": l.produit.designation if l.produit else l.nom_lot,
+            "quantite": l.quantite_achat if validee else l.quantite_technique,
+            "unite": (l.produit.unite_vente if l.produit else "") if validee
+                     else l.unite_technique,
+            "origine": l.origine,
+        }
+        if validee:
+            ligne["prix_unitaire_ht"] = l.prix_unitaire_ht
+            ligne["prix_ht"] = l.prix_ht
+            ligne["taux_tva"] = l.taux_tva
+        lignes.append(ligne)
+
+    montants: dict = {
+        "total_ht": None, "ventilation_tva": {}, "total_tva": None,
+        "total_ttc": None, "acompte_30_pct": None,
+    }
+    if validee:
+        montants = {
+            "total_ht": session.devis.total_ht,
+            "ventilation_tva": session.devis.ventilation_tva,
+            "total_tva": session.devis.total_tva,
+            "total_ttc": session.devis.total_ttc,
+            "acompte_30_pct": session.devis.acompte_30_pct,
+        }
+
     return {
         "pieces": session.pieces,
-        "lignes": [
-            {
-                "lot_code": l.lot_code,
-                "designation": l.produit.designation if l.produit else l.nom_lot,
-                "quantite": l.quantite_achat,
-                "unite": l.produit.unite_vente if l.produit else "",
-                "prix_unitaire_ht": l.prix_unitaire_ht,
-                "prix_ht": l.prix_ht,
-                "taux_tva": l.taux_tva,
-                "origine": l.origine,
-            }
-            for l in session.devis.lignes
-        ],
-        "total_ht": session.devis.total_ht,
-        "ventilation_tva": session.devis.ventilation_tva,
-        "total_tva": session.devis.total_tva,
-        "total_ttc": session.devis.total_ttc,
-        "acompte_30_pct": session.devis.acompte_30_pct,
+        "lignes": lignes,
+        "structure_validee": validee,
+        **montants,
         "mentions": sorted(session.devis.mentions),
         # En franchise (art. 293 B), le front masque tout ce qui touche à la
         # TVA : un devis d'auto-entrepreneur qui en affiche une est faux.
@@ -118,6 +140,19 @@ def api_message(msg: MessageEntrant, request: Request, response: Response) -> di
         "consommables_suggeres": resultat.consommables_suggeres,
         "devis": _serialiser_devis(session),
     }
+
+
+@app.post("/api/valider-structure")
+def api_valider_structure(request: Request, response: Response) -> dict:
+    """HITL-2 — l'artisan valide lots et quantités ; le chiffrage suit."""
+    projet_id, session = _projet(request)
+    applique = valider_structure(session)
+    if not applique:
+        raise HTTPException(status_code=409,
+                            detail="il n'y a rien à valider : la structure est vide")
+    REGISTRE.enregistrer(projet_id, session)
+    _poser_cookie(response, projet_id)
+    return {"projet_id": projet_id, "devis": _serialiser_devis(session)}
 
 
 class DicteeEntrante(BaseModel):
@@ -290,6 +325,13 @@ def api_profil_ecrire(entrant: ProfilEntrant, request: Request,
 @app.get("/api/export")
 def api_export(request: Request) -> Response:
     _, session = _projet(request)
+    if not session.structure_validee:
+        raise HTTPException(status_code=409, detail={
+            "code": "structure_non_validee",
+            "message": "Valide d'abord la structure du devis : les prix ne sont "
+                       "calculés qu'après.",
+            "manquantes": [],
+        })
     try:
         contenu = generer_docx(session.devis, session.pieces, session.profil,
                                session.client, session.delai_execution)
@@ -297,6 +339,7 @@ def api_export(request: Request) -> Response:
         # 409 et non 400 : la requête est correcte, c'est l'état du projet qui
         # ne permet pas encore un document légalement recevable (US-15, dégradé).
         raise HTTPException(status_code=409, detail={
+            "code": "mentions_incompletes",
             "message": "Il manque des mentions obligatoires pour émettre ce devis.",
             "manquantes": exc.manquants,
         }) from exc

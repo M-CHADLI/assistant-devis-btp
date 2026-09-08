@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 
 from pydantic import ValidationError
 
-from app.devis import Devis, LotInconnu, ajouter_consommables, ajouter_ligne, consommables_par_defaut
+from app.devis import (Devis, LotInconnu, ajouter_consommables, ajouter_ligne,
+                       chiffrer, consommables_par_defaut)
 from app.llm import ModeleInjoignable, SortieModeleInvalide, appeler_modele
 from app.profil import Client, ProfilArtisan
 from app.referentiel import REFERENTIEL, MENTIONS, bornes, est_plausible
@@ -83,6 +84,11 @@ class Session:
     profil: ProfilArtisan = field(default_factory=ProfilArtisan)
     client: Client = field(default_factory=Client)
     delai_execution: str = ""
+    # HITL-2 (docs/STORIES.md US-12) : tant que l'artisan n'a pas validé la
+    # structure, aucun prix n'est calculé — donc aucun ne peut fuiter vers le
+    # navigateur. On valide ce qui est stable avant d'y accrocher ce qui est
+    # volatil (docs/DISPOSITIF_AGENT.md §1.4).
+    structure_validee: bool = False
 
 
 @dataclass
@@ -157,17 +163,26 @@ def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], 
                     "cette taille ?"
                 )
                 continue
-            ajouter_ligne(session.devis, ligne.lot_code, ligne.dimension.type, ligne.dimension.valeur)
+            ajouter_ligne(session.devis, ligne.lot_code, ligne.dimension.type,
+                          ligne.dimension.valeur,
+                          chiffrer_maintenant=session.structure_validee)
             deja_presentes.add(cle)
             lignes_nouvelles += 1
             if ligne.lot_code not in session.lots_presents:
                 session.lots_presents.append(ligne.lot_code)
             if ligne.lot_code in MENTIONS and MENTIONS[ligne.lot_code] not in mentions:
                 mentions.append(MENTIONS[ligne.lot_code])
-        if lignes_nouvelles:
+        if lignes_nouvelles and session.structure_validee:
             messages.append(
                 f"{lignes_nouvelles} ligne(s) ajoutée(s) au devis "
                 f"(total HT provisoire : {session.devis.total_ht} €)."
+            )
+        elif lignes_nouvelles:
+            # Avant HITL-2, on ne dit pas de montant — pas même « provisoire ».
+            messages.append(
+                f"{lignes_nouvelles} ligne(s) ajoutée(s) à la structure du devis. "
+                "Relis les lots et les quantités : le chiffrage viendra après ta "
+                "validation."
             )
         elif p.lignes:
             messages.append("Déjà pris en compte dans le devis en cours.")
@@ -177,7 +192,8 @@ def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], 
         p = PayloadConsommables.model_validate(payload)
         if p.lot_code not in REFERENTIEL:
             raise LotInconnu(f"lot_code inconnu : {p.lot_code!r}")
-        ajouter_consommables(session.devis, p.lot_code, p.items)
+        ajouter_consommables(session.devis, p.lot_code, p.items,
+                             chiffrer_maintenant=session.structure_validee)
         messages.append(f"Consommables ajoutés pour {REFERENTIEL[p.lot_code].nom} : "
                          + ", ".join(p.items))
 
@@ -272,6 +288,20 @@ def traiter_message(session: Session, texte_utilisateur: str) -> ResultatTour:
     return ResultatTour("escalade", [MESSAGE_ESCALADE], [], session.devis, {})
 
 
+def valider_structure(session: Session) -> bool:
+    """HITL-2 — l'artisan valide lots et quantités ; **alors** on chiffre.
+
+    Valider un devis déjà chiffré, c'est valider un prix ; valider un devis nu,
+    c'est valider le métier (docs/DISPOSITIF_AGENT.md §1.4). L'artisan valide
+    seul : depuis le pivot, le client n'a plus de rôle actif ici.
+    """
+    if not session.devis.lignes:
+        return False
+    session.structure_validee = True
+    chiffrer(session.devis)
+    return True
+
+
 def valider_transcription(session: Session, propose: str, corrige: str) -> str:
     """HITL-0 : l'artisan relit sa dictée et la valide (docs/STORIES.md US-05).
 
@@ -299,7 +329,8 @@ def confirmer_quantite(session: Session, index: int) -> bool:
         return False
     attente = session.a_confirmer.pop(index)
     ajouter_ligne(session.devis, attente.lot_code, attente.dimension_type,
-                  attente.dimension_valeur)
+                  attente.dimension_valeur,
+                  chiffrer_maintenant=session.structure_validee)
     if attente.lot_code not in session.lots_presents:
         session.lots_presents.append(attente.lot_code)
     if attente.lot_code in MENTIONS:

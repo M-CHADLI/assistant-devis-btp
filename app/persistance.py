@@ -97,7 +97,7 @@ def _profil_depuis_dict(brut: dict) -> ProfilArtisan:
 
 def serialiser_session(session: Session) -> dict:
     return {
-        "version": 2,
+        "version": 3,
         "historique": session.historique,
         "pieces": session.pieces,
         "lots_presents": session.lots_presents,
@@ -109,6 +109,9 @@ def serialiser_session(session: Session) -> dict:
                  "quantite_achat": l.quantite_achat,
                  "prix_unitaire_ht": l.prix_unitaire_ht, "prix_ht": l.prix_ht,
                  "taux_tva": l.taux_tva, "origine": l.origine,
+                 "quantite_technique": l.quantite_technique,
+                 "unite_technique": l.unite_technique,
+                 "chiffree": l.chiffree,
                  "dimension_type": l.dimension_type,
                  "dimension_valeur": l.dimension_valeur}
                 for l in session.devis.lignes
@@ -127,6 +130,7 @@ def serialiser_session(session: Session) -> dict:
         "client": {"nom": session.client.nom,
                    "adresse_chantier": session.client.adresse_chantier},
         "delai_execution": session.delai_execution,
+        "structure_validee": session.structure_validee,
     }
 
 
@@ -139,6 +143,11 @@ def deserialiser_session(brut: dict) -> Session:
             quantite_achat=l["quantite_achat"],
             prix_unitaire_ht=l["prix_unitaire_ht"], prix_ht=l["prix_ht"],
             taux_tva=l["taux_tva"], origine=l.get("origine", "modèle"),
+            quantite_technique=l.get("quantite_technique", l["quantite_achat"]),
+            unite_technique=l.get("unite_technique", ""),
+            # Projets écrits avant la version 3 : le devis était chiffré dès
+            # l'ajout de la ligne, donc toute ligne relue est chiffrée.
+            chiffree=l.get("chiffree", True),
             dimension_type=l.get("dimension_type"),
             dimension_valeur=l.get("dimension_valeur"),
         ))
@@ -156,6 +165,10 @@ def deserialiser_session(brut: dict) -> Session:
         profil=_profil_depuis_dict(brut.get("profil", {})),
         client=Client(**brut.get("client", {})),
         delai_execution=brut.get("delai_execution", ""),
+        # Idem : avant la version 3, un devis qui portait des lignes portait
+        # aussi ses prix — le relire comme « structure non validée » masquerait
+        # un chiffrage déjà fait.
+        structure_validee=brut.get("structure_validee", devis.chiffre),
     )
 
 

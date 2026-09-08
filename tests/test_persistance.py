@@ -6,7 +6,7 @@ import pytest
 from app.devis import ajouter_ligne
 from app.persistance import (MOTIF_ID, ProjetIntrouvable, Registre,
                              deserialiser_session, serialiser_session)
-from app.pipeline import Correction, Escalade, Session
+from app.pipeline import Correction, Escalade, Session, valider_structure
 
 
 @pytest.fixture
@@ -96,3 +96,42 @@ def test_reinitialiser_vide_le_projet_sans_le_supprimer(registre):
     assert neuve.devis.lignes == []
     assert registre.obtenir(projet_id).devis.lignes == []
     assert projet_id in registre.lister()
+
+
+def test_l_etat_de_validation_de_structure_survit_au_disque(tmp_path):
+    """US-12 + US-16 : un devis non validé se relit non chiffré, et un devis
+    validé se relit chiffré."""
+    registre = Registre(racine=tmp_path)
+    projet_id, session = registre.creer()
+    ajouter_ligne(session.devis, "PEINT_FINITION", "surface", 22.0,
+                  chiffrer_maintenant=False)
+    registre.enregistrer(projet_id, session)
+
+    registre._cache.clear()
+    relue = registre.obtenir(projet_id)
+    assert relue.structure_validee is False
+    assert relue.devis.lignes[0].chiffree is False
+    assert relue.devis.lignes[0].quantite_technique > 0
+    assert relue.devis.total_ht == 0.0  # rien n'a été chiffré
+
+    valider_structure(relue)
+    registre.enregistrer(projet_id, relue)
+    registre._cache.clear()
+    apres = registre.obtenir(projet_id)
+    assert apres.structure_validee is True
+    assert apres.devis.total_ht > 0
+
+
+def test_un_projet_version_2_se_relit_comme_deja_chiffre():
+    """Repli de compatibilité : avant la version 3, le devis était chiffré dès
+    l'ajout de la ligne. Le relire comme « non validé » masquerait ses prix."""
+    v2 = {
+        "version": 2,
+        "devis": {"mentions": [], "lignes": [
+            {"lot_code": "PEINT_FINITION", "nom_lot": "Peinture de finition",
+             "produit": None, "quantite_achat": 3, "prix_unitaire_ht": 34.9,
+             "prix_ht": 104.7, "taux_tva": "10", "origine": "modèle"}]},
+    }
+    session = deserialiser_session(v2)
+    assert session.structure_validee is True
+    assert session.devis.total_ht == 104.7

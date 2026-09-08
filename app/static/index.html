@@ -202,18 +202,36 @@ function rendreDevis(devis) {
     return;
   }
   const franchise = devis.franchise_tva === true;
+  const validee = devis.structure_validee === true;
   const suffixe = franchise ? '' : ' HT';
-  let html = `<table><tr><th>Poste</th><th>Qté</th><th>PU${suffixe}</th><th>Total${suffixe}</th><th></th></tr>`;
+
+  // HITL-2 (US-12) : avant validation, l'écran ne comporte aucune colonne prix,
+  // même vide — le serveur n'en a d'ailleurs calculé aucun.
+  let html = validee
+    ? `<table><tr><th>Poste</th><th>Qté</th><th>PU${suffixe}</th><th>Total${suffixe}</th><th></th></tr>`
+    : '<table><tr><th>Lot</th><th>Quantité</th><th></th></tr>';
   devis.lignes.forEach((l, i) => {
-    html += `<tr>
-      <td>${l.designation}${l.origine === 'consommable' ? ' <small>(consommable)</small>' : ''}</td>
-      <td>${l.quantite} ${l.unite}</td>
-      <td>${l.prix_unitaire_ht.toFixed(2)} €</td>
-      <td>${l.prix_ht.toFixed(2)} €</td>
-      <td><button class="btn-supprimer" aria-label="Supprimer la ligne ${i + 1} : ${l.designation}" onclick="corrigerLigne(${i})"><span aria-hidden="true">✕</span></button></td>
-    </tr>`;
+    const nom = `${l.designation}${l.origine === 'consommable' ? ' <small>(consommable)</small>' : ''}`;
+    const supprimer = `<td><button class="btn-supprimer" aria-label="Supprimer la ligne ${i + 1} : ${l.designation}" onclick="corrigerLigne(${i})"><span aria-hidden="true">✕</span></button></td>`;
+    html += validee
+      ? `<tr><td>${nom}</td><td>${l.quantite} ${l.unite}</td>
+         <td>${l.prix_unitaire_ht.toFixed(2)} €</td>
+         <td>${l.prix_ht.toFixed(2)} €</td>${supprimer}</tr>`
+      : `<tr><td>${nom}</td><td>${l.quantite} ${l.unite}</td>${supprimer}</tr>`;
   });
   html += '</table>';
+
+  if (!validee) {
+    html += `<div class="a-confirmer">
+      <strong>Structure du devis — pas encore chiffrée.</strong>
+      <p>Relis les lots et les quantités. Les prix ne seront calculés qu'après ta
+      validation : on valide le métier, pas un montant.</p>
+      <button class="principal" onclick="validerStructure()">Valider la structure du devis</button>
+    </div>`;
+    devisCorps.innerHTML = html;
+    return;
+  }
+
   html += '<div class="totaux">';
   if (franchise) {
     // Art. 293 B du CGI : aucune TVA affichée, seulement la mention légale.
@@ -364,6 +382,15 @@ async function envoyer() {
 
 document.getElementById('btn-envoyer').onclick = envoyer;
 
+// --- HITL-2 : validation de la structure avant chiffrage (US-12) ------------
+async function validerStructure() {
+  const resp = await fetch('/api/valider-structure', {method: 'POST'});
+  if (!resp.ok) return;
+  const data = await resp.json();
+  ajouterMessage("Structure validée — voici le chiffrage.", 'assistant');
+  rendreDevis(data.devis);
+}
+
 // --- HITL-0 : relecture de la dictée (US-05) --------------------------------
 // Rien ne part au pipeline tant que l'artisan n'a pas validé ce texte.
 const zoneRelecture = document.getElementById('relecture');
@@ -421,7 +448,9 @@ entree.addEventListener('keydown', e => { if (e.key === 'Enter') envoyer(); });
 document.getElementById('btn-reset').onclick = async () => {
   await fetch('/api/reset', {method: 'POST'});
   fil.innerHTML = '';
-  rendreDevis({lignes: [], total_ht: 0, ventilation_tva: {}, total_ttc: 0, acompte_30_pct: 0, mentions: [], corrections: [], a_confirmer: []});
+  rendreDevis({lignes: [], structure_validee: false, total_ht: null,
+               ventilation_tva: {}, total_ttc: null, acompte_30_pct: null,
+               mentions: [], corrections: [], a_confirmer: []});
 };
 
 document.getElementById('btn-export').onclick = async () => {
@@ -429,9 +458,15 @@ document.getElementById('btn-export').onclick = async () => {
   if (resp.status === 409) {
     // Cas dégradé US-15 : on n'émet pas un devis non conforme, on dit quoi remplir.
     const detail = (await resp.json()).detail;
-    rendreAlerteMentions({mentions_manquantes: detail.manquantes});
-    ouvrirProfil();
-    document.getElementById('alerte-mentions').focus();
+    const zone = document.getElementById('alerte-mentions');
+    if (detail.code === 'structure_non_validee') {
+      zone.textContent = detail.message;
+      zone.hidden = false;
+    } else {
+      rendreAlerteMentions({mentions_manquantes: detail.manquantes});
+      ouvrirProfil();
+    }
+    zone.focus();
     return;
   }
   if (!resp.ok) { ajouterMessage("L'export a échoué. Réessaie.", 'assistant'); return; }

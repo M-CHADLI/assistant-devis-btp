@@ -89,3 +89,20 @@ def test_la_dictee_ne_part_pas_au_pipeline_sans_relecture(html):
     corps = onresult.group(1)
     assert "relireDictee" in corps
     assert "/api/message" not in corps
+
+
+def test_l_ecran_de_structure_ne_comporte_aucune_colonne_prix(html):
+    """US-12 — « aucune colonne prix, même vide » avant validation."""
+    script = html[html.index("<script>"):]
+    entete = re.search(r"validee\s*\?\s*`(<table>.*?)`\s*:\s*'(<table>.*?)'",
+                       script, re.S)
+    assert entete, "les deux en-têtes de tableau ont changé de forme — à revérifier"
+    structure = entete.group(2)
+    for interdit in ("PU", "Total", "€", "TVA"):
+        assert interdit not in structure, (
+            f"l'écran de structure ne doit rien porter de monétaire : {interdit}")
+
+
+def test_le_bouton_de_validation_porte_un_libelle_explicite(html):
+    """RGAA 11.9 / WCAG 2.4.6 : compréhensible hors contexte, pas « Valider »."""
+    assert "Valider la structure du devis" in html

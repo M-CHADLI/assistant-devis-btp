@@ -40,7 +40,8 @@ def test_devis_vide_au_premier_appel(client):
     assert r.status_code == 200
     corps = r.json()
     assert corps["devis"]["lignes"] == []
-    assert corps["devis"]["total_ht"] == 0
+    # Un devis neuf n'a pas de total : il n'a pas encore été chiffré (US-12).
+    assert corps["devis"]["total_ht"] is None
     assert corps["projet_id"]
 
 
@@ -50,7 +51,61 @@ def test_un_message_alimente_le_devis(client):
     corps = r.json()
     assert corps["intent"] == "devis"
     assert len(corps["devis"]["lignes"]) == 1
-    assert corps["devis"]["total_ht"] > 0
+    assert corps["devis"]["total_ht"] is None  # HITL-2 : pas encore chiffré
+
+    chiffre = client.post("/api/valider-structure").json()["devis"]
+    assert chiffre["total_ht"] > 0
+
+
+# --- HITL-2 : valider la structure avant de voir le moindre prix (US-12) ----
+
+def test_aucun_montant_n_est_transmis_avant_validation(client):
+    """Critère US-12, au sens littéral : la réponse ne contient aucune clé de
+    prix — pas même vide."""
+    corps = client.post("/api/message", json={"texte": "22 m2 de peinture"}).json()
+    devis = corps["devis"]
+
+    assert devis["structure_validee"] is False
+    assert devis["lignes"], "la structure, elle, doit être là"
+    for ligne in devis["lignes"]:
+        assert "prix_unitaire_ht" not in ligne
+        assert "prix_ht" not in ligne
+        assert "taux_tva" not in ligne
+        assert ligne["quantite"] > 0  # quantité technique : c'est du métier, pas du prix
+    for total in ("total_ht", "total_tva", "total_ttc", "acompte_30_pct"):
+        assert devis[total] is None
+    assert devis["ventilation_tva"] == {}
+
+
+def test_la_validation_de_structure_declenche_le_chiffrage(client):
+    client.post("/api/message", json={"texte": "22 m2 de peinture"})
+    devis = client.post("/api/valider-structure").json()["devis"]
+
+    assert devis["structure_validee"] is True
+    assert devis["total_ht"] > 0
+    assert all(l["prix_ht"] >= 0 for l in devis["lignes"])
+
+
+def test_la_structure_non_validee_survit_au_rechargement_sans_prix(client):
+    """Scénario dégradé US-12 : il ferme la page avant validation ; rien n'est
+    chiffré, la structure est retrouvée telle quelle."""
+    client.post("/api/message", json={"texte": "22 m2 de peinture"})
+    devis = client.get("/api/devis").json()["devis"]
+    assert devis["structure_validee"] is False
+    assert devis["total_ht"] is None
+    assert len(devis["lignes"]) == 1
+
+
+def test_valider_une_structure_vide_est_refuse(client):
+    assert client.post("/api/valider-structure").status_code == 409
+
+
+def test_l_export_exige_la_validation_de_structure(client):
+    client.post("/api/profil", json=PROFIL_COMPLET)
+    client.post("/api/message", json={"texte": "22 m2 de peinture"})
+    r = client.get("/api/export")
+    assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "structure_non_validee"
 
 
 def test_le_devis_survit_a_un_rechargement(client):
@@ -100,6 +155,7 @@ PROFIL_COMPLET = {
 def test_export_refuse_tant_que_les_mentions_legales_manquent(client):
     """US-15 — cas dégradé : mieux vaut pas de devis qu'un devis non conforme."""
     client.post("/api/message", json={"texte": "22 m2 de peinture"})
+    client.post("/api/valider-structure")
     r = client.get("/api/export")
     assert r.status_code == 409
     detail = r.json()["detail"]
@@ -109,6 +165,7 @@ def test_export_refuse_tant_que_les_mentions_legales_manquent(client):
 def test_export_rend_un_docx(client):
     client.post("/api/profil", json=PROFIL_COMPLET)
     client.post("/api/message", json={"texte": "22 m2 de peinture"})
+    client.post("/api/valider-structure")
     r = client.get("/api/export")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith(
@@ -132,15 +189,17 @@ def test_le_regime_de_tva_du_profil_se_lit_dans_le_devis(client):
     corps = client.post("/api/message", json={"texte": "22 m2 de peinture"}).json()
     assert corps["devis"]["franchise_tva"] is True
     assert corps["devis"]["mentions_manquantes"] == []
+    client.post("/api/valider-structure")
     assert client.get("/api/export").status_code == 200
 
 
 def test_aucune_ligne_ne_porte_de_reference_produit_inventee(client):
     """Garde-fou structurel : le modèle n'exprime jamais de prix ni de référence."""
-    corps = client.post("/api/message", json={"texte": "22 m2 de peinture"}).json()
-    for ligne in corps["devis"]["lignes"]:
+    client.post("/api/message", json={"texte": "22 m2 de peinture"})
+    devis = client.post("/api/valider-structure").json()["devis"]
+    for ligne in devis["lignes"]:
         assert ligne["prix_unitaire_ht"] > 0  # vient du catalogue, pas du modèle
-    assert corps["devis"]["total_ht"] > 0
+    assert devis["total_ht"] > 0
 
 
 def _client_hors_bornes(tmp_path, monkeypatch):

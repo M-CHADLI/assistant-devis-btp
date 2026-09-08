@@ -487,9 +487,19 @@ n'a plus de rôle actif ici.
   WCAG 2.4.6, 2.5.3).
 
 **Traçabilité.** C13, C14, C17 · `DISPOSITIF_AGENT.md` §1.4 (HITL-2) ·
-état : **à faire** — le moteur chiffre dès l'ajout de ligne (`app/devis.py`
-appelle le catalogue immédiatement) ; l'étape de validation intermédiaire n'existe
-pas encore dans `app/pipeline.py`.
+état : **fait** — `app/devis.py` sépare `_quantite_technique()` (rendement, taux
+de chute, unité du lot — sans catalogue) de `chiffrer_ligne()` (résolution
+produit, conditionnement, prix, promo). `ajouter_ligne(..., chiffrer_maintenant=False)`
+est le mode par défaut du pipeline tant que `session.structure_validee` est faux :
+**aucune requête catalogue n'est faite**, donc aucun montant n'existe à
+transmettre. `_serialiser_devis` n'émet alors ni clé `prix_unitaire_ht`, ni
+`prix_ht`, ni `taux_tva`, et les totaux valent `null` — vérifié par
+`tests/test_api.py::test_aucun_montant_n_est_transmis_avant_validation`.
+`POST /api/valider-structure` déclenche le chiffrage ; l'export répond 409
+`structure_non_validee` avant cela. La persistance passe en version 3 (les
+projets v2 se relisent comme déjà chiffrés, sans quoi leurs prix
+disparaîtraient). Front : tableau à deux colonnes, bouton « Valider la structure
+du devis ».
 
 ### US-13 — Voir le devis chiffré à partir du catalogue, pas du modèle
 
