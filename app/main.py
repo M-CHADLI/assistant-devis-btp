@@ -15,6 +15,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from app.export import MentionsIncompletes, generer_docx
+from app.observabilite import JOURNAL, agreger
 from app.persistance import Registre
 from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
                           corriger_ligne, traiter_message, valider_structure,
@@ -30,6 +31,7 @@ REGISTRE = Registre()
 # Chemin absolu dérivé du paquet : uvicorn doit pouvoir être lancé depuis
 # n'importe quel répertoire courant sans casser la page d'accueil.
 INDEX_HTML = Path(__file__).resolve().parent / "static" / "index.html"
+METRIQUES_HTML = Path(__file__).resolve().parent / "static" / "metriques.html"
 
 COOKIE_PROJET = "projet_id"
 DUREE_COOKIE = 60 * 60 * 24 * 30  # 30 jours
@@ -116,6 +118,18 @@ def _serialiser_devis(session: Session) -> dict:
 @app.get("/", response_class=HTMLResponse)
 def index() -> HTMLResponse:
     return HTMLResponse(INDEX_HTML.read_text(encoding="utf-8"))
+
+
+@app.get("/metriques", response_class=HTMLResponse,
+         summary="Tableau de bord d'exploitation (docs/STORIES.md US-24)")
+def page_metriques() -> HTMLResponse:
+    """Lit le journal applicatif : reste consultable modèle arrêté."""
+    return HTMLResponse(METRIQUES_HTML.read_text(encoding="utf-8"))
+
+
+@app.get("/api/metriques", summary="Métriques du §4.3 agrégées depuis le journal")
+def api_metriques() -> dict:
+    return agreger(JOURNAL)
 
 
 class MessageEntrant(BaseModel):

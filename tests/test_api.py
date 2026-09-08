@@ -325,3 +325,19 @@ def test_une_quantite_en_attente_porte_le_nom_metier_du_lot(client, monkeypatch)
     r = client.post("/api/message", json={"texte": "2200 m² de peinture"})
     attente = r.json()["devis"]["a_confirmer"][0]
     assert attente["lot_nom"] and attente["lot_nom"] != attente["lot_code"]
+
+
+def test_le_tableau_de_bord_reste_lisible_modele_arrete(client, monkeypatch):
+    """Scénario dégradé US-24 : les métriques se lisent dans le journal, pas
+    dans le modèle."""
+    from app.llm import ModeleInjoignable
+
+    def injoignable(historique, message, timeout=60):
+        raise ModeleInjoignable("service arrêté")
+
+    monkeypatch.setattr(pipeline, "appeler_modele", injoignable)
+    client.post("/api/message", json={"texte": "22 m² de peinture"})
+    r = client.get("/api/metriques")
+    assert r.status_code == 200
+    assert len(r.json()["metriques"]) == 8
+    assert client.get("/metriques").status_code == 200

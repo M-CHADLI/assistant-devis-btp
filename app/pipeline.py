@@ -7,6 +7,7 @@ correction de l'artisan est journalisée comme signal qualité (§1.4, §5.2).
 from __future__ import annotations
 
 import datetime as dt
+import time
 from dataclasses import dataclass, field
 
 from pydantic import ValidationError
@@ -16,7 +17,8 @@ from app.devis import (Devis, LotInconnu, ajouter_consommables, ajouter_ligne,
 from app.garde_fous import (MESSAGE_INJECTION, detecter_hors_perimetre,
                             detecter_injection, message_hors_perimetre,
                             neutraliser, reste_du_chantier)
-from app.llm import ModeleInjoignable, SortieModeleInvalide, appeler_modele
+from app.llm import MODEL_NAME, ModeleInjoignable, SortieModeleInvalide, appeler_modele
+from app.observabilite import JOURNAL
 from app.profil import Client, ProfilArtisan
 from app.referentiel import REFERENTIEL, MENTIONS, bornes, est_plausible
 from app.schema import PayloadClarification, PayloadConsommables, PayloadDevis, PayloadReponse
@@ -93,6 +95,9 @@ class Session:
     # navigateur. On valide ce qui est stable avant d'y accrocher ce qui est
     # volatil (docs/DISPOSITIF_AGENT.md §1.4).
     structure_validee: bool = False
+    # Compteur de reprises du dernier tour — sert au journal (§4.3), pas à la
+    # logique métier : il n'est donc pas persisté.
+    reprises_du_tour: int = 0
 
 
 @dataclass
@@ -266,42 +271,66 @@ def traiter_message(session: Session, texte_utilisateur: str) -> ResultatTour:
     cadrages: list[str] = []
     texte_modele = texte_utilisateur
 
+    debut = time.monotonic()
+
     injections = detecter_injection(texte_utilisateur)
     if injections:
         # Journaliser d'abord : c'est la trace qui rend l'attaque mesurable.
         _journaliser_escalade(session, "injection_neutralisee", ",".join(injections))
+        JOURNAL.enregistrer("injection_neutralisee", motifs=injections)
         cadrages.append(MESSAGE_INJECTION)
         texte_modele = neutraliser(texte_utilisateur)
 
     domaines = detecter_hors_perimetre(texte_utilisateur)
     if domaines:
         _journaliser_escalade(session, "hors_perimetre", ",".join(domaines))
+        JOURNAL.enregistrer("hors_perimetre", domaines=domaines)
         cadrages.extend(message_hors_perimetre(d) for d in domaines)
         if not reste_du_chantier(texte_utilisateur):
             # Rien d'autre à traiter : on nomme la limite au lieu d'improviser.
+            _journaliser_tour(session, "hors_perimetre", debut)
             return ResultatTour("hors_perimetre", cadrages, [], session.devis, {},
                                 cadrages=list(cadrages))
 
     resultat = _tour_modele(session, texte_modele)
     resultat.messages_assistant = cadrages + resultat.messages_assistant
     resultat.cadrages = list(cadrages)
+    _journaliser_tour(session, resultat.intent, debut, session.reprises_du_tour)
     return resultat
+
+
+def _journaliser_tour(session: Session, intent: str, debut: float,
+                      reprises: int = 0) -> None:
+    """Un tour = un message de l'artisan, quelle qu'en soit l'issue. C'est
+    l'unité que mesure la latence p95 du §4.3, pas l'appel modèle isolé."""
+    JOURNAL.enregistrer("tour", intent=intent, reprises=reprises,
+                        latence_ms=round((time.monotonic() - debut) * 1000))
 
 
 def _tour_modele(session: Session, message_utilisateur: str) -> ResultatTour:
     """Appel modèle avec une reprise, puis escalade (§1.3)."""
     message_suivant = message_utilisateur
+    session.reprises_du_tour = 0
     for tentative in range(MAX_APPELS_MODELE):
         derniere_chance = tentative == MAX_APPELS_MODELE - 1
+        session.reprises_du_tour = tentative
+        depart_appel = time.monotonic()
+
+        def _tracer(valide: bool, motif: str = "") -> None:
+            JOURNAL.enregistrer("appel_modele", valide=valide, motif=motif,
+                                modele=MODEL_NAME, tentative=tentative,
+                                latence_ms=round((time.monotonic() - depart_appel) * 1000))
 
         try:
             sortie = appeler_modele(session.historique, message_suivant)
         except ModeleInjoignable as exc:
             # Une reprise n'a aucune chance d'aboutir : on sort tout de suite.
             _journaliser_escalade(session, "modele_injoignable", exc)
+            _tracer(False, "modele_injoignable")
             return ResultatTour("indisponible", [MESSAGE_INDISPONIBLE], [], session.devis, {})
         except SortieModeleInvalide as exc:
             _journaliser_escalade(session, "json_invalide", exc)
+            _tracer(False, "json_invalide")
             if derniere_chance:
                 break
             message_suivant = (
@@ -316,9 +345,11 @@ def _tour_modele(session: Session, message_utilisateur: str) -> ResultatTour:
 
         try:
             intent, messages, mentions, consommables_suggeres = _router(session, sortie)
+            _tracer(True, intent)
             return ResultatTour(intent, messages, mentions, session.devis, consommables_suggeres)
         except (ValidationError, LotInconnu, ValueError) as exc:
             _journaliser_escalade(session, _motif(exc), exc)
+            _tracer(False, _motif(exc))
             if derniere_chance:
                 break
             message_suivant = (
@@ -360,6 +391,7 @@ def valider_transcription(session: Session, propose: str, corrige: str) -> str:
             description=(f"transcription corrigée avant traitement : "
                          f"« {(propose or '').strip()[:200]} » → « {retenu[:200]} »"),
         ))
+        JOURNAL.enregistrer("correction_artisan", origine="transcription")
     return retenu
 
 
@@ -383,6 +415,8 @@ def confirmer_quantite(session: Session, index: int) -> bool:
                      f"{attente.dimension_type} sur {attente.lot_code} "
                      f"(bornes {attente.borne_min}–{attente.borne_max})"),
     ))
+    JOURNAL.enregistrer("correction_artisan", origine="quantite_hors_bornes",
+                        lot_code=attente.lot_code)
     return True
 
 
@@ -402,3 +436,4 @@ def corriger_ligne(session: Session, index_ligne: int, description: str) -> None
         Correction(horodatage=dt.datetime.now().isoformat(timespec="seconds"),
                    auteur="artisan", description=description)
     )
+    JOURNAL.enregistrer("correction_artisan", origine="ligne_devis")

@@ -134,3 +134,40 @@ def test_apres_rechargement_le_focus_va_sur_le_titre_du_devis(html):
     """US-16 — WCAG 2.4.3 : sinon l'artisan repart en tête de document."""
     assert '<h1 id="titre-devis" tabindex="-1">' in html
     assert "document.getElementById('titre-devis').focus()" in html
+
+
+# --- tableau de bord d'exploitation (US-24) --------------------------------
+
+PAGE_METRIQUES = PAGE.parent / "metriques.html"
+
+
+@pytest.fixture(scope="module")
+def metriques() -> str:
+    return PAGE_METRIQUES.read_text(encoding="utf-8")
+
+
+def test_le_tableau_de_bord_declare_sa_langue(metriques):
+    assert '<html lang="fr">' in metriques
+
+
+def test_les_donnees_sont_un_tableau_et_pas_un_graphique(metriques):
+    """RGAA 1.x — pas d'image de graphe sans équivalent : ici, la donnée *est*
+    le tableau, et chaque tableau porte un résumé et des en-têtes de portée."""
+    assert metriques.count("<caption>") >= 2
+    assert 'scope="col"' in metriques and 'scope="row"' in metriques
+    assert "<canvas" not in metriques and "<img" not in metriques
+
+
+def test_l_etat_d_une_metrique_est_ecrit_pas_seulement_colore(metriques):
+    """La colonne « État » porte le mot ; la couleur n'est qu'un rappel."""
+    assert "${m.statut}" in metriques
+    assert "RGAA 3.1" in metriques
+
+
+def test_l_echec_de_lecture_du_journal_est_annonce(metriques):
+    assert 'role="alert"' in metriques
+    assert ".catch(" in metriques
+
+
+def test_l_assistant_donne_acces_au_tableau_de_bord(html):
+    assert 'href="/metriques"' in html

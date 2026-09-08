@@ -834,8 +834,22 @@ les espère.
 - *Accessibilité* — chaque graphique a une alternative textuelle ou un tableau de
   données équivalent (RGAA 1.x — WCAG 1.1.1).
 
-**Traçabilité.** C11, C20 · `DISPOSITIF_AGENT.md` §4.3 · état : **à faire**
-(aucune journalisation applicative, aucun tableau de bord).
+**Traçabilité.** C11, C20 · `DISPOSITIF_AGENT.md` §4.3 · état : **fait pour ce
+qui est observable en exploitation** — `app/observabilite.py` écrit un journal
+JSONL (un événement par ligne : appel modèle, tour, garde-fou, correction
+artisan) et `agreger()` en tire les huit métriques du §4.3, seuils recopiés tels
+quels dans `SEUILS`. Le tableau de bord est servi sur `/metriques`, alimenté par
+`GET /api/metriques` : il lit le journal, donc reste consultable modèle arrêté
+(testé). Chaque appel porte horodatage, intention, validité, latence, numéro de
+tentative et nom de modèle ; la latence p95 est mesurée **au tour**, pas à
+l'appel. Aucun graphique : la donnée est un tableau à en-têtes de portée, et
+l'état de chaque métrique est écrit en toutes lettres, la couleur ne servant que
+de rappel. Une écriture de journal impossible ne fait jamais tomber un tour.
+Tests : `tests/test_observabilite.py`, `tests/test_api.py`, `tests/test_front.py`.
+**Reste** : les métriques 2 à 6 sont déclarées « non mesuré » — elles supposent
+le jeu d'essai annoté à la main, et on préfère l'admettre qu'afficher un chiffre
+flatteur. Pas encore d'attribution d'un écart à une **version** de modèle
+(scénario 2) : le journal note le nom du modèle, pas sa version d'adaptateur.
 
 ### US-25 — Que les corrections alimentent la boucle qualité
 
