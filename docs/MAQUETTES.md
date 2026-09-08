@@ -255,17 +255,94 @@ consultable **modèle arrêté** — c'est précisément quand on en a besoin.
 | Une métrique non mesurée s'affiche « non mesurée » **et dit ce qui lui manque**, jamais zéro | Un zéro se lit comme une mesure ; c'est un mensonge par arrondi | Tests d'observabilité |
 | Cinq des huit métriques sont dans cet état | Elles demandent le jeu d'essai annoté à la main, qui n'existe pas encore. La page le dit au lieu de le masquer. | `NON_MESUREE`, `app/observabilite.py` |
 
+## Maquette 7 — Saisie assistée du SIRET, et ce qui se passe quand l'annuaire se tait
+
+Dans le volet « Profil et mentions légales ». Deux questions se tranchent ici, et
+c'est pour elles que l'écran est dessiné : **ce qui s'affiche pendant l'appel au
+service externe**, et **ce qui s'affiche quand il ne répond pas**.
+
+État nominal, après une recherche qui a abouti :
+
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Votre entreprise                                              legend     │
+│                                                                          │
+│ Numéro SIRET                                                  label      │
+│ ┌────────────────────────────┐                                           │
+│ │ 552 100 554 00019          │  inputmode="numeric"                      │
+│ └────────────────────────────┘  aria-describedby="siret-aide             │
+│ Quatorze chiffres. Le renseigner               siret-erreur"             │
+│ remplit les champs légaux ci-dessous ;                                   │
+│ vous pourrez tous les corriger.               id=siret-aide              │
+│                                                                          │
+│ [ Récupérer mes informations légales ]        button, désactivé le temps │
+│                                               de l'appel                 │
+│ Vos informations légales ont été récupérées.  id=siret-retour            │
+│ Relisez-les : ce que vous corrigez fait       aria-live="polite"         │
+│ autorité. L'annuaire n'a pas renseigné 1                                 │
+│ champ — complétez-le à la main.                                          │
+│                                                                          │
+│ Raison sociale                                                           │
+│ ┌────────────────────────────┐  fond légèrement teinté + title :         │
+│ │ RENAULT                    │  « Rempli depuis l'annuaire des           │
+│ └────────────────────────────┘    entreprises — corrigez-le si besoin,   │
+│                                   votre correction fait autorité. »      │
+│ Adresse de l'entreprise                                                  │
+│ ┌────────────────────────────┐                                           │
+│ │ 122 avenue du Général Leclerc, 92100 Boulogne-Billancourt│             │
+│ └────────────────────────────┘                                           │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+Les trois autres états du même écran, au même endroit :
+
+```text
+pendant l'appel      ┌─────────────────────────────────────────────────────┐
+                     │ [ Récupérer mes informations légales ]  ← désactivé │
+                     │ Recherche en cours…            aria-live="polite"   │
+                     └─────────────────────────────────────────────────────┘
+
+SIRET mal formé      ┌─────────────────────────────────────────────────────┐
+(422, aucun appel)   │ ⚠ Un SIRET compte quatorze chiffres ; celui-ci en   │
+                     │   compte douze.                role="alert"         │
+                     │ ┌──────────────┐  aria-invalid="true", focus rendu  │
+                     │ │ 552100554000 │  au champ                          │
+                     │ └──────────────┘                                    │
+                     └─────────────────────────────────────────────────────┘
+
+annuaire muet        ┌─────────────────────────────────────────────────────┐
+(200, jamais 5xx)    │ L'annuaire des entreprises n'a pas répondu.         │
+                     │ Saisissez vos informations légales à la main,       │
+                     │ rien n'est perdu.              aria-live="polite"   │
+                     │ Le SIRET saisi reste dans le champ.                 │
+                     └─────────────────────────────────────────────────────┘
+```
+
+| Annotation | Règle | Ce qui la tient |
+|---|---|---|
+| Le champ cite son aide **et** son erreur en `aria-describedby` | RGAA 4.1, critère 11.10 — WCAG 3.3.3 : une erreur non rattachée au champ n'est pas lue au bon moment | `test_le_champ_siret_est_relie_a_son_aide_et_a_son_erreur` |
+| L'erreur porte `role="alert"` et un « ⚠ » **dans le texte** | RGAA 4.1, critère 3.1 : la couleur seule ne porte jamais une information | `test_l_erreur_de_siret_est_une_alerte_et_ne_tient_pas_a_la_couleur` |
+| Le message dit la **correction attendue**, pas seulement la faute | « SIRET invalide » n'aide personne à le corriger | Story US-01 |
+| Le champ invalide est marqué `aria-invalid` | RGAA 4.1, critère 8.9 | `test_le_champ_invalide_est_marque_pour_les_technologies_d_assistance` |
+| La bascule en saisie manuelle est dans une région `aria-live="polite"` | WCAG 4.1.3 : l'afficher sans l'annoncer laisse un utilisateur non voyant devant un formulaire qui ne se remplira jamais | `test_la_bascule_en_saisie_manuelle_est_annoncee` |
+| **Aucun champ prérempli n'est `readonly` ni `disabled`** | Un verrou posé pour « protéger » la donnée d'annuaire retirerait à l'artisan l'autorité que le cadrage lui donne | `test_un_champ_prerempli_reste_modifiable` |
+| L'origine `annuaire` est un `title` et une teinte, jamais un blocage | RGAA 3.1 encore : la teinte seule ne dirait rien | `test_l_origine_d_un_champ_prerempli_est_visible_sans_etre_bloquante` |
+| Le bouton se désactive le temps de l'appel, les champs jamais | Éviter le double appel sans jamais figer la saisie manuelle | Script du front |
+| L'indisponibilité rend **200**, garde le SIRET saisi, et l'explique | Faire échouer une inscription parce qu'un tiers est en panne serait le mauvais arbitrage | `test_l_indisponibilite_rend_200_et_garde_le_siret_saisi` |
+| Le nom de l'annuaire n'apparaît nulle part côté navigateur | Le client parle au serveur, jamais au tiers : c'est ce qui garde la clé hors de portée | `test_le_front_ignore_le_nom_de_l_annuaire` |
+
+**Cette maquette a été dessinée après le code**, comme les maquettes 1, 2, 4, 5
+et 6 — elle décrit l'écran tel qu'il est, elle ne l'a pas précédé. La dire
+« à dessiner » alors que l'écran existait aurait été le troisième écart entre
+ce document et le dépôt.
+
 ## Ce qui reste à dessiner, avant d'être codé
 
-| Écran | Story | Ce qu'il faudra trancher sur la maquette |
-|---|---|---|
-| Saisie assistée du SIRET | US-01 | Ce qui s'affiche pendant l'appel au service externe, et ce qui s'affiche quand il ne répond pas |
-
-Un point de méthode pour la suite : cette maquette-là sera dessinée **avec ses
-annotations d'accessibilité dès le premier jet**. Rattraper l'accessibilité
-après coup coûte plus cher que de la poser dans la maquette, et le rattrapage
-se voit — il produit des interfaces où l'accessibilité est une couche, pas une
-structure.
+**Rien.** Les sept écrans du produit sont dessinés. Le prochain qui s'ajoutera
+passera par ici **avant** d'être codé, **avec ses annotations d'accessibilité
+dès le premier jet** : rattraper l'accessibilité après coup coûte plus cher que
+de la poser dans la maquette, et le rattrapage se voit — il produit des
+interfaces où l'accessibilité est une couche, pas une structure.
 
 ### Ce qui a été codé sans être dessiné
 
@@ -276,10 +353,13 @@ structure.
 
 Ces deux lignes ne sont pas un rattrapage : elles disent ce que le code a
 décidé à la place de la maquette, pour que la décision reste lisible. Si l'un
-des deux écrans se retravaille, il repassera par ici **avant**.
+des deux écrans se retravaille, il repassera par ici **avant**. La saisie
+assistée du SIRET figurait dans le même cas ; elle en est sortie par la
+maquette 7, qui la décrit au lieu de la promettre.
 
 ---
 
-*Établi le 08/09/2026 à partir de `app/static/index.html` (828 lignes) et
-`app/static/metriques.html`. Les maquettes 1, 2, 4, 5 et 6 décrivent l'écran
-tel qu'il est ; la maquette 3 a précédé son implémentation de quelques minutes.*
+*Établi le 08/09/2026 à partir de `app/static/index.html` et
+`app/static/metriques.html`, complété le 09/09/2026 par la maquette 7. Les
+maquettes 1, 2, 4, 5, 6 et 7 décrivent l'écran tel qu'il est ; la maquette 3 a
+précédé son implémentation de quelques minutes.*

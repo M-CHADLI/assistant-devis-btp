@@ -146,6 +146,10 @@ Trois décisions ont été prises en écrivant, et méritent d'être discutées 
   « sa modification prime », et elle évite de figer une donnée fausse que
   personne n'a jamais lue.
 
+L'écran est décrit par la **maquette 7** de `docs/MAQUETTES.md`, avec ses quatre
+états (nominal, appel en cours, SIRET mal formé, annuaire muet) et les dix
+annotations d'accessibilité que les tests tiennent.
+
 **Reste** : le scénario nominal n'a **jamais été joué contre l'annuaire réel**,
 faute de clé sur cette machine. Le nom des clés JSON lues (`denomination`,
 `numero_rcs`, `code_naf`, `siege`) vient de la documentation publiée, non d'une
