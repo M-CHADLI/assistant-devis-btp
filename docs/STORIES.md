@@ -208,7 +208,9 @@ un VLM dans le projet en ferait un second projet (`CADRAGE_MODELE.md` §6).
 **Contexte.** C'est le geste fondateur du pivot. L'audio est transcrit par un
 **STT local sur la DGX Spark** : l'audio ne sort jamais de la machine
 (`CADRAGE_MODELE.md` §2). L'arbitrage Gladia (distant) vs Whisper (local) est
-ouvert dans `docs/NOTES.md` et n'appartient pas à cette story ; en attendant,
+ouvert dans `docs/NOTES.md` — instruit par `docs/BENCHMARK_STT.md`, qui écarte
+Deepgram, Azure et la Web Speech API sur des faits et laisse deux finalistes
+locaux face à Gladia — et n'appartient pas à cette story ; en attendant,
 c'est l'option locale qui fait foi, parce qu'elle est la seule compatible avec
 le principe « 100 % local » affiché au jury.
 

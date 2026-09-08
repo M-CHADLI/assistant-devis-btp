@@ -4,7 +4,7 @@
 > niveau de la *compétence*. Ici on descend d'un cran : les **135 critères
 > d'évaluation** que le jury coche un par un, extraits de
 > `reference/referentiel-rncp-ai-engineer.xlsx`, confrontés à l'**état constaté
-> du dépôt** au commit `4ee3870` (08/09/2026).
+> du dépôt** au commit `d29b444` (08/09/2026).
 >
 > Même règle que la grille de contrôle : **on ne dénature pas le projet pour
 > cocher une case.** Un critère hors périmètre est écrit comme tel, avec la
@@ -26,11 +26,11 @@ chose de nommé · ❌ absent · ➖ écarté, avec motif assumé.
 | Livrable | Critères | ✅ | 🟡 | ❌ | ➖ |
 |---|---|---|---|---|---|
 | E1 — Données (C1-C5) | 28 | 7 | 6 | 14 | 1 |
-| E2 — Veille et IA préexistante (C6-C8) | 20 | 9 | 6 | 5 | 0 |
+| E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 23 | 6 | 10 | 0 |
-| E4 — Application (C14-C19) | 36 | 19 | 7 | 10 | 0 |
+| E4 — Application (C14-C19) | 36 | 19 | 8 | 9 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **65** | **30** | **39** | **1** |
+| **Total** | **135** | **71** | **29** | **34** | **1** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -59,10 +59,12 @@ chaîne MLOps qu'il vise n'existe pas encore. OWASP top 10, exigé sur les deux
 API (C9-61, C17-127), est couvert par six mesures nommées dans
 `app/authentification.py` plus les garde-fous d'entrée.
 
-Reste **l'éco-responsabilité**, critère de choix des services (C7-49, C15-110)
-et des développements (C17-126) : rien n'est mesuré, rien n'est argumenté. Elle
-attend le banc d'essai STT, qui devra porter une colonne de consommation
-plutôt qu'un paragraphe d'intention.
+**L'éco-responsabilité** (C7-49, C15-110, C17-126) est passée de l'intention à
+l'argument : `docs/BENCHMARK_STT.md` chiffre l'écart entre transcription locale
+et API distante et refuse l'argument facile — le local est sobre parce que la
+machine tourne déjà pour le LLM, pas par nature. Elle reste **non mesurée** :
+aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-126
+à mi-chemin.
 
 ---
 
@@ -167,18 +169,19 @@ plutôt qu'un paragraphe d'intention.
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 45 | Expression de besoin reformulée, objectifs et contraintes | 🟡 | `docs/CADRAGE_MODELE.md` porte objectifs et contraintes, mais pas sous la forme d'une expression de besoin d'intégration d'un service tiers. |
-| 46 | Benchmark listant services étudiés **et non étudiés** | ❌ | Aucun benchmark. |
-| 47 | Raisons d'écarter un service explicitées | 🟡 | Des choix sont argumentés en dispersé (gpt-oss retenu pour Apache 2.0 et MoE ; OCR délégué à une API externe ; Gladia contre Whisper local non tranché) mais **jamais rassemblés en benchmark**. |
-| 48 | Niveau d'adéquation par ensemble fonctionnel | ❌ | Absent. |
-| 49 | Niveau de démarche éco-responsable de chaque service | ❌ | Absent. Angle porteur ici : le 100 % local évite le trafic d'inférence mais consomme une DGX Spark — c'est un arbitrage réel à documenter, pas un argument facile. |
-| 50 | Contraintes techniques et pré-requis par solution | 🟡 | Les contraintes de la cible matérielle sont posées avec précision (128 Go unifiés, 273 Go/s, MoE + FP4) — pour **un** service, pas pour un panel. |
-| 51 | Conclusions délimitant services retenus et écartés | ❌ | Absentes. |
+| 45 | Expression de besoin reformulée, objectifs et contraintes | ✅ | `docs/BENCHMARK_STT.md` §1 : le besoin est reformulé pour l'usage réel (dictée sur chantier bruyant, noms propres de clients, relecture HITL-0), assorti d'un tableau besoin → contrainte imposée au service, et d'une liste explicite de **ce qui n'est pas un besoin** (diarisation, traduction, temps réel sub-seconde) — c'est elle qui écarte des services excellents mais hors sujet. |
+| 46 | Benchmark listant services étudiés **et non étudiés** | ✅ | `docs/BENCHMARK_STT.md` §2 : six solutions étudiées (Web Speech API, faster-whisper large-v3-turbo, Parakeet TDT 0.6b v3, Gladia, Deepgram, Azure AI Speech) **et** un second tableau des solutions écartées sans étude avec leur motif (AssemblyAI, Speechmatics, Google, AWS, API OpenAI, Vosk, dictée système, outils de réunion). |
+| 47 | Raisons d'écarter un service explicitées | ✅ | `docs/BENCHMARK_STT.md` §7 : chaque écart tient sur un fait nommé — Deepgram sur l'usage par défaut de l'audio client pour l'entraînement, Azure sur le poids d'exploitation et la contrainte de régions européennes, Web Speech API sur la sortie de l'audio hors machine (INC-10). |
+| 48 | Niveau d'adéquation par ensemble fonctionnel | 🟡 | `docs/BENCHMARK_STT.md` §5 : grille de neuf ensembles fonctionnels × six solutions, en mots et non en couleur. Mais cinq lignes sur neuf sont « partiel » partout — jargon métier, noms propres, bruit — et le document le dit : la documentation des fournisseurs ne permet pas de les départager. Le protocole de mesure (§8) est écrit, **pas encore tenu**. |
+| 49 | Niveau de démarche éco-responsable de chaque service | ✅ | `docs/BENCHMARK_STT.md` §6 : ce que chaque fournisseur publie et ce qu'il tait, puis un ordre de grandeur calculé aux valeurs constructeur de la DGX Spark (≈ 2,3 Wh par heure d'audio transcrite en local, contre ≈ 528 Wh pour 24 h de veille). La conclusion refuse l'argument facile : le local est sobre **parce que la machine tourne déjà pour le LLM**, pas parce qu'il est local — si elle ne tournait que pour transcrire, l'API mutualisée gagnerait. |
+| 50 | Contraintes techniques et pré-requis par solution | ✅ | `docs/BENCHMARK_STT.md` §4 : une fiche par solution — prérequis, empreinte mémoire, limites connues (la version *turbo* dégrade la traduction et boucle sur les silences sans VAD ; Parakeet gagne en glouton plutôt qu'en faisceau ; Azure impose des régions), coût public et pérennité du fournisseur. |
+| 51 | Conclusions délimitant services retenus et écartés | ✅ | `docs/BENCHMARK_STT.md` §7 : trois écartés sur faits, deux finalistes locaux, Gladia en repli documenté. L'arbitrage restant est **nommé et rendu à son propriétaire** — « le 100 % local couvre-t-il tout le traitement ou seulement le LLM ? » — avec, pour chaque branche, ce qu'elle change dans le code et dans quels documents. |
 
-> Le benchmark naturel du projet est **STT** — Gladia, Whisper local, Web Speech
-> API, Azure Speech, Deepgram — parce que c'est le seul endroit où le projet
-> hésite encore vraiment, où l'éco-responsabilité et la contrainte « 100 % local »
-> s'opposent franchement, et où la conclusion changera le code.
+> **Le benchmark a été fait là où le projet hésite vraiment.** Pas sur le choix
+> du LLM, tranché depuis le cadrage, mais sur le STT : c'est le seul endroit où
+> l'éco-responsabilité et la contrainte « 100 % local » s'opposent franchement,
+> et où la conclusion changera le code. Le document s'arrête volontairement
+> avant l'arbitrage de principe, qui n'appartient pas à un benchmark.
 
 ### C8 — Paramétrage d'un service d'IA
 
@@ -286,7 +289,7 @@ plutôt qu'un paragraphe d'intention.
 | # | Critère | Statut | Constat |
 |---|---|---|---|
 | 109 | Spécifications techniques : architecture, dépendances, environnement d'exécution | ✅ | `CADRAGE_MODELE.md` (frontière modèle/code, schéma de sortie), `pyproject.toml` (dépendances épinglées, Python ≥ 3.14), contraintes matérielles argumentées. |
-| 110 | Services et prestataires éco-responsables favorisés | ❌ | Aucun critère éco-responsable dans les choix faits. |
+| 110 | Services et prestataires éco-responsables favorisés | 🟡 | Le critère éco-responsable est désormais **instruit** : `docs/BENCHMARK_STT.md` §6 compare ce que chaque fournisseur publie, calcule l'ordre de grandeur local et conclut que le local est la seule option dont l'empreinte soit mesurable par le projet. Reste 🟡 tant qu'aucune consommation n'est **relevée** et qu'aucun prestataire n'est effectivement retenu. |
 | 111 | Flux de données représentés par un diagramme de flux | 🟡 | `CONTEXTE_COMPLET_PROJET.md` porte un schéma ASCII du flux. Ce n'est pas un **diagramme de flux de données** au sens formel (DFD niveau 0/1). |
 | 112 | Preuve de concept accessible et fonctionnelle en pré-production | 🟡 | La preuve de concept **fonctionne en local et c'est vérifié**, pas supposé : `tools/parcours_bout_en_bout.py` déroule 24 étapes contre le serveur réel et `gpt-oss:20b`, du 401 sans jeton jusqu'à la fermeture, en écrivant un vrai `.docx`. Il n'y a toujours pas d'environnement de pré-production. |
 | 113 | Conclusion de la preuve de concept permettant une décision | ❌ | Non rédigée. |
@@ -314,7 +317,7 @@ plutôt qu'un paragraphe d'intention.
 | 123 | Composants métier développés et fonctionnels | ✅ | Moteur de devis déterministe : référentiel, taux de chute, rendements, TVA, ventilation, acompte. 12 tests dédiés. |
 | 124 | Gestion des droits d'accès développée | 🟡 | L'accès est fermé, testé et journalisé (voir C5-33), mais **il n'y a qu'un seul rôle** : un artisan sur sa machine. Il n'existe donc pas de gestion de droits différenciés, et il n'en faut pas encore — US-01 (comptes) la rendra nécessaire. |
 | 125 | Flux de données intégrés conformément aux spécifications | ✅ | La frontière est tenue : le modèle décrit, le code calcule. Le schéma de sortie ne comporte **ni prix ni référence produit** — le modèle ne peut pas halluciner ce qu'il n'a pas la possibilité d'exprimer. |
-| 126 | Bonnes pratiques d'éco-conception (éco-index, Green IT) | 🟡 | Le front est **un seul fichier, sans framework, sans dépendance externe, sans image** — c'est de l'éco-conception de fait, mais elle n'est ni revendiquée ni mesurée. |
+| 126 | Bonnes pratiques d'éco-conception (éco-index, Green IT) | 🟡 | Le front est **un seul fichier de 36 Ko, sans cadriciel, sans dépendance externe, sans image**, l'audio n'est jamais conservé et HITL-0 filtre avant l'appel modèle plutôt qu'après. C'est de l'éco-conception effective, désormais **revendiquée et argumentée** (`docs/BENCHMARK_STT.md` §6), toujours pas **mesurée** — aucun éco-index n'a été passé. |
 | 127 | Préconisations OWASP top 10 implémentées quand nécessaire | ✅ | Mêmes six mesures qu'en C9-61, plus les garde-fous d'entrée. Le front n'ajoute pas de surface : un seul fichier, aucune dépendance externe, aucun script tiers. |
 | 128 | Tests unitaires ou d'intégration couvrant composants métier et gestion des accès | ✅ | Composants métier largement couverts ; **la gestion des accès l'est aussi** depuis `0442fbe` — `tests/test_auth.py` couvre le refus sans jeton, le jeton forgé, l'expiration, la limitation de tentatives et la fermeture de session. |
 | 129 | Sources versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
@@ -394,12 +397,13 @@ plutôt qu'un paragraphe d'intention.
 7. ~~**Modèle Merise** du référentiel métier et du catalogue.~~ **Fait** : `docs/MODELE_DONNEES.md`. C4-19 et C14-103 fermés, C4-20 passe à partiel, et le schéma cible du catalogue est prêt pour C2.
 8. ~~**Authentification de l'API.**~~ **Fait** : `app/authentification.py`, 19 tests. C5-31, C5-33, C9-59, C9-61, C9-65 fermés ; C10-70 et C17-124 restent 🟡 (pas de renouvellement de jeton, un seul rôle).
 9. ~~**Wireframes** de l'interface existante.~~ **Fait** : `docs/MAQUETTES.md`, six maquettes annotées. C14-104, C17-121 et C10-72 fermés, quatre tests d'accessibilité ajoutés au passage.
-10. **Benchmark STT** avec colonne éco-responsable. Sept critères de C7 et deux ailleurs (C15-110, C17-126). **C'est désormais le plus gros gisement restant** après le dépôt distant.
+10. ~~**Benchmark STT** avec colonne éco-responsable.~~ **Fait** : `docs/BENCHMARK_STT.md`. Six des sept critères de C7 fermés, C7-48 reste 🟡 faute de mesure ; C15-110 et C17-126 passent à partiel. Le protocole de mesure est écrit et attend un corpus de trente dictées.
 
-**Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), tenir le banc
-d'essai STT (neuf critères), écrire le modèle Merise et les maquettes (quatre),
-et la chaîne MLOps de C13 (sept) — le reste est du rituel à tenir, pas du
-travail à inventer.
+**Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
+protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
+mi-chemin), et la chaîne MLOps de C13 (sept) — le reste est du rituel à tenir,
+pas du travail à inventer. Les quatre gisements documentaires de la liste
+ci-dessus sont fermés.
 
 ---
 

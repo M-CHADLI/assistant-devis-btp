@@ -160,12 +160,18 @@ reste 100 % locale, ce qui suit concerne l'application qui l'entoure.
   prototype jetable pour valider le flux avant de passer en local, soit le
   principe 100 % local se limite au LLM et le STT peut être externe — **à ne
   pas laisser implicite**, ça touche un principe déjà posé dans le cadrage, pas
-  seulement un choix d'infra.
+  seulement un choix d'infra. **Matière rassemblée le 08/09/2026** dans
+  `docs/BENCHMARK_STT.md` : coût, résidence des données, pérennité du
+  fournisseur, empreinte énergétique et conséquences en code de chaque branche.
+  La note reste ici parce que **le benchmark instruit, il ne tranche pas**.
 - **Whisper (local)** — l'alternative locale à Gladia, celle qui respecte le
   principe posé dans le cadrage. Comparatif à faire au grill-me : latence sur
   DGX Spark, qualité de transcription FR, empreinte mémoire face au(x) LLM déjà
   chargé(s), et si un mode « live/streaming » est aussi simple à obtenir qu'avec
   Gladia (le prototype actuel exploite le streaming websocket de Gladia).
+  `docs/BENCHMARK_STT.md` §4 ajoute un troisième candidat local, **Parakeet TDT
+  0.6b v3**, et §8 le protocole qui départagera les deux — une fois le corpus de
+  trente dictées enregistré, ce qui suppose d'aller sur un chantier.
 
 **Outils déjà mobilisés, à inventorier sans re-trancher :**
 

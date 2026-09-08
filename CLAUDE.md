@@ -32,6 +32,7 @@ docs/STORIES.md        les 26 stories et l'ordre du backlog
 docs/notion/           schémas et CSV de la transposition Notion
 docs/MODELE_DONNEES.md le modèle de données — conceptuel constaté, logique cible
 docs/MAQUETTES.md      parcours utilisateur et maquettes filaires annotées
+docs/BENCHMARK_STT.md  le banc d'essai reconnaissance vocale — instruit, non tranché
 docs/RGPD.md           registre des traitements et procédures de tri
 app/                   l'implémentation (FastAPI, moteur de devis, front)
 tests/                 la suite pytest
@@ -62,6 +63,12 @@ archive/renoassistant/ conception précédente
 - **`docs/MAQUETTES.md`** — le parcours de bout en bout et six maquettes filaires, chacune
   annotée des règles d'accessibilité qu'elle porte **et du test qui les tient**. Les écrans
   restants s'y dessinent **avant** d'être codés, annotations comprises.
+- **`docs/BENCHMARK_STT.md`** — le banc d'essai des six services de reconnaissance vocale, plus
+  ceux écartés sans étude. **Il instruit l'arbitrage « 100 % local » sans le trancher** : le choix
+  entre Whisper/Parakeet locaux et Gladia distant appartient à l'auteur du projet, et le document
+  dit ce que chaque branche change dans le code. Ses chiffres sont **documentaires** : le
+  protocole de mesure (§8) n'a pas encore tourné — ne pas présenter ses estimations comme des
+  mesures, ni laisser une mesure future trancher un principe.
 - **`docs/NOTION_BOARD.md`** — comment poser cette organisation sur Notion (thème JIRA) sans le
   connecteur MCP, qui charge 42 outils pour six appels utiles.
 - **`docs/NOTES.md`** — bloc-notes des idées non encore arbitrées. Ce qui y est tranché remonte
