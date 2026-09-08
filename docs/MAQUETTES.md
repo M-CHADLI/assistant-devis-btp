@@ -4,8 +4,10 @@
 > mieux qu'une reconstitution : le front a été écrit directement en HTML, et ce
 > document en fixe l'état pour que la suite s'y raccroche. Ce qui change à
 > partir d'ici, c'est le sens de lecture — les écrans qui restent à faire
-> (US-01, US-03, US-17) seront dessinés **avant** d'être codés, et cette page
-> est l'endroit où ils le seront.
+> seront dessinés **avant** d'être codés, et cette page est l'endroit où ils le
+> seront. **Cette règle n'a pas tenu pour US-03 ni US-17** : les deux ont été
+> codées dans la nuit du 08 au 09/09/2026 sans passer par la maquette. Le
+> tableau de fin le consigne plutôt que de faire comme si.
 >
 > Chaque maquette porte ses **annotations d'accessibilité** et, quand il en
 > existe un, le test qui les tient. Une maquette sans ces annotations décrirait
@@ -258,14 +260,23 @@ consultable **modèle arrêté** — c'est précisément quand on en a besoin.
 | Écran | Story | Ce qu'il faudra trancher sur la maquette |
 |---|---|---|
 | Saisie assistée du SIRET | US-01 | Ce qui s'affiche pendant l'appel au service externe, et ce qui s'affiche quand il ne répond pas |
-| Reprise d'un devis photographié | US-03 | Le rendu de la reconnaissance de caractères avant validation : montrer le doute plutôt que le masquer |
-| Historique des chantiers | US-17 | La question de fond n'est pas graphique : un historique par client suppose un fichier de personnes que le cadrage refuse aujourd'hui (`docs/MODELE_DONNEES.md`) |
 
-Un point de méthode pour la suite : ces trois maquettes-là seront dessinées
-**avec leurs annotations d'accessibilité dès le premier jet**. Rattraper
-l'accessibilité après coup coûte plus cher que de la poser dans la maquette, et
-le rattrapage se voit — il produit des interfaces où l'accessibilité est une
-couche, pas une structure.
+Un point de méthode pour la suite : cette maquette-là sera dessinée **avec ses
+annotations d'accessibilité dès le premier jet**. Rattraper l'accessibilité
+après coup coûte plus cher que de la poser dans la maquette, et le rattrapage
+se voit — il produit des interfaces où l'accessibilité est une couche, pas une
+structure.
+
+### Ce qui a été codé sans être dessiné
+
+| Écran | Story | Ce que la maquette aurait tranché, et ce qui a été décidé sans elle |
+|---|---|---|
+| Dépôt d'un ancien devis | US-03 | Le rendu du doute de la reconnaissance de caractères. **Décidé dans le code** : il n'y a pas de rendu du doute, parce qu'il n'y a pas de restitution — rien du document déposé n'atteint l'écran, seulement le nom des blocs reconnus. L'écran montre l'avertissement de sortie de fichier, puis le bilan. |
+| Repartir d'un devis | US-17 | Un historique des chantiers, dont la question de fond n'était pas graphique : une liste par client suppose un fichier de personnes que le cadrage refuse (`docs/MODELE_DONNEES.md`). **Contournée, pas tranchée** : la duplication part du projet *courant*, jamais d'une liste, donc aucun fichier de personnes n'est requis. L'écran est un bouton et une zone de bilan. |
+
+Ces deux lignes ne sont pas un rattrapage : elles disent ce que le code a
+décidé à la place de la maquette, pour que la décision reste lisible. Si l'un
+des deux écrans se retravaille, il repassera par ici **avant**.
 
 ---
 

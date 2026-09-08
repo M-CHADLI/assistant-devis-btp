@@ -15,7 +15,7 @@ US-13,Voir le devis chiffré à partir du catalogue pas du modèle,E — Arbitre
 US-14,Corriger une ligne et que ma correction fasse autorité,E — Arbitrer,Story,Noyau démontrable,8,Haute,Terminé,S3,5,C13 · C17 · C20,DISPOSITIF_AGENT.md §1.4 · §5.2,fait
 US-15,Obtenir un devis conforme aux mentions obligatoires BTP,E — Arbitrer,Story,Noyau démontrable,7,Critique,Terminé,S2,8,C13 · C14,CADRAGE_MODELE.md §6,fait
 US-16,Retrouver mon devis après un rechargement,E — Arbitrer,Story,Noyau démontrable,3,Critique,Terminé,S1,5,C13 · C17,DISPOSITIF_AGENT.md §2.5,fait
-US-17,Repartir d'un devis pour un chantier voisin,E — Arbitrer,Story,Hors file,0,Basse,À faire,Backlog,3,C13,hors cadrage explicite,à faire
+US-17,Repartir d'un devis pour un chantier voisin,E — Arbitrer,Story,Hors file,0,Basse,Terminé,S6,3,C13,hors cadrage explicite,fait
 US-18,Être averti sur un domaine réglementé sans être bloqué,F — Garde-fous,Story,Noyau démontrable,8,Critique,Terminé,S3,3,C13 · C17,DISPOSITIF_AGENT.md §3.3,fait
 US-19,Être redirigé quand ma demande sort du périmètre,F — Garde-fous,Story,Certification,8,Haute,Terminé,S6,5,C13 · C17,DISPOSITIF_AGENT.md §3.3,fait
 US-20,Que l'application résiste à une tentative d'injection,F — Garde-fous,Story,Certification,8,Haute,Terminé,S6,5,C17 · C21,DISPOSITIF_AGENT.md §3.1,fait

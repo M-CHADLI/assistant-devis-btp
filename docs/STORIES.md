@@ -728,6 +728,9 @@ retrouvé, place le focus sur le titre du devis. Tests :
 
 ### US-17 — Repartir d'un devis pour un chantier voisin
 
+> En tant qu'artisan, je veux repartir d'un devis que j'ai déjà fait, pour ne
+> pas redicter un chantier que je connais par cœur.
+
 **Contexte.** Le même artisan refait souvent la même chose. Dupliquer un devis
 existant et n'en changer que les surfaces est le raccourci métier le plus
 rentable, et le moins coûteux à implémenter.
@@ -736,13 +739,58 @@ rentable, et le moins coûteux à implémenter.
 1. *Nominal* — duplication, changement de surface, nouveau numéro de devis.
 2. *Dégradé* — la duplication ne recopie pas les corrections journalisées de
    l'original (elles appartiennent à l'historique de l'autre chantier).
+3. *Dégradé* — la duplication échoue (serveur injoignable) : le devis courant
+   reste affiché, intact, et l'écran le dit.
 
 **Critères de validation.**
 - Le devis dupliqué porte un numéro distinct et une nouvelle date d'émission.
 - Le journal de corrections du devis source n'est pas transféré.
+- La copie ne porte aucun prix : elle revient avant HITL-2, donc sans aucune
+  clé de prix dans la réponse (US-12).
+- *Accessibilité* — l'action est un `<button>` porteur d'un intitulé textuel,
+  le pictogramme ne portant rien (RGAA 7.1) ; le bilan de la copie est du
+  texte qui nomme ce qui a suivi et ce qui n'a pas suivi (RGAA 3.1), annoncé
+  dans une zone `role="status" aria-live="polite"` qui ne vole pas le focus
+  (WCAG 4.1.3).
 
-**Traçabilité.** C13 · hors cadrage explicite — **story de confort**, à placer en
-bas de backlog. état : **à faire**.
+**Décisions prises en implémentant.**
+- **Le numéro de devis n'a pas de compteur partagé.** `numero_de_devis()` rend
+  `DEV-AAAAMMJJ-<six premiers caractères de l'identifiant de projet>`. Un
+  compteur incrémental supposerait un état mutable commun à tous les projets :
+  deux devis ouverts le même jour se disputeraient le même rang, ou en
+  sauteraient un. La numérotation continue sans rupture est une obligation de
+  *facturation* ; d'un devis, on attend qu'il soit identifiable de façon
+  univoque, et qu'on le retrouve — ici, le numéro dit le fichier où il vit.
+- **L'identité est fixée à l'ouverture du projet et ne bouge plus.** La
+  recalculer à chaque export ferait changer le numéro et la date de validité
+  d'un devis **déjà remis au client**, alors qu'un devis remis engage sur une
+  durée. Version de persistance 4 → 5 ; les projets écrits avant reçoivent
+  une identité **une fois**, à la relecture.
+- **La copie garde la structure et laisse les prix.** Le catalogue est
+  volatil, la structure ne l'est pas : un prix recopié et présenté comme celui
+  du jour serait exactement le prix inventé que tout le projet interdit. La
+  copie revient donc `structure_validee=False` — HITL-2 est à refaire,
+  puisque les surfaces vont changer.
+- **La copie laisse aussi les corrections, les escalades et l'historique.**
+  Ils appartiennent à l'histoire de l'autre chantier : les reprendre
+  gonflerait le signal qualité (US-25) de doublons jamais dictés, et
+  l'historique porte le nom de l'autre client.
+- **La réponse dit ce qui n'a pas suivi.** `repris` et `non_repris` sont deux
+  listes de phrases, rendues telles quelles à l'écran : une copie
+  silencieusement amputée ferait croire à l'artisan qu'il tient son chiffrage.
+
+**Défaut corrigé au passage.** L'export écrivait `DEV-{jour}-001` en dur : deux
+devis émis le même jour portaient le même numéro. C'est la story qui l'a fait
+apparaître, il est corrigé à la racine.
+
+**Traçabilité.** C13 · hors cadrage explicite — **story de confort**, tirée du
+bas du backlog une fois la file de certification vidée · `numero_de_devis()`
+dans `app/devis.py`, `Session.numero_devis` / `date_emission` dans
+`app/pipeline.py`, `Registre.dupliquer()` et la version 5 dans
+`app/persistance.py`, `POST /api/projet/dupliquer` dans `app/main.py`,
+`numero_devis=` dans `app/export.py`, bouton et bilan dans
+`app/static/index.html` · tests : `tests/test_duplication.py` (22),
+accessibilité dans `tests/test_front.py` (5) · état : **fait**.
 
 ---
 

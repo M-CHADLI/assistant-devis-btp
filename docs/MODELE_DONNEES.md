@@ -23,7 +23,7 @@ qu'au commit.
 
 Les **données d'exploitation** — un projet en cours, ses lignes de devis, les
 corrections de l'artisan, les mentions légales — vivent dans un fichier JSON
-par projet (`app/persistance.py`, format en version 4), écrit de façon
+par projet (`app/persistance.py`, format en version 5), écrit de façon
 atomique par renommage.
 
 Ça tient, et ça tiendra encore un moment : un artisan travaille sur un projet à
@@ -127,13 +127,15 @@ justification.
 | Donnée | Type | Contrainte | Rôle |
 |---|---|---|---|
 | `projet_id` | texte | 8 à 32 caractères, `[a-z0-9]` | Identifiant, également nom du fichier. Le motif est une **liste blanche** : il interdit qu'un identifiant forgé désigne un autre chemin. |
-| `version` | entier | 4 | Version du format. Les relectures dégradées des versions 1 à 3 sont explicites dans le code. |
+| `version` | entier | 5 | Version du format. Les relectures dégradées des versions 1 à 4 sont explicites dans le code. |
 | `pieces` | liste de textes | — | Pièces du chantier citées par l'artisan |
 | `lots_presents` | liste de codes | valeurs du référentiel | Lots retenus pour le projet |
 | `structure_validee` | booléen | — | Porte HITL-2 (*human in the loop*, niveau 2) : **tant qu'il est faux, aucun prix n'existe** |
 | `tours_clarification` | entier | — | Limite le va-et-vient de clarification |
 | `delai_execution` | texte | — | Mention légale du devis |
 | `historique` | liste de tours | — | Fil de conversation, non modélisé comme entité |
+| `numero_devis` | texte | `DEV-AAAAMMJJ-xxxxxx` | Identité du devis, **fixée à l'ouverture du projet et jamais recalculée** : un devis remis au client engage sur une durée, son numéro et sa date ne peuvent pas changer à un second export. Le suffixe reprend le début de `projet_id`, ce qui rend le numéro unique **sans compteur partagé** (US-17) |
+| `date_emission` | texte, ISO 8601 | — | Jour d'ouverture du projet, d'où court la validité du devis. Vide pour les projets antérieurs à la version 5 : le registre leur en attribue une **une seule fois**, à la relecture |
 
 ### Entité LIGNE_DEVIS — `app/devis.py`
 
