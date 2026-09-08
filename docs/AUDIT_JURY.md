@@ -29,10 +29,10 @@ l'absence de jeu de données à exposer, et cette absence a cessé.
 |---|---|---|---|---|---|
 | E1 — Données (C1-C5) | 28 | 18 | 8 | 2 | 0 |
 | E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 4 | 1 | 0 |
-| E3 — Modèle IA (C9-C13) | 39 | 23 | 6 | 10 | 0 |
+| E3 — Modèle IA (C9-C13) | 39 | 27 | 8 | 4 | 0 |
 | E4 — Application (C14-C19) | 36 | 22 | 9 | 5 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
-| **Total** | **135** | **85** | **32** | **18** | **0** |
+| **Total** | **135** | **89** | **34** | **12** | **0** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -56,8 +56,8 @@ l'interface : sur les *documents livrés* (C6-39, C8-57, C9-66, C11-85, C12-93,
 C13-101, C18-137, C20-151). Elle est désormais une **règle écrite**
 (`docs/ACCESSIBILITE_DOCUMENTS.md`, neuf règles) dont trois sont **vérifiées
 mécaniquement** à chaque exécution de la chaîne — un critère transverse tenu
-par une machine ne se perd pas en route. Seul C13-101 reste ❌, parce que la
-chaîne MLOps qu'il vise n'existe pas encore. OWASP top 10, exigé sur les deux
+par une machine ne se perd pas en route. Les huit sont désormais ✅ :
+`docs/CHAINE_MLOPS.md` a fermé le dernier, C13-101. OWASP top 10, exigé sur les deux
 API (C9-61, C17-127), est couvert par six mesures nommées dans
 `app/authentification.py` plus les garde-fous d'entrée.
 
@@ -266,17 +266,19 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 95 | Documentation couvrant étapes, tâches, déclencheurs | ❌ | Absente. |
-| 96 | Déclencheurs intégrés comme définis | ❌ | Absent. |
-| 97 | Fichiers de configuration reconnus et exécutés | ❌ | Absent. |
-| 98 | Étape de test des données intégrée et sans erreur | ❌ | Absente. |
-| 99 | Étapes de test, entraînement et validation du modèle intégrées | ❌ | Absentes. |
+| 95 | Documentation couvrant étapes, tâches, déclencheurs | ✅ | `docs/CHAINE_MLOPS.md` — les quatre étapes avec leur module et leurs prérequis, le tableau des déclencheurs, les deux fichiers de configuration, et une section « ce que cette chaîne ne fait pas » qui nomme l'entraînement jamais exécuté. |
+| 96 | Déclencheurs intégrés comme définis | 🟡 | `.github/workflows/modele.yml` : `push` et `pull_request` sur `dataset/`, `mlops/`, `tools/mlops/`, plus un rendez-vous hebdomadaire et un lancement manuel — conformes au tableau documenté. **Jamais exécutés**, faute de dépôt distant (constat nº 1). |
+| 97 | Fichiers de configuration reconnus et exécutés | ✅ | `mlops/pipeline.toml` (ordre, prérequis, caractère bloquant) et `mlops/lora.toml` (hyperparamètres). L'exécuteur ne connaît aucune étape en dur : il lit la déclaration, refuse les doublons de nom, et l'exécution locale enchaîne bien les quatre étapes déclarées. |
+| 98 | Étape de test des données intégrée et sans erreur | ✅ | `tools/mlops/valider_dataset.py`, étape `donnees`, **réussie**. Elle valide l'enveloppe et le `payload` avec les modèles Pydantic du produit, compte chaque refus avec son motif (retenus + refusés = lus), détecte les fuites entraînement/essai sans tolérance, et se teste elle-même sur `dataset/gabarit_fautifs.jsonl` — six exemples portant chacun un défaut et son motif attendu. 33 tests dans `tests/test_mlops.py`. |
+| 99 | Étapes de test, entraînement et validation du modèle intégrées | 🟡 | Les trois sont déclarées, câblées et exécutables ; l'exécuteur les rapporte `ignoré` en **nommant le prérequis manquant**, pas `réussi`. L'entraînement n'a jamais tourné — le dataset reste à écrire à la main — et ne feint rien : ni artefact factice, ni métrique inventée. |
 | 100 | Sources de la chaîne versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
-| 101 | Documentation d'installation, configuration, test, au format accessible | ❌ | Absente. La chaîne MLOps n'existe pas ; la règle d'accessibilité, elle, est prête à s'y appliquer. |
+| 101 | Documentation d'installation, configuration, test, au format accessible | ✅ | `docs/CHAINE_MLOPS.md` : aucune installation supplémentaire (bibliothèque standard seule), les commandes d'exécution complète, en simulation et étape par étape, la sortie attendue en l'état, et le format d'un exemple. Conforme aux règles vérifiées par `tools/verifier_accessibilite_docs.py`. |
 
-> C13 est **intégralement à faire**. C'est cohérent avec le calendrier : le
-> fine-tuning n'a pas encore eu lieu. Mais c'est sept critères, et la chaîne
-> doit exister avant l'entraînement pour pouvoir en porter la trace.
+> C13 passe de sept ❌ à un seul — le dépôt distant. La chaîne a été écrite
+> **avant** l'entraînement, délibérément : écrite après, elle n'aurait plus pu
+> porter la trace de l'entraînement, seulement le récit qu'on en fait. D'où ses
+> trois états — `réussi`, `échoué`, `ignoré` — plutôt que deux : confondre
+> « pas encore lancé » avec « réussi » ferait mentir le rapport.
 
 ---
 
@@ -288,7 +290,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 |---|---|---|---|
 | 103 | Modélisation des données respectant un formalisme (Merise, entités-relations) | ✅ | Même document qu'en C4-19. Il couvre en plus les **structures propres à l'application** — projet, ligne de devis, correction, escalade — et les quatre contraintes d'intégrité qu'un schéma relationnel ne peut pas porter, avec ce qui les vérifie. |
 | 104 | Modélisation des parcours utilisateurs (schéma fonctionnel, wireframes) | ✅ | `docs/MAQUETTES.md` — le parcours complet en schéma fonctionnel (les trois points d'arrêt HITL y sont visibles), puis six maquettes filaires. Le document **dit qu'elles ont été dessinées après l'interface** plutôt que de faire croire l'inverse ; à partir de là, les écrans restants (US-01, US-03, US-17) seront dessinés avant d'être codés. |
-| 105 | Chaque spécification couvre contexte, scénarios, critères de validation | ✅ | `docs/STORIES.md` : 27 stories, chacune avec son contexte, ses critères d'acceptation et **un cas dégradé**. |
+| 105 | Chaque spécification couvre contexte, scénarios, critères de validation | ✅ | `docs/STORIES.md` : 28 stories, chacune avec son contexte, ses critères d'acceptation et **un cas dégradé**. |
 | 106 | Objectifs d'accessibilité intégrés aux critères d'acceptation des user stories | ✅ | 21 stories portent une rubrique « Accessibilité » **au même rang** que le fonctionnel — c'est exactement ce que le critère demande, et c'est rare. |
 | 107 | Objectifs d'accessibilité appuyés sur un standard (WCAG, RGAA) | ✅ | RGAA 4.1 nommé 23 fois dans `docs/STORIES.md`, avec les numéros de critère. |
 
@@ -306,7 +308,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 115 | Cycles, étapes, rôles, rituels et outils de la méthode respectés | 🟡 | Le découpage agile est réel — 27 stories, 7 épiques, deux files de priorité, sprints dans `PLANNING.md`. Les **rituels ne sont pas tenus ni tracés** (pas de revue de sprint, pas de rétrospective écrite). |
+| 115 | Cycles, étapes, rôles, rituels et outils de la méthode respectés | 🟡 | Le découpage agile est réel — 28 stories, 7 épiques, deux files de priorité, sprints dans `PLANNING.md`. Les **rituels ne sont pas tenus ni tracés** (pas de revue de sprint, pas de rétrospective écrite). |
 | 116 | Outils de pilotage disponibles (kanban, burndown, backlog) | 🟡 | Le backlog existe et fait autorité. Le kit de transposition Notion est prêt (`docs/NOTION_BOARD.md`, CSV, CLI) mais **le tableau n'est pas encore monté**. |
 | 117 | Objectifs et modalités des rituels partagés aux parties prenantes | ❌ | Non écrits. |
 | 118 | Éléments de pilotage accessibles à toutes les parties tout au long du projet | 🟡 | Accessibles dans le dépôt ; pas de vue partagée hors dépôt tant que Notion n'est pas monté. |
@@ -411,12 +413,18 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 12. ~~**Empaquetage et livraison continue** : le produit ne s'installe qu'en connaissant la commande.~~ **Fait** : `Dockerfile`, `.dockerignore`, `.github/workflows/livraison.yml` et `docs/LIVRAISON_CONTINUE.md`. C19 passe de 5 ❌ à 1 (le dernier étant le dépôt distant). L'image est construite, démarrée et interrogée en local ; ce qui n'est pas vérifié, c'est l'exécution du workflow — comme pour l'intégration continue, et pour la même raison.
 
+13. ~~**Chaîne MLOps** : la chaîne du modèle, écrite avant l'entraînement pour pouvoir en porter la trace.~~ **Fait** : `tools/mlops/`, `mlops/pipeline.toml`, `mlops/lora.toml`, `.github/workflows/modele.yml` et `docs/CHAINE_MLOPS.md`. C13 passe de 7 ❌ à 1 (le dépôt distant). L'étape de test des données tourne et réussit ; les trois autres se déclarent `ignoré` en nommant leur prérequis manquant.
+
 **Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
 protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
-mi-chemin), et la chaîne MLOps de C13 (sept) — le reste est du rituel à tenir,
-pas du travail à inventer. Les six gisements documentaires de la liste
-ci-dessus sont fermés, E1 n'est plus le plus gros trou du référentiel, et C13
-est désormais le seul gisement de ❌ qui ne dépende pas d'un dépôt distant.
+mi-chemin), et **écrire le dataset à la main** — le reste est du rituel à
+tenir, pas du travail à inventer. Les six gisements documentaires de la liste
+ci-dessus sont fermés, et il ne reste plus de gisement de ❌ : les douze
+restants sont **neuf dépendances au dépôt distant** et trois constats isolés
+(C7-43 l'accessibilité des sources de veille, C15-113 la conclusion de la
+preuve de concept, C16-117 les rituels à partager).
+Ce qui bloque le projet n'est plus de l'outillage, c'est de la matière — les
+2000 exemples que personne ne peut écrire à ma place.
 
 ---
 

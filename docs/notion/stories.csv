@@ -26,3 +26,4 @@ US-24,Que l'exploitation soit observable,G — Socle,Story,Certification,2,Criti
 US-25,Que les corrections alimentent la boucle qualité,G — Socle,Story,Certification,7,Haute,Terminé,S6,5,C20,DISPOSITIF_AGENT.md §4.2 · §5.2,fait
 US-26,Que le produit s'installe et se relance sans moi,G — Socle,Story,Certification,4,Haute,En cours,S5,5,C18 · C19,—,partiel
 US-27,"Que le catalogue vienne de vraies sources, trous compris",G — Socle,Story,Certification,9,Haute,En cours,S5,8,C1 · C2 · C3 · C4 · C5,CHAINE_DONNEES.md,partiel
+US-28,Que la chaîne du modèle existe avant l'entraînement,G — Socle,Story,Certification,10,Haute,En cours,S6,8,C13,CHAINE_MLOPS.md,partiel

@@ -29,7 +29,9 @@ les données ne sortent pas de la machine.
 │
 ├── app/                       l'implémentation : API, moteur de devis, front
 ├── tests/                     la suite pytest
-├── tools/                     outillage hors produit, dont la chaîne de données
+├── tools/                     outillage hors produit : chaînes de données et du modèle
+├── mlops/                     la déclaration de la chaîne du modèle
+├── dataset/                   exemples de référence et de contrôle de la validation
 ├── catalogue/                 sources, extraits bruts et jeu de données agrégé
 │
 ├── docs/                      la conception du projet — fait autorité
@@ -125,6 +127,22 @@ tout passe.
 
 `BTP_MOT_DE_PASSE` porte l'**empreinte** de la phrase, jamais la phrase :
 l'exporter en clair ferait échouer l'authentification sans dire pourquoi.
+
+### La chaîne du modèle
+
+Elle existe **avant** l'entraînement, volontairement : écrite après, elle ne
+pourrait plus porter la trace de l'entraînement, seulement le récit qu'on en fait.
+
+```bash
+VIRTUAL_ENV=~/.venvs/the-project uv run python -m tools.mlops.executer
+```
+
+Quatre étapes déclarées dans `mlops/pipeline.toml` — test des données,
+préparation, entraînement, validation — et **trois** états possibles : `réussi`,
+`échoué`, ou `ignoré` faute de prérequis. Aujourd'hui, le dataset restant à
+écrire à la main, seule la première tourne ; les trois autres se déclarent
+`ignoré` en nommant ce qui leur manque, jamais `réussi`. Tout est dans
+`docs/CHAINE_MLOPS.md`.
 
 ## État d'avancement
 

@@ -1052,6 +1052,63 @@ remplacerait — mais les codes de lot du référentiel et les familles du dump 
 recouvrent pas encore, et inventer cette table de correspondance sans arbitrage
 métier reviendrait à décider à la place de l'artisan.
 
+### US-28 — Que la chaîne du modèle existe avant l'entraînement
+
+**Contexte.** Le fine-tuning n'aura pas lieu avant octobre. Écrire la chaîne
+après lui serait pourtant trop tard : elle ne pourrait plus porter la trace de
+l'entraînement, seulement le récit qu'on en fait. Et un projet de fine-tuning
+n'a qu'une mesure honnête — un jeu d'essai écrit à la main, jamais vu à
+l'entraînement. Cette mesure se perd d'un seul geste : un exemple d'essai
+recopié dans le jeu d'entraînement. Le modèle ne le résout plus, il s'en
+souvient, et le chiffre monte pour la mauvaise raison. C'est ce que cette story
+protège.
+
+**Scénarios d'usage.**
+1. *Nominal* — la chaîne s'exécute : l'étape de test des données valide chaque
+   exemple contre les modèles Pydantic du produit, compte les refus par motif, et
+   écrit l'écart à la répartition visée.
+2. *Fuite* — un exemple d'essai réapparaît dans le jeu d'entraînement : la chaîne
+   s'arrête, nomme l'exemple, et ne propose aucune tolérance.
+3. *Prérequis absent* — le dataset n'est pas encore écrit : les étapes concernées
+   se déclarent `ignoré` **en nommant ce qui manque**, jamais `réussi`.
+4. *Dégradé* — un détecteur de la validation cesse silencieusement de détecter :
+   `dataset/gabarit_fautifs.jsonl` le fait rougir immédiatement, parce que chaque
+   exemple fautif y porte le motif de refus qu'il doit provoquer.
+
+**Critères de validation.**
+- Trois états distincts, pas deux : `réussi`, `échoué`, `ignoré`. Confondre
+  « pas encore lancé » avec « réussi » ferait mentir le rapport.
+- La détection de fuite entraînement/essai est bloquante et sans tolérance.
+- Aucune étape n'est connue en dur de l'exécuteur : l'ordre, les prérequis et le
+  caractère bloquant se lisent dans `mlops/pipeline.toml`, les hyperparamètres
+  dans `mlops/lora.toml` — pour qu'une mesure se rattache à une configuration.
+- L'étape de test des données rejoue les invariants de la chaîne catalogue : rien
+  n'est écarté en silence, aucune valeur n'est inventée, l'écart à la cible est
+  **écrit et non bloquant** — un dataset déséquilibré se rééquilibre en écrivant
+  des exemples, pas en bloquant la chaîne.
+- L'étape d'entraînement ne simule rien et ne produit aucun artefact factice.
+- La validation déclare **non mesurées** les métriques que le jeu d'essai ne
+  permet pas encore de mesurer, plutôt que de les approcher.
+- *Accessibilité* — la documentation de la chaîne respecte
+  `docs/ACCESSIBILITE_DOCUMENTS.md` ; la sortie de l'exécuteur reste lisible sans
+  couleur, l'état de chaque étape étant un mot aligné en colonne.
+
+**Traçabilité.** C13 · `docs/CHAINE_MLOPS.md` · état : **la chaîne est faite,
+l'entraînement ne l'est pas** — `tools/mlops/executer.py` lit la déclaration TOML
+et enchaîne les quatre étapes ; `valider_dataset.py` se teste sur quatre exemples
+de référence et six exemples fautifs avant de valider quoi que ce soit ;
+`preparer.py` convertit vers le format Unsloth sans rien corriger, le raisonnement
+partant dans un message `analysis` distinct du `final` ; `entrainer.py` nomme ses
+prérequis manquants et sort en code 3 ; `evaluer.py` mesure les métriques 1, 5, 7
+et 8 avec les seuils lus dans `app.observabilite.SEUILS`, et déclare 2, 3, 4 et 6
+non mesurées. Un exécuteur maison de 150 lignes plutôt qu'Airflow ou ZenML : la
+chaîne compte quatre étapes, tourne sur une machine, et doit rester lisible par un
+jury en trois minutes. Tests : `tests/test_mlops.py` (33).
+**Reste** : le dataset de ~2000 exemples et le jeu d'essai de 150 à 200 — écrits
+et corrigés **à la main**, c'est la condition de l'honnêteté de la mesure. Le code
+d'appel à Unsloth ne sera versionné qu'une fois exécuté sur la machine : du code
+d'entraînement jamais lancé donne une fausse impression d'avancement.
+
 ---
 
 ## Ordre de traitement
@@ -1094,6 +1151,7 @@ Elles ne se voient pas à la démonstration, et elles se notent.
 | 7 | US-25 (export du signal qualité) | C20 |
 | 8 | US-19 / US-20 (périmètre, injection) | C17, C21 |
 | 9 | US-27 (chaîne de données) | C1 à C5 |
+| 10 | US-28 (chaîne du modèle) | C13 |
 
 Trois stories ne figurent dans aucune file parce qu'elles étaient **déjà faites**
 au moment du découpage : US-08, US-10 et US-13. Elles restent au découpage pour la
@@ -1106,10 +1164,15 @@ dépend d'un dépôt distant.
 
 US-17 reste hors des deux files : confort métier réel, aucun apport de preuve.
 
-**Ajout du 08/09/2026.** US-27 (chaîne de données) est née de l'audit jury :
-les compétences C1 à C5 exigent une collecte, un nettoyage et une mise en base
-réels, qu'aucune des vingt-six stories initiales ne portait. Elle est faite pour
-la chaîne, ouverte pour le branchement au devis.
+**Ajouts du 08/09/2026.** Deux stories sont nées de l'audit jury, sur le même
+constat : une compétence entière n'était portée par aucune story.
+
+- **US-27 (chaîne de données)** — les compétences C1 à C5 exigent une collecte,
+  un nettoyage et une mise en base réels, qu'aucune des vingt-six stories
+  initiales ne portait. Faite pour la chaîne, ouverte pour le branchement au
+  devis.
+- **US-28 (chaîne du modèle)** — C13 était le dernier gisement de ❌ indépendant
+  du dépôt distant. La chaîne est faite ; l'entraînement, non.
 
 ### Ce que ce découpage ne couvre pas
 
@@ -1117,6 +1180,9 @@ Volontairement, et pour ne pas laisser croire à une couverture qu'il n'a pas :
 
 - **Le dataset et le fine-tuning** ne sont pas des stories : ils ne se décrivent
   pas du point de vue de l'utilisateur. Ils relèvent de `CADRAGE_MODELE.md` §6-7.
+  US-28 n'est pas une exception à cette règle : elle porte la **chaîne** qui
+  valide et trace, pas le dataset ni l'entraînement eux-mêmes. Elle figure ici
+  parce que C13 l'exige et qu'une compétence sans story ne se suit pas.
 - **La veille** (C6) est un rituel, pas une fonctionnalité — `veille/DISPOSITIF.md`.
 - **Les modèles de données et le diagramme de flux** sont des artefacts de
   conception attendus au dossier, pas des besoins utilisateur.

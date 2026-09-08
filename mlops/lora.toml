@@ -1,0 +1,18 @@
+# Hyperparamètres de l'adaptateur LoRA. Hors du code, exprès : les changer ne
+# doit pas demander de modifier un script, et leur historique doit se lire dans
+# git — c'est ce qui permettra de rattacher une mesure à une configuration.
+#
+# Ces valeurs sont celles du cadrage (docs/CADRAGE_MODELE.md) et n'ont pas
+# encore été confrontées à un entraînement réel. Elles bougeront.
+
+[lora]
+modele_base = "unsloth/gpt-oss-20b"
+rang = 16                # r : compromis capacité / mémoire retenu par Unsloth pour gpt-oss
+alpha = 32               # 2 × rang, réglage usuel
+dropout = 0.0            # Unsloth optimise le chemin sans dropout
+longueur_max = 4096      # un exemple `devis` raisonné dépasse rarement 2000 jetons
+epoques = 2              # au-delà, le sur-apprentissage guette sur ~2000 exemples
+taille_lot = 4
+accumulation_gradient = 4
+taux_apprentissage = 2e-4
+graine = 3407            # figée : deux entraînements comparables doivent l'être vraiment

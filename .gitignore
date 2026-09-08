@@ -43,3 +43,11 @@ data/raw/
 # cache et la base SQLite s'en déduisent, et n'ont pas à peser dans l'historique.
 catalogue/sources/*.html
 catalogue/*.sqlite3
+
+# Chaîne MLOps : artefacts et rapports d'exécution sont reconstructibles, et
+# le format chat pèse plusieurs fois le dataset. La déclaration (pipeline.toml,
+# lora.toml) et le dataset, eux, sont versionnés — c'est ce qui permet de
+# rattacher une mesure à une configuration.
+mlops/artefacts/
+mlops/executions/
+mlops/evaluations/

@@ -33,16 +33,19 @@ README.md              porte d'entrée
 CLAUDE.md              ce fichier
 PLANNING.md            calendrier des 4 mois
 docs/                  la conception — fait autorité
-docs/STORIES.md        les 27 stories et l'ordre du backlog
+docs/STORIES.md        les 28 stories et l'ordre du backlog
 docs/notion/           schémas et CSV de la transposition Notion
 docs/MODELE_DONNEES.md le modèle de données — conceptuel constaté, logique cible
 docs/MAQUETTES.md      parcours utilisateur et maquettes filaires annotées
 docs/BENCHMARK_STT.md  le banc d'essai reconnaissance vocale — instruit, non tranché
 docs/RGPD.md           registre des traitements et procédures de tri
 docs/CHAINE_DONNEES.md la chaîne de collecte, nettoyage et mise en base du catalogue
+docs/CHAINE_MLOPS.md   la chaîne du modèle : test des données, préparation, entraînement
 app/                   l'implémentation (FastAPI, moteur de devis, front)
 tests/                 la suite pytest
-tools/                 outillage hors produit (CLI Notion, chaîne de données)
+tools/                 outillage hors produit (CLI Notion, chaînes données et modèle)
+mlops/                 la déclaration de la chaîne du modèle et ses hyperparamètres
+dataset/               les exemples de référence et de contrôle de la validation
 catalogue/             la chaîne de données : sources, extraits bruts, jeu agrégé
 veille/                livrables de veille
 reference/             référentiel de compétences
@@ -55,7 +58,7 @@ archive/renoassistant/ conception précédente
 - **`docs/LIVRABLES.md`** — grille de contrôle de la couverture des cinq livrables attendus.
   **Ce n'est pas le projet** : le projet vaut par lui-même, cette grille ne fait que signaler
   les manques. Ne jamais dénaturer le cadrage pour cocher une case.
-- **`docs/STORIES.md`** — le découpage en 27 stories, sept épiques, deux files de priorité.
+- **`docs/STORIES.md`** — le découpage en 28 stories, sept épiques, deux files de priorité.
   Chaque story porte un cas dégradé, des critères d'accessibilité **au même rang** que les
   critères fonctionnels, et une ligne de traçabilité qui dit l'état du code **constaté**.
   Sa mise à jour fait partie de la définition de fini.
@@ -89,6 +92,16 @@ archive/renoassistant/ conception précédente
   `qualite_correspondance` dit `exacte`, `proxy` ou `absente` — ne jamais laisser l'aval prendre
   un proxy pour une mesure. La chaîne **n'alimente pas encore** `app/catalogue.py` : la couture
   est décrite au §8 du document.
+- **`docs/CHAINE_MLOPS.md`** — la chaîne du modèle : `donnees` → `preparation` →
+  `entrainement` → `validation`, déclarées dans `mlops/pipeline.toml` et exécutées par
+  `tools/mlops/executer.py` (`uv run python -m tools.mlops.executer`).
+  **Trois principes à ne pas défaire** : la chaîne connaît **trois** états — `réussi`,
+  `échoué`, `ignoré` — parce que confondre « pas encore lancé » avec « réussi » ferait
+  mentir le rapport ; la **détection de fuite** entre `dataset/entrainement.jsonl` et
+  `dataset/essai.jsonl` est bloquante et sans tolérance, c'est la seule mesure honnête du
+  projet ; l'étape d'entraînement **ne simule rien** et ne produit aucun artefact factice.
+  L'écart à la répartition cible, lui, est écrit et non bloquant : un dataset déséquilibré
+  se rééquilibre en écrivant des exemples. Tests dans `tests/test_mlops.py`.
 - **`docs/SOURCES_DONNEES.md`** — ancienne conception *RenoAssistant*, **périmée en tant
   qu'architecture**, mais conservée car toujours utile : structure du dump catalogue Leroy Merlin
   et contrainte légale sur les données (structure réelle, valeurs simulées). Ne pas la traiter
