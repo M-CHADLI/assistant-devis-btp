@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **09/09/2026**, commit `d24dbc4`.
+Dernière mise à jour : **09/09/2026**, commit `a556057`.
 
 ---
 
@@ -39,11 +39,11 @@ Dernière mise à jour : **09/09/2026**, commit `d24dbc4`.
 
 ## État vérifié au 08/09/2026
 
-- **514 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+- **520 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
   `test_front` 55, `test_garde_fous` 52, `test_chaine_donnees` 43,
   `test_gabarit` 41, `test_pipeline` 33, `test_mlops` 33, `test_annuaire` 30,
   `test_api` 29, `test_boucle_qualite` 24, `test_duplication` 22,
-  `test_correspondance` 21, `test_auth` 19, `test_api_catalogue` 19,
+  `test_correspondance` 27, `test_auth` 19, `test_api_catalogue` 19,
   `test_devis` 16, `test_export` 13,
   `test_transcription` 12, `test_persistance` 12, `test_packaging` 11,
   `test_observabilite` 11, `test_contrat_api` 10, `test_referentiel` 8.
@@ -140,8 +140,13 @@ Dernière mise à jour : **09/09/2026**, commit `d24dbc4`.
 | `e2d4b7f` | US-17 répercutée : stories, maquettes, modèle de données, audit |
 | `6adb257` | Journal remis à l'état vérifié après US-17 |
 | `d24dbc4` | Devis branché sur la base catalogue, sans deviner les correspondances (US-27) |
+| `1273590` | Journal remis à l'état vérifié après le branchement |
+| `9ecff98` | Maquette 7 — le dernier écran promis sans être décrit (US-01) |
+| `e1fac49` | Maquette 7 répercutée dans l'audit |
+| `09f853f` | Une prise réseau ne peut plus être chiffrée comme une prise de courant (INC-12) |
+| `a556057` | Deux incidents versés au journal, tableau de bord complété (INC-11, INC-12) |
 
-**Rien n'est poussé.** **Cinquante-six commits cette nuit** (depuis `87cfb07`), soixante-cinq sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
+**Rien n'est poussé.** **Soixante-deux commits cette nuit** (depuis `87cfb07`), soixante et onze sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
 
 **L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
 82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
@@ -228,6 +233,13 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
     et le jour où elles arrivent,
     `test_il_reste_des_arbitrages_et_ils_sont_nommes` tombe, ce qui rappelle de
     rebasculer le défaut sur `base`.
+
+    **Vérifié depuis, contre la base réelle** : le branchement avait un angle
+    mort, corrigé (`09f853f`, INC-12). « Le moins cher de la famille » suppose
+    une famille homogène ; `ELECTRICITE_APPAREILLAGE` mélange courant fort et
+    communication, et `ELEC_PRISE` prenait une RJ45 à 7,60 €. Un lot déclare
+    désormais ce qu'il `retient` dans sa famille. Les treize autres familles ont
+    été relues une à une : elles ne varient que par la taille ou la finition.
 10. **Partager les rituels, pas seulement les écrire.** `docs/RITUELS.md` existe
     désormais (objectifs, modalités, parties prenantes, définition de fini), mais
     C16-117 reste 🟡 volontairement : le critère demande de *partager* avec les
@@ -381,3 +393,23 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
   threadpool ; une connexion partagée entre threads produit une panne rare et
   difficile à reproduire. Le coût d'ouverture est négligeable devant un appel au
   modèle.
+
+- **Maquette 7 dessinée plutôt qu'un troisième aveu.** `docs/MAQUETTES.md`
+  annonçait la saisie assistée du SIRET comme « restant à dessiner, avant d'être
+  codé » alors que l'écran existait depuis US-01. C'était le troisième écart
+  entre ce document et le dépôt, après US-03 et US-17. Le choix a été de le
+  décrire comme les six autres — quatre états, dix annotations d'accessibilité
+  adossées à leur test — plutôt que d'antidater une maquette ou d'ajouter une
+  ligne au tableau des aveux. La section « reste à dessiner » est désormais vide
+  et le dit.
+- **Un lot peut filtrer sa famille, mais le filtre est écrit.** C'est le seul
+  point du branchement catalogue où j'ai ajouté un mécanisme plutôt qu'une
+  déclaration. Il reste déclaratif : les fragments retenus sont dans la table
+  avec leur motif, un test refuse un filtre non motivé, et un filtre sans
+  résultat ne prend rien plutôt que le voisin le plus proche.
+- **Le tableau de bord des incidents était faux par omission** : il s'arrêtait à
+  INC-07 alors que trois fiches existaient plus bas. Complété, et deux fiches
+  ajoutées (INC-11, le numéro de devis en double ; INC-12, la prise réseau).
+  La conclusion tirée de la série est écrite dans le journal : trois des douze
+  incidents n'avaient aucun symptôme visible, et aucun n'a été trouvé par un
+  test.
