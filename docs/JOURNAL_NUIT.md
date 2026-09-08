@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **09/09/2026**, commit `a556057`.
+Dernière mise à jour : **09/09/2026**, commit `28fcfab`.
 
 ---
 
@@ -145,6 +145,7 @@ Dernière mise à jour : **09/09/2026**, commit `a556057`.
 | `e1fac49` | Maquette 7 répercutée dans l'audit |
 | `09f853f` | Une prise réseau ne peut plus être chiffrée comme une prise de courant (INC-12) |
 | `a556057` | Deux incidents versés au journal, tableau de bord complété (INC-11, INC-12) |
+| `28fcfab` | Parcours de bout en bout rejoué : 24/24, sortie 0 |
 
 **Parcours de bout en bout rejoué après tous ces changements** — serveur réel,
 Ollama réel, `gpt-oss:20b`, `.docx` écrit sur le disque : **24/24 étapes, sortie 0**.
@@ -152,7 +153,7 @@ C'était le point à vérifier : les tests remplacent le modèle par une fausse
 fonction, ils n'auraient rien dit d'une chaîne cassée. Relevé le 09/09/2026,
 avec `BTP_DONNEES` pointé hors du dépôt.
 
-**Rien n'est poussé.** **Soixante-deux commits cette nuit** (depuis `87cfb07`), soixante et onze sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
+**Rien n'est poussé.** **Soixante-trois commits cette nuit** (depuis `87cfb07`), soixante-douze sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
 
 **L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
 82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
