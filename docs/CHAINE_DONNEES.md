@@ -314,12 +314,36 @@ de démonstration, pas règle métier — un artisan choisit une gamme, une
 disponibilité, parfois un fournisseur imposé. Elle a l'avantage d'être
 reproductible et d'être écrite plutôt que devinée.
 
-Trois cas retombent sur le catalogue simulé sans jamais lever d'erreur :
-correspondance en attente d'arbitrage, base absente (l'état d'un dépôt
-fraîchement cloné), famille vide. Un prix simulé assumé vaut mieux qu'un prix
-réel pris dans la mauvaise famille.
+### Une famille n'est pas toujours homogène
 
-Tests : `tests/test_correspondance.py` (21).
+Le « moins cher de la famille » suppose que la famille ne contienne qu'une
+seule sorte de chose. `ELECTRICITE_APPAREILLAGE` dément cette hypothèse : elle
+mélange le courant fort (2P+T, étanche IP55) et la communication (RJ45, USB-C),
+et son article le moins cher est une **prise RJ45 à 7,60 €**. Chiffrer une prise
+de courant à ce prix afficherait un montant juste pour un produit faux — une
+substitution muette, qui est pire qu'un prix faux : rien dans le devis ne
+permettrait de la voir.
+
+Un lot peut donc déclarer ce qu'il `retient` dans sa famille. `ELEC_PRISE`
+retient `2P+T` et `étanche`, et le rayon étant déjà trié, le premier qui
+convient est le moins cher qui convient — 8,22 € au lieu de 7,60 €. Le filtre
+est **écrit dans la table avec son motif**, jamais déduit d'une ressemblance,
+et un test refuse un filtre non motivé. Vérifié famille par famille : c'est la
+seule des quatorze qui soit hétérogène par nature ; ailleurs, seules la taille
+ou la finition varient.
+
+Si plus aucun produit ne correspond, **le lot ne prend rien** et retombe sur le
+catalogue simulé : une famille qui ne contient plus ce que le lot désigne doit
+se signaler, pas se faire remplacer par son plus proche voisin.
+
+### Ce qui retombe sur le catalogue simulé
+
+Quatre cas, sans jamais lever d'erreur : correspondance en attente d'arbitrage,
+base absente (l'état d'un dépôt fraîchement cloné), famille vide, filtre sans
+résultat. Un prix simulé assumé vaut mieux qu'un prix réel pris dans la
+mauvaise famille.
+
+Tests : `tests/test_correspondance.py` (27).
 
 ## 9. Ce que la chaîne ne fait pas
 

@@ -1180,7 +1180,13 @@ base « si elle est là » ferait dépendre le prix d'un fichier reconstructible
 versionné, et le même chantier chiffrerait différemment sur deux machines sans que
 rien ne le dise. `Produit.origine` voyage avec le prix et dit `base` ou `simule`.
 Trois cas retombent sur le catalogue simulé sans lever d'erreur : arbitrage en
-attente, base absente, famille vide. Tests : `tests/test_correspondance.py` (21).
+attente, base absente, famille vide, filtre sans résultat. Une famille peut en
+effet être hétérogène : `ELECTRICITE_APPAREILLAGE` mélange courant fort et
+communication, et son article le moins cher est une prise RJ45 — la prendre pour
+une prise de courant afficherait un prix juste sur un produit faux. Un lot
+déclare donc ce qu'il `retient` dans sa famille, écrit avec son motif, et ne
+prend rien plutôt que le plus proche voisin. Tests :
+`tests/test_correspondance.py` (27).
 **Reste** : les deux arbitrages métier, qui appartiennent à l'artisan — trancher ce
 qu'on vend n'est pas un travail de programmation. Tant qu'ils ne sont pas rendus, le
 défaut reste `simule` ; le jour où ils le sont,

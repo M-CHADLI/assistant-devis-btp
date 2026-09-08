@@ -24,6 +24,12 @@ exactement ce que ce projet refuse (`docs/CADRAGE_MODELE.md` : zéro prix
 inventé). Un lot en attente d'arbitrage retombe sur le catalogue simulé, et le
 dit.
 
+**Une famille n'est pas toujours homogène.** `ELECTRICITE_APPAREILLAGE` mélange
+des prises de courant et des prises de communication : le moins cher du rayon y
+est une RJ45, qui ne remplace pas une 2P+T. Un lot peut donc déclarer ce qu'il
+`retient` dans sa famille — un filtre **écrit**, jamais deviné, et qui ne rend
+rien plutôt que de rendre autre chose.
+
 Trancher un `ARBITRAGE_REQUIS` n'est pas un travail de programmation : c'est
 décider ce qu'on vend. Cela appartient à l'artisan, pas au code.
 """
@@ -41,6 +47,13 @@ class Correspondance:
     famille_code: str
     etat: str
     motif: str
+
+    #: Fragments de libellé qui définissent ce que le lot retient dans sa
+    #: famille, quand celle-ci n'est pas homogène. Vide = toute la famille.
+    #: Si aucun produit ne correspond, le lot **ne prend rien** : une famille
+    #: qui ne contient plus ce que le lot désigne doit se signaler, pas se
+    #: remplacer par son plus proche voisin.
+    retient: tuple[str, ...] = ()
 
 
 #: Une entrée par lot du référentiel. Un lot absent de cette table n'a pas de
@@ -95,7 +108,12 @@ TABLE: dict[str, Correspondance] = {
         "gaine figure aux consommables du lot, pas à la ligne."),
     "ELEC_PRISE": Correspondance(
         "ELEC_PRISE", "ELECTRICITE_APPAREILLAGE", ETABLIE,
-        "Prises et interrupteurs à l'unité : même objet des deux côtés."),
+        "Prises à l'unité. La famille n'est pas homogène : elle mélange le "
+        "courant fort (2P+T, étanche) et la communication (RJ45, USB-C). Le "
+        "moins cher du rayon est une RJ45 à 7,60 €, qui n'alimente rien — la "
+        "prendre pour une prise de courant serait une substitution muette. "
+        "D'où le filtre : le lot ne retient que le courant fort.",
+        retient=("2P+T", "étanche")),
     "ELEC_TABLEAU": Correspondance(
         "ELEC_TABLEAU", "ELECTRICITE_TABLEAU", ARBITRAGE_REQUIS,
         "Le lot pose **un tableau équipé** ; la famille ne contient que des "
@@ -122,6 +140,29 @@ def famille_de(lot_code: str) -> str | None:
     if entree is None or entree.etat != ETABLIE:
         return None
     return entree.famille_code
+
+
+def retenus_par(lot_code: str) -> tuple[str, ...]:
+    """Les fragments de libellé que ce lot retient dans sa famille.
+
+    Vide quand le lot prend toute la famille — le cas ordinaire, celui d'une
+    famille homogène où seule la taille ou la finition varie.
+    """
+    entree = TABLE.get(lot_code)
+    return entree.retient if entree is not None else ()
+
+
+def convient(libelle: str, retient: tuple[str, ...]) -> bool:
+    """Ce libellé entre-t-il dans ce que le lot retient ?
+
+    Comparaison insensible à la casse, sur le libellé publié par la source :
+    c'est la seule chaîne que le catalogue garantisse. Un filtre vide accepte
+    tout, ce qui est la règle pour une famille homogène.
+    """
+    if not retient:
+        return True
+    minuscule = libelle.casefold()
+    return any(fragment.casefold() in minuscule for fragment in retient)
 
 
 def en_attente_d_arbitrage() -> list[Correspondance]:

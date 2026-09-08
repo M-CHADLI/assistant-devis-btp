@@ -25,7 +25,7 @@ import os
 from dataclasses import dataclass
 
 from app import catalogue_base
-from app.correspondance import famille_de
+from app.correspondance import convient, famille_de, retenus_par
 
 
 @dataclass
@@ -110,8 +110,19 @@ def _depuis_la_base(lot_code: str) -> Produit | None:
         cx = catalogue_base.ouvrir()
     except FileNotFoundError:
         return None
+    retient = retenus_par(lot_code)
     try:
-        ligne = catalogue_base.moins_cher_de_famille(cx, famille)
+        if retient:
+            # Le rayon est déjà trié du moins cher au plus cher : le premier
+            # qui convient est le moins cher qui convient. Aucun ne convient
+            # rend `None`, et le lot retombe sur le catalogue simulé — une
+            # famille qui ne contient plus ce que le lot désigne doit se
+            # signaler, pas se remplacer par son plus proche voisin.
+            ligne = next(
+                (l for l in catalogue_base.produits_de_famille(cx, famille)
+                 if convient(l["libelle"], retient)), None)
+        else:
+            ligne = catalogue_base.moins_cher_de_famille(cx, famille)
     finally:
         cx.close()
     if ligne is None:

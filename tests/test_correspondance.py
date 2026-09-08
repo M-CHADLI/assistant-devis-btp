@@ -21,7 +21,8 @@ import pytest
 
 from app import catalogue, catalogue_base
 from app.correspondance import (ARBITRAGE_REQUIS, ETABLIE, FAMILLES_SANS_LOT,
-                                TABLE, en_attente_d_arbitrage, famille_de)
+                                TABLE, convient, en_attente_d_arbitrage,
+                                famille_de, retenus_par)
 from app.devis import Devis, ajouter_ligne
 from app.referentiel import REFERENTIEL
 from tools.donnees import agreger as ag
@@ -55,6 +56,10 @@ JEU = [
     _ligne("T-PL-003", "Mitigeur lavabo", "PLOMBERIE_ROBINETTERIE", "u", "70,00"),
     _ligne("T-EL-001", "Câble rigide", "ELECTRICITE_CABLE", "ml", "1,20"),
     _ligne("T-EL-002", "Prise 2P+T", "ELECTRICITE_APPAREILLAGE", "u", "8,00"),
+    # Moins chère que la 2P+T, et dans la même famille : c'est exactement le
+    # piège que le filtre de `ELEC_PRISE` doit éviter. Une prise réseau
+    # n'alimente rien.
+    _ligne("T-EL-004", "Prise RJ45 cat.6", "ELECTRICITE_APPAREILLAGE", "u", "5,00"),
     _ligne("T-EL-003", "Disjoncteur 20 A", "ELECTRICITE_TABLEAU", "u", "8,49"),
 ]
 
@@ -259,3 +264,66 @@ def test_aucun_prix_n_est_nul_quelle_que_soit_la_source(base):
         produit = catalogue.resoudre_produit(lot)
         assert produit is not None, lot
         assert produit.prix_unitaire_ht > 0, lot
+
+
+# --- Une famille hétérogène ne se prend pas en bloc -------------------------
+
+def test_une_prise_de_communication_ne_sert_pas_de_prise_de_courant(base):
+    """Le moins cher de la famille est la RJ45 à 5 €. La prendre pour une prise
+    de courant serait une substitution muette : le devis afficherait un prix
+    juste pour un produit faux, ce qui est pire qu'un prix faux."""
+    produit = catalogue.resoudre_produit("ELEC_PRISE")
+    assert produit.reference == "T-EL-002"
+    assert produit.prix_unitaire_ht == 8.00
+
+
+def test_le_filtre_est_ecrit_dans_la_table_et_motive():
+    """Un filtre non expliqué serait une exclusion arbitraire. Chaque lot qui
+    en porte un doit dire dans son motif pourquoi sa famille ne va pas en
+    bloc."""
+    for entree in TABLE.values():
+        if entree.retient:
+            assert entree.etat == ETABLIE, (
+                f"{entree.lot_code} filtre une famille qu'il n'utilise pas")
+            assert "homogène" in entree.motif or "mélange" in entree.motif, (
+                f"{entree.lot_code} filtre sans dire pourquoi")
+
+
+def test_un_filtre_vide_prend_toute_la_famille():
+    """Le cas ordinaire : une famille où seules la taille ou la finition
+    varient se prend en bloc."""
+    assert retenus_par("PEINT_FINITION") == ()
+    assert convient("Peinture acrylique mate 2.5 L", ()) is True
+
+
+def test_le_filtre_ignore_la_casse_et_les_variantes_de_libelle():
+    retient = retenus_par("ELEC_PRISE")
+    assert convient("PRISE 2P+T 16A", retient) is True
+    assert convient("Prise Étanche IP55".upper(), retient) is True
+    assert convient("Prise USB-C double", retient) is False
+
+
+def test_un_lot_inconnu_ne_retient_rien():
+    assert retenus_par("LOT_QUI_N_EXISTE_PAS") == ()
+
+
+def test_une_famille_qui_ne_contient_plus_ce_qu_on_retient_ne_rend_rien(
+        tmp_path, monkeypatch):
+    """Si le rayon ne contient plus que des prises réseau, le lot ne prend
+    rien et retombe sur le catalogue simulé. Prendre le voisin le plus proche
+    serait la substitution muette que le filtre existe pour empêcher."""
+    jeu = [_ligne("T-EL-005", "Prise RJ45 cat.6", "ELECTRICITE_APPAREILLAGE",
+                  "u", "5,00")]
+    produits, _ = ag.nettoyer_produits(jeu)
+    ag.joindre(produits, {}, {})
+    chemin = tmp_path / "catalogue.sqlite3"
+    imp.construire({"sources": [{"role": "fichier", "source": "jeu de test",
+                                 "licence": "Données simulées",
+                                 "lignes_brutes": len(jeu)}],
+                    "produits": produits}, chemin).close()
+    monkeypatch.setattr(catalogue_base, "BASE", chemin)
+    monkeypatch.setenv("BTP_CATALOGUE_SOURCE", "base")
+
+    produit = catalogue.resoudre_produit("ELEC_PRISE")
+    assert produit is not None, "le lot doit rester chiffrable"
+    assert produit.origine == "simule"
