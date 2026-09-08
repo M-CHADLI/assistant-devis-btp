@@ -387,8 +387,8 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 | # | Critère | Statut | Constat |
 |---|---|---|---|
-| 153 | Causes des problèmes identifiées correctement | ✅ | `docs/INCIDENTS.md` — **dix fiches**, chacune avec son symptôme, sa reproduction, sa cause remontée au-delà du symptôme, son correctif et son test de non-régression. Trois portent en plus un « comment il a été trouvé » : le défaut de remise par le parcours réel, la sévérité par emoji, la fuite de la dictée par la rédaction du registre RGPD. |
-| 154 | Problème reproduit en environnement de développement | ✅ | Chaque fiche porte sa reproduction, et la commande commune est donnée en tête du journal. Sept des dix incidents ont un test de non-régression dédié dans la suite. |
+| 153 | Causes des problèmes identifiées correctement | ✅ | `docs/INCIDENTS.md` — **douze fiches**, chacune avec son symptôme, sa reproduction, sa cause remontée au-delà du symptôme, son correctif et son test de non-régression. Cinq portent en plus un « comment il a été trouvé », et le journal en tire une conclusion : **trois des douze n'avaient aucun symptôme visible** (fuite de la dictée, remise invisible, prise réseau chiffrée comme prise de courant) et aucun n'a été trouvé par un test — les tests vérifiaient ce qu'on savait déjà. Les trois sont sortis d'une confrontation du code à autre chose que lui-même. |
+| 154 | Problème reproduit en environnement de développement | ✅ | Chaque fiche porte sa reproduction, et la commande commune est donnée en tête du journal. Neuf des douze incidents ont un test de non-régression dédié dans la suite. |
 | 155 | Procédure de débogage documentée depuis l'outil de suivi | 🟡 | La procédure de débogage est écrite une fois pour toutes en tête de `docs/INCIDENTS.md` — reproduire d'abord, écrire le test qui échoue avant le correctif, remonter à la cause, un correctif un commit, relancer la suite entière. Elle n'est pas *tenue depuis un outil de suivi* : le fichier en tient lieu jusqu'à ce que le tableau Notion soit monté. |
 | 156 | Solution documentée expliquant chaque étape | ✅ | Chaque fiche explique la solution et ce qu'elle change, pas seulement le fichier touché. |
 | 157 | Solution versionnée dans le dépôt (merge request par exemple) | 🟡 | Versionnée par commits atomiques et messages explicatifs. **Sans remote, pas de merge request.** |
@@ -405,7 +405,7 @@ aucun wattmètre n'a encore tourné, et c'est ce qui maintient C15-110 et C17-12
 
 1. **Créer le dépôt distant et pousser.** Neuf critères, une commande. *(Décision de l'utilisateur : je n'ai pas le droit de pousser.)*
 2. ~~**Chaîne d'intégration continue** (`.github/workflows/`).~~ **Fait** : `tests.yml` et `docs/INTEGRATION_CONTINUE.md`. Cinq des six critères de C18 sont fermés ; le sixième attend le dépôt distant.
-3. ~~**Fiches d'incident** pour les anomalies déjà corrigées.~~ **Fait** : `docs/INCIDENTS.md`, dix fiches. → C21 pour l'essentiel.
+3. ~~**Fiches d'incident** pour les anomalies déjà corrigées.~~ **Fait** : `docs/INCIDENTS.md`, douze fiches. → C21 pour l'essentiel.
 4. ~~**Quatre séances de veille** au gabarit.~~ **Fait pour une** (08/09/2026), et pas pour quatre : voir la note de C6. La suite est un rituel à tenir, pas un document à écrire. → C6.
 5. ~~**Registre des traitements de données personnelles** + procédures de tri.~~ **Fait** le 08/09/2026 : `docs/RGPD.md`. Trois critères fermés, et un défaut de confidentialité trouvé et corrigé au passage. → C4.
 6. ~~**Journalisation applicative** branchée sur les escalades et corrections existantes.~~ **Fait** : `app/observabilite.py`, dix points de journalisation, tableau de bord `/metriques`. → C20 et C11 largement fermés.

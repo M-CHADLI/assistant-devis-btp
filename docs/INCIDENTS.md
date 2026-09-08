@@ -42,6 +42,15 @@ BTP_DONNEES=/tmp/donnees \
 | INC-05 | Ollama arrêté renvoyait une erreur 500 nue | Majeure | Résolu | `e669883` |
 | INC-06 | Les mentions du devis s'affichaient « undefined » | Majeure | Résolu | `d783b9a` |
 | INC-07 | Le fichier de verrouillage des dépendances avait dérivé | Mineure | Résolu | `7d29b6f` |
+| INC-08 | Une remise s'appliquait sans apparaître nulle part | Majeure | Résolu | `1b3c103` |
+| INC-09 | La sévérité d'une mention se devinait dans le texte | Majeure | Résolu | `75d5e05` |
+| INC-10 | La dictée du prototype sortait de la machine | Critique | Atténué | `34f561e` |
+| INC-11 | Deux devis émis le même jour portaient le même numéro | Majeure | Résolu | `c63600e` |
+| INC-12 | Une prise réseau pouvait être chiffrée comme une prise de courant | Critique | Résolu | `09f853f` |
+
+Les cinq dernières lignes manquaient au tableau alors que leurs sections
+existaient plus bas : un tableau de bord qui ne montre qu'une partie du journal
+est pire qu'un journal sans tableau de bord.
 
 ---
 
@@ -342,6 +351,68 @@ démarrage de la reconnaissance ne contourne la demande d'accord.
 
 ---
 
+## INC-11 — Deux devis émis le même jour portaient le même numéro
+
+**Symptôme.** Deux chantiers différents chiffrés le même jour sortent en `.docx`
+avec le même numéro, `DEV-20260908-001`. Un numéro de devis sert à désigner un
+document : deux documents qui portent le même ne se distinguent plus, ni pour
+l'artisan, ni pour le client, ni au moment de facturer.
+
+**Reproduction.** Chiffrer un chantier, exporter, ouvrir un second projet,
+chiffrer, exporter. Comparer les deux en-têtes.
+
+**Comment il a été trouvé.** En codant US-17 (repartir d'un devis pour un
+chantier voisin) : la duplication rend le cas fréquent, alors qu'il était
+jusque-là théorique.
+
+**Cause.** L'export écrivait `DEV-{jour}-001` en dur. Le `-001` avait l'air d'un
+compteur, il n'en était pas un — personne ne l'incrémentait.
+
+**Correctif.** `numero_de_devis(projet_id, jour)` rend
+`DEV-AAAAMMJJ-<six premiers caractères de l'identifiant de projet>`. Unique
+**sans compteur partagé** : un compteur incrémental demanderait un état mutable
+partagé entre les sessions, pour une propriété — la numérotation sans trou — que
+la loi impose aux *factures*, pas aux devis. Le numéro et la date d'émission
+sont fixés à l'ouverture du projet et jamais recalculés : un devis réexporté
+doit être le même document.
+
+**Test de non-régression.** `tests/test_duplication.py` et `tests/test_export.py`
+vérifient qu'un devis dupliqué porte un numéro différent de son original et que
+le réexport ne change pas le numéro.
+
+---
+
+## INC-12 — Une prise réseau pouvait être chiffrée comme une prise de courant
+
+**Symptôme.** Aucun — c'est la deuxième fois dans ce journal, après INC-10, et
+c'est ce qui rend le défaut grave. Le devis affiche une ligne « Prise » à
+7,60 €, un montant correct pour l'article retenu. Rien ne dit que l'article
+retenu est une prise RJ45, qui n'alimente rien.
+
+**Reproduction.** Régler `BTP_CATALOGUE_SOURCE=base`, chiffrer un chantier
+comportant le lot `ELEC_PRISE`, lire la désignation de la ligne.
+
+**Comment il a été trouvé.** En comparant les deux sources de prix lot par lot
+contre la base réelle, plutôt qu'en se fiant aux tests unitaires — qui passaient,
+parce que leur jeu de données ne contenait qu'une seule prise.
+
+**Cause.** La règle « le moins cher de la famille » suppose que la famille ne
+contienne qu'une seule sorte de chose. `ELECTRICITE_APPAREILLAGE` mélange le
+courant fort (2P+T, étanche) et la communication (RJ45, USB-C), et son article
+le moins cher est une RJ45.
+
+**Correctif.** Un lot déclare ce qu'il `retient` dans sa famille
+(`app/correspondance.py`), écrit avec son motif et jamais déduit d'une
+ressemblance de libellé. Quand plus rien ne correspond, le lot ne prend rien et
+retombe sur le catalogue simulé : une famille qui ne contient plus ce que le lot
+désigne doit se signaler, pas se faire remplacer par son plus proche voisin.
+
+**Test de non-régression.** Six tests dans `tests/test_correspondance.py`, dont
+un qui place une RJ45 *moins chère* que la 2P+T dans le jeu de données — le jeu
+initial ne contenait qu'une prise, et c'est pourquoi il ne voyait rien.
+
+---
+
 ## Ce que ce journal ne couvre pas encore
 
 - **Aucun outil de suivi.** C21-155 demande une procédure de débogage
@@ -349,6 +420,15 @@ démarrage de la reconnaissance ne contourne la demande d'accord.
   tableau Notion (`docs/NOTION_BOARD.md`) le portera quand il sera monté.
 - **Aucune merge request.** C21-157 la cite en exemple. Sans dépôt distant, les
   correctifs sont des commits atomiques et rien de plus.
-- **Aucun incident de production**, puisqu'il n'y a pas de production. Les dix
+- **Aucun incident de production**, puisqu'il n'y a pas de production. Les douze
   incidents ci-dessus sont des défauts de développement — ce sont de vrais
   incidents, avec de vraies causes, mais aucun n'a touché un utilisateur.
+
+**Ce que la série apprend.** Trois des douze (INC-10, INC-12, et INC-08 dans une
+moindre mesure) n'avaient **aucun symptôme visible** : l'écran affichait quelque
+chose de plausible. Aucun n'a été trouvé par un test, et aucun ne l'aurait été —
+les tests vérifiaient ce qu'on savait déjà. Les trois ont été trouvés en
+confrontant le code à autre chose que lui-même : un registre RGPD écrit depuis
+les modules, un parcours joué en vrai, une comparaison de sources contre la base
+réelle. C'est l'argument le plus solide de ce journal en faveur des exercices de
+conformité et des vérifications de bout en bout.
