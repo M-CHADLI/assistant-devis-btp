@@ -39,6 +39,18 @@ class LigneChiffree(LigneStructure):
     taux_tva: float
 
 
+class MentionSortie(BaseModel):
+    """Une mention réglementaire du tour : sa sévérité, puis son libellé.
+
+    La sévérité est publiée comme donnée et non déduite du texte : le front la
+    lit dans `niveau` au lieu de chercher un emoji dans la phrase, et un
+    changement de formulation ne change plus la couleur d'un avertissement
+    (docs/STORIES.md US-18).
+    """
+    niveau: str = Field(description="simple | forte")
+    texte: str
+
+
 class LigneEnAttente(BaseModel):
     """Quantité hors bornes, retenue tant que l'artisan n'a pas tranché (US-11)."""
     lot_code: str
@@ -67,6 +79,8 @@ class DevisSortie(BaseModel):
     total_tva: float | None
     total_ttc: float | None
     acompte_30_pct: float | None
+    # Les niveaux (« simple », « forte ») accumulés sur le devis, pas des
+    # phrases : le libellé est choisi à l'affichage.
     mentions: list[str]
     franchise_tva: bool
     mentions_manquantes: list[str]
@@ -83,7 +97,7 @@ class ReponseTour(ReponseDevis):
     """Un tour de dialogue rendu au navigateur."""
     intent: str
     messages: list[str]
-    mentions: list[str]
+    mentions: list[MentionSortie]
     consommables_suggeres: dict[str, list[str]]
     # Messages de garde-fou (périmètre, injection) : listés à part pour que le
     # front les annonce en role="alert" sans reconnaître leur texte (US-20).

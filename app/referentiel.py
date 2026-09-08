@@ -71,6 +71,16 @@ MENTIONS: dict[str, str] = {
     "PLOMB_EVAC": "simple",
 }
 
+# Le texte qui accompagne chaque niveau. Il vit ici, et pas dans l'interface :
+# le front recevait jusqu'ici des phrases dont il devait *deviner* la sévérité
+# en cherchant un emoji dans la chaîne (US-18). La sévérité est une donnée, elle
+# voyage comme telle ; le texte n'est plus qu'un libellé.
+TEXTE_MENTION: dict[str, str] = {
+    "forte": ("Ce point relève d'un domaine réglementé — je t'informe, mais "
+              "fais valider par un professionnel avant travaux."),
+    "simple": "Point de vigilance : à vérifier avant de te lancer.",
+}
+
 
 # --- Bornes de plausibilité (docs/DISPOSITIF_AGENT.md §3.2) ---
 #

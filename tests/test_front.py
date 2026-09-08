@@ -223,3 +223,25 @@ def test_la_colonne_remise_n_apparait_que_s_il_y_a_une_remise(html):
     recalcule, mais une colonne vide n'apprendrait rien."""
     assert "remise_pct > 0" in html
     assert "l.remise_pct.toFixed(0)" in html
+
+
+def test_la_severite_d_une_mention_ne_se_devine_pas_dans_le_texte(html):
+    """US-18 — la sévérité arrive du serveur dans `niveau`. La chercher dans la
+    phrase (`startsWith('⚠️')`) liait la couleur d'un avertissement
+    réglementaire à un caractère de ponctuation."""
+    assert "startsWith('⚠️')" not in html
+    assert "m.niveau === 'forte'" in html
+
+
+def test_une_mention_ne_repose_pas_sur_la_seule_couleur(html):
+    """RGAA 3.1 — le rouge et l'orange ne disent rien à qui ne les voit pas :
+    le niveau est écrit en toutes lettres devant le message."""
+    assert "'Réglementé — '" in html
+    assert "'Vigilance — '" in html
+
+
+def test_une_mention_forte_est_annoncee_immediatement(html):
+    """RGAA 7.4 — un poste réglementé ne doit pas passer inaperçu : role=alert
+    interrompt la lecture, role=status attend une pause."""
+    bloc = html[html.index("(data.mentions || []).forEach"):]
+    assert "'alert' : 'status'" in bloc[:600]

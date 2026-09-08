@@ -342,8 +342,11 @@ plutôt que d'interroger indéfiniment.
 - *Accessibilité* — l'arrivée d'une question est annoncée en `aria-live="polite"`.
 
 **Traçabilité.** C13, C14, C17 · `DISPOSITIF_AGENT.md` §1.4 (HITL-1) ·
-état : **partiel** (branche `clarification` présente dans `app/pipeline.py` ;
-plafond à trois tours **non implémenté**, `<label>` absent du front).
+état : **fait** — branche `clarification` dans `app/pipeline.py`, plafond
+`MAX_TOURS_CLARIFICATION = 3` appliqué au-delà duquel quatre hypothèses par
+défaut sont annoncées puis suivies, `<label for="entree">` dans
+`app/static/index.html`. Couvert par `tests/test_pipeline.py` et
+`tests/test_front.py`.
 
 ### US-08 — Voir mon chantier découpé en lots ordonnés
 
@@ -403,10 +406,10 @@ calcule est un modèle qui se trompe silencieusement.
   perdu à la lecture linéaire (RGAA 5.7 — WCAG 1.3.1).
 
 **Traçabilité.** C13, C14 · `DISPOSITIF_AGENT.md` §1.2 étapes 5-6 ·
-état : **partiel** — le calcul est correct et testé (`tests/test_devis.py`), mais
-l'`intent` `quantitatif`, déclaré dans `app/schema.py` et annoncé dans le prompt
-système, **n'a aucune branche dans `_router`** (`app/pipeline.py`) : anomalie
-ouverte, à corriger.
+état : **fait** — le calcul est testé (`tests/test_devis.py`) et l'anomalie
+ouverte est **levée** : `_router` traite `quantitatif` avec `devis` et `lots`
+(`app/pipeline.py`), une intention annoncée au modèle ne peut plus tomber dans
+le vide.
 
 ### US-10 — Ne pas oublier les consommables
 
@@ -561,9 +564,11 @@ produit **et** une source de données d'entraînement.
   WCAG 2.1.2, 2.4.3).
 
 **Traçabilité.** C13, C17, C20 · `DISPOSITIF_AGENT.md` §1.4, §5.2 ·
-état : **partiel** — journalisation faite (`Correction`, `corriger_ligne` dans
-`app/pipeline.py`) ; **à faire** côté front (bouton `✕` sans nom accessible,
-modale sans sémantique de dialogue dans `app/static/index.html`).
+état : **fait** — journalisation faite (`Correction`, `corriger_ligne` dans
+`app/pipeline.py`) ; côté front, le bouton de suppression porte un
+`aria-label` qui nomme la ligne visée et la modale de correction est un
+`role="dialog" aria-modal="true"` étiqueté par son titre
+(`app/static/index.html`).
 
 ### US-15 — Obtenir un devis conforme aux mentions obligatoires BTP
 
@@ -682,11 +687,15 @@ un professionnel — pas un refus.
   (RGAA 3.1 — WCAG 1.4.1).
 - *Accessibilité* — une mention forte est annoncée en `role="alert"`.
 
-**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §3.3 · état : **partiel** —
-l'ajout forcé par le code est **implémenté** (`app/pipeline.py` complète les
-mentions depuis `MENTIONS` indépendamment de la sortie du modèle) ; le front classe
-la sévérité par **détection de chaîne** (`startsWith('⚠️')`) et la rend par la
-**couleur seule** — les deux sont à reprendre.
+**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §3.3 · état : **fait** —
+l'ajout forcé par le code est implémenté (`app/pipeline.py` complète les mentions
+depuis `MENTIONS` indépendamment de la sortie du modèle) et la sévérité **voyage
+comme donnée** : l'API publie `MentionSortie {niveau, texte}` (`app/api_schema.py`),
+le libellé vit dans `TEXTE_MENTION` (`app/referentiel.py`), le front classe sur
+`niveau` et écrit « Réglementé — » ou « Vigilance — » devant le message, une mention
+forte étant annoncée en `role="alert"`. La détection de chaîne (`startsWith('⚠️')`)
+et la couleur seule ont disparu ; `tests/test_front.py` vérifie qu'elles ne
+reviennent pas.
 
 ### US-19 — Être redirigé quand ma demande sort du périmètre
 
@@ -945,9 +954,11 @@ qui tient dans la tête de son auteur n'est pas une procédure.
 - Les dépendances sont figées et reproductibles.
 
 **Traçabilité.** C18, C19 · état : **partiel** — `pyproject.toml` et `uv.lock`
-figent les dépendances et `tests/` existe, mais aucune chaîne d'intégration n'est
-configurée et `app/main.py` ouvre `app/static/index.html` par **chemin relatif**,
-donc dépendant du répertoire de lancement.
+figent les dépendances, `.github/workflows/tests.yml` exécute la suite à chaque
+modification et `app/main.py` résout `static/index.html` depuis son propre
+emplacement (lancement indépendant du répertoire courant). **Reste** : aucun
+`remote` git n'est configuré, donc la chaîne ne s'exécute nulle part et rien
+n'est observable par un tiers.
 
 ---
 
@@ -991,9 +1002,15 @@ Elles ne se voient pas à la démonstration, et elles se notent.
 | 7 | US-25 (export du signal qualité) | C20 |
 | 8 | US-19 / US-20 (périmètre, injection) | C17, C21 |
 
-Trois stories ne figurent dans aucune file parce qu'elles sont **déjà faites** :
-US-08, US-10 et US-13. Elles restent au découpage pour la traçabilité, pas pour
-le reste à faire.
+Trois stories ne figurent dans aucune file parce qu'elles étaient **déjà faites**
+au moment du découpage : US-08, US-10 et US-13. Elles restent au découpage pour la
+traçabilité, pas pour le reste à faire.
+
+**Où en sont ces files (08/09/2026).** Les deux tables sont l'ordre décidé, pas
+l'état : celui-ci se lit story par story, à la ligne *Traçabilité*. De la file 1,
+seules **US-04** (transcription locale) et **US-06** (contradictions) restent
+ouvertes ; de la file 2, **US-01**, **US-03**, et la partie de **US-26** qui
+dépend d'un dépôt distant.
 
 US-17 reste hors des deux files : confort métier réel, aucun apport de preuve.
 

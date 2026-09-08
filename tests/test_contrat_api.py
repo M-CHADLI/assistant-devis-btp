@@ -118,3 +118,14 @@ def test_l_api_annonce_sa_regle_structurante_dans_sa_description(client):
     modèle/code doit s'y voir."""
     description = client.get("/openapi.json").json()["info"]["description"]
     assert "aucune clé de prix" in description
+
+
+def test_l_openapi_publie_la_forme_structuree_d_une_mention(client):
+    """US-18 — le niveau est une donnée du contrat, pas une convention de
+    rédaction. Publié, il est opposable au front comme au jury."""
+    schema = client.get("/openapi.json").json()
+    mention = schema["components"]["schemas"]["MentionSortie"]
+    assert set(mention["properties"]) == {"niveau", "texte"}
+    assert "simple | forte" in mention["properties"]["niveau"]["description"]
+    tour = schema["components"]["schemas"]["ReponseTour"]
+    assert tour["properties"]["mentions"]["items"]["$ref"].endswith("MentionSortie")

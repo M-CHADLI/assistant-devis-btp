@@ -400,13 +400,17 @@ function rendreTour(data) {
   const cadrages = data.cadrages || [];
   data.messages.forEach(m => {
     if (cadrages.includes(m)) { ajouterMessage('Cadrage — ' + m, 'assistant cadrage', 'alert'); return; }
-    let classe = 'assistant';
-    if (m.startsWith('⚠️')) classe += ' mention-forte';
-    else if (m.toLowerCase().includes('vigilance')) classe += ' mention-simple';
-    // Ajout du préfixe textuel
-    if (classe.includes('mention-forte')) m = 'Réglementé — ' + m;
-    else if (classe.includes('mention-simple')) m = 'Vigilance — ' + m;
-    ajouterMessage(m, classe);
+    ajouterMessage(m, 'assistant');
+  });
+  // Les mentions arrivent structurées : {niveau, texte}. La sévérité est lue
+  // dans la donnée, jamais devinée dans la phrase — reformuler le message ne
+  // peut plus changer la couleur de l'avertissement (US-18). Le préfixe en
+  // toutes lettres double la couleur, qui ne porte donc rien à elle seule.
+  (data.mentions || []).forEach(m => {
+    const niveau = m.niveau === 'forte' ? 'forte' : 'simple';
+    const prefixe = niveau === 'forte' ? 'Réglementé — ' : 'Vigilance — ';
+    ajouterMessage(prefixe + m.texte, 'assistant mention-' + niveau,
+                   niveau === 'forte' ? 'alert' : 'status');
   });
   if (Object.keys(data.consommables_suggeres || {}).length) {
     let texteConso = 'Ne pas oublier : ';

@@ -21,7 +21,8 @@ from app.garde_fous import (MESSAGE_HUMAIN, MESSAGE_INJECTION, demande_un_humain
 from app.llm import MODEL_NAME, ModeleInjoignable, SortieModeleInvalide, appeler_modele
 from app.observabilite import JOURNAL
 from app.profil import Client, ProfilArtisan
-from app.referentiel import REFERENTIEL, MENTIONS, bornes, est_plausible
+from app.referentiel import (REFERENTIEL, MENTIONS, TEXTE_MENTION, bornes,
+                            est_plausible)
 from app.schema import PayloadClarification, PayloadConsommables, PayloadDevis, PayloadReponse
 
 LONGUEUR_MAX_ENTREE = 2000
@@ -117,7 +118,8 @@ class Session:
 class ResultatTour:
     intent: str
     messages_assistant: list[str]
-    mentions: list[str]
+    # Chacune : {"niveau": "simple" | "forte", "texte": …} (US-18).
+    mentions: list[dict[str, str]]
     devis: Devis
     consommables_suggeres: dict[str, list[str]]
     # Messages de garde-fou (périmètre, injection) : ils sont déjà en tête de
@@ -136,7 +138,8 @@ def _valider_entree(texte: str) -> str | None:
     return None
 
 
-def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], dict[str, list[str]]]:
+def _router(session: Session, sortie: dict,
+            ) -> tuple[str, list[str], list[dict[str, str]], dict[str, list[str]]]:
     """Route une sortie modèle déjà parsée en JSON vers le bon traitement.
 
     Peut lever ValidationError ou LotInconnu — l'appelant décide de reprendre
@@ -145,7 +148,8 @@ def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], 
     intent = sortie.get("intent")
     payload = sortie.get("payload", {})
     mention = sortie.get("mention")
-    mentions: list[str] = [mention] if mention else []
+    # Niveaux collectés pendant le tour, du modèle et des lots ajoutés.
+    niveaux: list[str] = [mention] if mention in TEXTE_MENTION else []
     messages: list[str] = []
     consommables_suggeres: dict[str, list[str]] = {}
 
@@ -196,8 +200,8 @@ def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], 
             lignes_nouvelles += 1
             if ligne.lot_code not in session.lots_presents:
                 session.lots_presents.append(ligne.lot_code)
-            if ligne.lot_code in MENTIONS and MENTIONS[ligne.lot_code] not in mentions:
-                mentions.append(MENTIONS[ligne.lot_code])
+            if ligne.lot_code in MENTIONS and MENTIONS[ligne.lot_code] not in niveaux:
+                niveaux.append(MENTIONS[ligne.lot_code])
         if lignes_nouvelles and session.structure_validee:
             messages.append(
                 f"{lignes_nouvelles} ligne(s) ajoutée(s) au devis "
@@ -230,11 +234,10 @@ def _router(session: Session, sortie: dict) -> tuple[str, list[str], list[str], 
     else:
         raise ValueError(f"intent inconnu du routeur : {intent!r}")
 
-    if mention == "forte":
-        messages.append("⚠️ Ce point relève d'un domaine réglementé — je t'informe, "
-                         "mais fais valider par un professionnel avant travaux.")
-    elif mention == "simple":
-        messages.append("Point de vigilance : à vérifier avant de te lancer.")
+    # Sortie structurée : niveau *et* texte. Le front classe sur `niveau` — il
+    # n'inspecte plus la phrase, et un lot réglementé signalé par le seul code
+    # (sans `mention` du modèle) s'affiche désormais lui aussi dans le fil.
+    mentions = [{"niveau": n, "texte": TEXTE_MENTION[n]} for n in niveaux]
 
     return intent, messages, mentions, consommables_suggeres
 

@@ -12,6 +12,7 @@ from app import pipeline
 from app.llm import ModeleInjoignable, SortieModeleInvalide
 from app.garde_fous import MESSAGE_HUMAIN
 from app.pipeline import MAX_APPELS_MODELE, Session, traiter_message
+from app.referentiel import TEXTE_MENTION
 
 
 class FauxModele:
@@ -41,8 +42,9 @@ def faux(monkeypatch):
     return _installer
 
 
-def _sortie_devis(lot_code="PEINT_FINITION", valeur=22.0, intent="devis"):
-    return {"intent": intent, "mention": None,
+def _sortie_devis(lot_code="PEINT_FINITION", valeur=22.0, intent="devis",
+                  mention=None):
+    return {"intent": intent, "mention": mention,
             "payload": {"pieces": ["salon"],
                         "lignes": [{"lot_code": lot_code,
                                     "dimension": {"type": "surface", "valeur": valeur}}]}}
@@ -141,8 +143,33 @@ def test_mention_ajoutee_par_le_code_meme_si_le_modele_l_oublie(faux):
     faux(_sortie_devis(lot_code="ELEC_TABLEAU", valeur=1.0))
     s = Session()
     r = traiter_message(s, "remplace le tableau électrique")
-    assert "forte" in r.mentions
+    assert [m["niveau"] for m in r.mentions] == ["forte"]
     assert "forte" in s.devis.mentions
+
+
+def test_la_mention_sort_avec_son_niveau_et_son_texte(faux):
+    """US-18 — la sévérité voyage comme donnée : l'interface n'a pas à la
+    retrouver en inspectant la phrase, ni la phrase à porter un emoji."""
+    faux(_sortie_devis(lot_code="ELEC_TABLEAU", valeur=1.0))
+    r = traiter_message(Session(), "remplace le tableau électrique")
+    assert r.mentions == [{"niveau": "forte", "texte": TEXTE_MENTION["forte"]}]
+    assert "⚠" not in r.mentions[0]["texte"]
+    assert all("⚠" not in m for m in r.messages_assistant)
+
+
+def test_un_meme_niveau_n_est_pas_annonce_deux_fois(faux):
+    """Le modèle signale « forte » et le lot l'impose : une seule mention."""
+    faux(_sortie_devis(lot_code="ELEC_TABLEAU", valeur=1.0, mention="forte"))
+    r = traiter_message(Session(), "remplace le tableau électrique")
+    assert len(r.mentions) == 1
+
+
+def test_une_mention_inconnue_du_modele_est_ignoree(faux):
+    """Le modèle décrit, il ne décide pas : un niveau hors référentiel ne
+    fabrique pas un avertissement au libellé vide."""
+    faux(_sortie_devis(lot_code="PEINT_FINITION", valeur=22.0, mention="critique"))
+    r = traiter_message(Session(), "22 m2 de peinture")
+    assert r.mentions == []
 
 
 # --- US-11 : bornes de plausibilité ---------------------------------------

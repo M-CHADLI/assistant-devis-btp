@@ -134,11 +134,11 @@ L'import CSV écrit `Story` et `Sprint` comme du texte. Pour obtenir de vraies l
 | | |
 |---|---|
 | Stories | 26, réparties sur 7 épiques |
-| Terminées | 16 · en cours 7 · à faire 3 |
+| Terminées | 20 · en cours 3 · à faire 3 |
 | Sprints clos | S1 à S4, **clos par anticipation** le 08/09 |
 | Sprints ouverts | S5 et S6, entamés en avance sur le calendrier |
-| Points restants au total | 44 sur 122 |
-| Tâches décomposées | 50, dont 43 terminées |
+| Points restants au total | 29 sur 122 |
+| Tâches décomposées | 53, dont 46 terminées |
 
 L'avance sur le calendrier de `PLANNING.md` est réelle, pas déclarative : l'état de chaque story
 est repris de sa ligne de traçabilité dans `docs/STORIES.md`, qui dit l'état du code **constaté**,
