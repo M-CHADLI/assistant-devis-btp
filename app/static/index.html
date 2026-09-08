@@ -237,15 +237,21 @@ function rendreDevis(devis) {
 
   // HITL-2 (US-12) : avant validation, l'écran ne comporte aucune colonne prix,
   // même vide — le serveur n'en a d'ailleurs calculé aucun.
+  // Même règle que le .docx : sans la colonne remise, une ligne remisée ne se
+  // recalcule pas de tête, et l'écart PU × quantité ≠ total se lit comme un bug.
+  const remises = validee && devis.lignes.some((l) => l.remise_pct > 0);
   let html = validee
-    ? `<table><tr><th>Poste</th><th>Qté</th><th>PU${suffixe}</th><th>Total${suffixe}</th><th></th></tr>`
-    : '<table><tr><th>Lot</th><th>Quantité</th><th></th></tr>';
+    ? `<table><tr><th scope="col">Poste</th><th scope="col">Qté</th><th scope="col">PU${suffixe}</th>${remises ? '<th scope="col">Remise</th>' : ''}<th scope="col">Total${suffixe}</th><th></th></tr>`
+    : '<table><tr><th scope="col">Lot</th><th scope="col">Quantité</th><th></th></tr>';
   devis.lignes.forEach((l, i) => {
     const nom = `${l.designation}${l.origine === 'consommable' ? ' <small>(consommable)</small>' : ''}`;
     const supprimer = `<td><button class="btn-supprimer" aria-label="Supprimer la ligne ${i + 1} : ${l.designation}" onclick="corrigerLigne(${i})"><span aria-hidden="true">✕</span></button></td>`;
+    const remise = remises
+      ? `<td>${l.remise_pct > 0 ? `− ${l.remise_pct.toFixed(0)} %` : '—'}</td>`
+      : '';
     html += validee
       ? `<tr><td>${nom}</td><td>${l.quantite} ${l.unite}</td>
-         <td>${l.prix_unitaire_ht.toFixed(2)} €</td>
+         <td>${l.prix_unitaire_ht.toFixed(2)} €</td>${remise}
          <td>${l.prix_ht.toFixed(2)} €</td>${supprimer}</tr>`
       : `<tr><td>${nom}</td><td>${l.quantite} ${l.unite}</td>${supprimer}</tr>`;
   });

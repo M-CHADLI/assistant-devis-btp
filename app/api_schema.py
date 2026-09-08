@@ -31,6 +31,10 @@ class LigneStructure(BaseModel):
 class LigneChiffree(LigneStructure):
     """Ligne après HITL-2 : les prix viennent du catalogue, pas du modèle."""
     prix_unitaire_ht: float
+    # La remise du catalogue, en pourcentage. Sans elle, le total d'une ligne
+    # n'est pas recalculable par le lecteur du devis : il verrait 2 × 79,90 €
+    # aboutir à 135,83 € sans explication (US-15, conformité du document).
+    remise_pct: float = 0.0
     prix_ht: float
     taux_tva: float
 

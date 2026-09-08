@@ -85,8 +85,20 @@ def generer_docx(devis: Devis, pieces: list[str], profil: ProfilArtisan,
     doc.add_paragraph(f"Délai d'exécution : {delai_execution}")
 
     doc.add_heading("Détail des postes", level=2)
-    colonnes = (["Poste", "Quantité", "Prix unitaire", "Total"] if franchise
-                else ["Poste", "Quantité", "Prix unitaire HT", "TVA", "Total HT"])
+    # Une remise du catalogue s'applique au total sans se voir dans le prix
+    # unitaire : le lecteur verrait 2 × 79,90 € donner 135,83 € sans explication.
+    # Un devis dont une ligne ne se recalcule pas se lit comme une erreur, et le
+    # client est en droit de vérifier chaque ligne. La colonne n'apparaît que
+    # s'il y a une remise — sinon elle n'apprendrait rien.
+    remises = {id(l): (l.produit.promo_pct if l.produit else 0.0) for l in devis.lignes}
+    afficher_remise = any(remises.values())
+    colonnes = ["Poste", "Quantité", "Prix unitaire" + ("" if franchise else " HT")]
+    if afficher_remise:
+        colonnes.append("Remise")
+    if not franchise:
+        colonnes.append("TVA")
+    colonnes.append("Total" + ("" if franchise else " HT"))
+
     table = doc.add_table(rows=1, cols=len(colonnes))
     table.style = "Light Grid Accent 1"
     for i, texte in enumerate(colonnes):
@@ -100,6 +112,9 @@ def generer_docx(devis: Devis, pieces: list[str], profil: ProfilArtisan,
             f"{ligne.quantite_achat} {unite}".strip(),
             f"{ligne.prix_unitaire_ht:.2f} €",
         ]
+        if afficher_remise:
+            remise = remises[id(ligne)]
+            valeurs.append(f"− {remise * 100:.0f} %" if remise else "—")
         if not franchise:
             valeurs.append(f"{ligne.taux_tva} %")
         valeurs.append(f"{ligne.prix_ht:.2f} €")

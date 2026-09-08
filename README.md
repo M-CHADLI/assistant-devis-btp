@@ -71,6 +71,26 @@ VIRTUAL_ENV=~/.venvs/the-project uv run python -c \
 qui y est écrit part en ligne. C'est pourquoi l'export du signal qualité refuse une
 destination dans le dépôt et vise le disque local par défaut.
 
+### Vérifier que tout marche vraiment
+
+`pytest` remplace le modèle par une fausse fonction : c'est ce qu'il faut pour
+tester le code, mais cela ne prouve rien sur la chaîne complète. Le parcours de
+bout en bout, lui, ne neutralise rien — serveur réel, Ollama réel, `.docx` écrit
+sur le disque :
+
+```bash
+export PHRASE="une-phrase-de-demonstration"
+export BTP_MOT_DE_PASSE=$(VIRTUAL_ENV=~/.venvs/the-project uv run python -c \
+  "from app.authentification import empreinte; import os; print(empreinte(os.environ['PHRASE']))")
+VIRTUAL_ENV=~/.venvs/the-project uv run uvicorn app.main:app --port 8199 &
+VIRTUAL_ENV=~/.venvs/the-project uv run python tools/parcours_bout_en_bout.py
+```
+
+Vingt-deux étapes : application fermée sans jeton, profil, relecture de dictée
+(HITL-0), tour modèle, absence de prix avant validation (HITL-2), chiffrage,
+export, recalcul de chaque ligne, injection, hors périmètre, escalade, métriques,
+fermeture. Sortie 0 si tout passe.
+
 ## État d'avancement
 
 Le cadrage est figé et **l'implémentation est engagée** : FastAPI, moteur de devis

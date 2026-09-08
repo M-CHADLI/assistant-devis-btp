@@ -154,6 +154,8 @@ def _serialiser_devis(session: Session) -> dict:
         }
         if validee:
             ligne["prix_unitaire_ht"] = l.prix_unitaire_ht
+            ligne["remise_pct"] = round(
+                (l.produit.promo_pct if l.produit else 0.0) * 100, 2)
             ligne["prix_ht"] = l.prix_ht
             ligne["taux_tva"] = l.taux_tva
         lignes.append(ligne)

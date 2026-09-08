@@ -207,3 +207,19 @@ def test_le_401_ramene_au_formulaire_quel_que_soit_l_appel(html):
 def test_la_limite_de_tentatives_est_expliquee_a_l_ecran(html):
     assert "resp.status === 429" in html
     assert "Trop de tentatives" in html
+
+
+def test_les_en_tetes_du_tableau_de_devis_portent_un_scope(html):
+    """RGAA 5.7 — sans `scope`, un lecteur d'écran ne rattache pas une cellule à
+    sa colonne, et le tableau se lit comme une suite de nombres."""
+    entetes = re.findall(r"<th[^>]*>", html)
+    assert entetes, "le tableau de devis a disparu"
+    sans_scope = [e for e in entetes if "scope=" not in e and not re.match(r"<th\s*>", e)]
+    assert not sans_scope, f"en-têtes sans scope : {sans_scope}"
+
+
+def test_la_colonne_remise_n_apparait_que_s_il_y_a_une_remise(html):
+    """Même règle que le .docx : la remise s'affiche pour que la ligne se
+    recalcule, mais une colonne vide n'apprendrait rien."""
+    assert "remise_pct > 0" in html
+    assert "l.remise_pct.toFixed(0)" in html

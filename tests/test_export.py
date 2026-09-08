@@ -13,7 +13,7 @@ import io
 import pytest
 from docx import Document
 
-from app.devis import Devis, ajouter_ligne
+from app.devis import Devis, ajouter_ligne, chiffrer
 from app.export import MentionsIncompletes, generer_docx
 from app.profil import MENTION_293B, Client, Decennale, ProfilArtisan, RegimeTVA
 
@@ -147,3 +147,48 @@ def test_le_document_a_des_titres_et_un_tableau_a_en_tete(devis, profil, client)
     niveaux = [p.style.name for p in doc.paragraphs if p.style.name.startswith("Heading")]
     assert "Heading 1" in niveaux and "Heading 2" in niveaux
     assert doc.tables[0].rows[0].cells[0].text == "Poste"
+
+
+# --- Recalcul de chaque ligne (remise du catalogue) ------------------------
+
+def _table_du_docx(contenu: bytes):
+    doc = Document(io.BytesIO(contenu))
+    table = doc.tables[0]
+    entete = [c.text for c in table.rows[0].cells]
+    return entete, [[c.text for c in r.cells] for r in table.rows[1:]]
+
+
+def _nombre(cellule: str) -> float:
+    return float(cellule.replace("€", "").replace("−", "").replace("%", "")
+                 .replace(",", ".").strip())
+
+
+def test_chaque_ligne_du_devis_est_recalculable(profil, client):
+    """Sans colonne remise, 2 × 79,90 € donnant 135,83 € se lit comme une
+    erreur — et le client est en droit de vérifier chaque ligne."""
+    d = Devis()
+    ajouter_ligne(d, "PEINT_FINITION", "surface", 22.0)      # remise 15 %
+    ajouter_ligne(d, "SOL_POSE_STRATIFIE", "surface", 22.0)  # remise 20 %
+    chiffrer(d)
+    entete, lignes = _table_du_docx(
+        generer_docx(d, ["salon"], profil, client, "3 semaines"))
+    assert "Remise" in entete
+    i_pu, i_rem, i_tot = (entete.index("Prix unitaire HT"), entete.index("Remise"),
+                          entete.index("Total HT"))
+    remisees = 0
+    for ligne in lignes:
+        remise = 0.0 if ligne[i_rem] == "—" else _nombre(ligne[i_rem]) / 100
+        remisees += remise > 0
+        attendu = _nombre(ligne[1].split()[0]) * _nombre(ligne[i_pu]) * (1 - remise)
+        assert abs(attendu - _nombre(ligne[i_tot])) < 0.02, ligne
+    assert remisees, "le jeu doit contenir au moins une ligne remisée"
+
+
+def test_sans_remise_la_colonne_n_apparait_pas(profil, client):
+    """Une colonne qui n'apprend rien encombre un document déjà dense."""
+    d = Devis()
+    ajouter_ligne(d, "SOL_POSE_CARRELAGE", "surface", 12.0)  # aucune remise
+    chiffrer(d)
+    entete, _ = _table_du_docx(
+        generer_docx(d, ["cuisine"], profil, client, "3 semaines"))
+    assert "Remise" not in entete

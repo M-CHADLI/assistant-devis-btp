@@ -598,7 +598,13 @@ bascule sur le chemin 293 B (ni colonne TVA, ni ventilation, ni total TTC).
 front affiche dans une région `role="status"` en ouvrant le formulaire de profil
 — un devis non conforme n'est jamais produit. Les sections sont écrites en
 `Heading 1`/`Heading 2` et le tableau porte une ligne d'en-tête, pour que
-l'export PDF balisé reste possible.
+l'export PDF balisé reste possible. Le **parcours de bout en bout**
+(`tools/parcours_bout_en_bout.py`, exécuté contre le serveur et le modèle réels)
+a montré un défaut que la suite pytest ne voyait pas : la remise du catalogue
+s'appliquait au total sans apparaître nulle part, si bien que 2 × 79,90 €
+aboutissait à 135,83 € sans explication. Une colonne **Remise** a été ajoutée au
+document et à l'écran — elle n'apparaît que s'il y a une remise — et un test
+vérifie que chaque ligne se recalcule : quantité × PU × (1 − remise) = total.
 
 ### US-16 — Retrouver mon devis après un rechargement
 
