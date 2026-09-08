@@ -4,7 +4,7 @@
 contexte compacté), tout ce qu'il faut pour repartir est ici. Le lire d'abord,
 le mettre à jour à chaque étape franchie.
 
-Dernière mise à jour : **08/09/2026**, commit `541544c`.
+Dernière mise à jour : **09/09/2026**, commit `e2d4b7f`.
 
 ---
 
@@ -39,27 +39,29 @@ Dernière mise à jour : **08/09/2026**, commit `541544c`.
 
 ## État vérifié au 08/09/2026
 
-- **466 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
-  `test_garde_fous` 52, `test_front` 50, `test_chaine_donnees` 43,
+- **493 tests, tous verts.** Répartition relevée par `pytest --collect-only -q` :
+  `test_front` 55, `test_garde_fous` 52, `test_chaine_donnees` 43,
   `test_gabarit` 41, `test_pipeline` 33, `test_mlops` 33, `test_annuaire` 30,
-  `test_api` 29, `test_boucle_qualite` 24, `test_auth` 19,
-  `test_api_catalogue` 19, `test_devis` 16, `test_export` 13,
+  `test_api` 29, `test_boucle_qualite` 24, `test_duplication` 22,
+  `test_auth` 19, `test_api_catalogue` 19, `test_devis` 16, `test_export` 13,
   `test_transcription` 12, `test_persistance` 12, `test_packaging` 11,
   `test_observabilite` 11, `test_contrat_api` 10, `test_referentiel` 8.
-- **Vingt-quatre opérations d'API**, comptées sur l'OpenAPI (`app.openapi()`),
+- **Vingt-cinq opérations d'API**, comptées sur l'OpenAPI (`app.openapi()`),
   pas sur les routes.
-- **Stories : 28 au découpage — 21 faites, 6 partielles, 1 à faire** (compté
-  depuis les lignes de traçabilité de `docs/STORIES.md`, pas depuis un tableau
-  recopié).
-  - *fait* : US-02, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20,
-    21, 22, 23, 24, 25
+- **Stories : 28 au découpage — 22 faites, 6 partielles, plus rien « à faire »**
+  (compté depuis les lignes de traçabilité de `docs/STORIES.md`, pas depuis un
+  tableau recopié).
+  - *fait* : US-02, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    20, 21, 22, 23, 24, 25
   - *partiel* : US-01 (tout est écrit et testé sauf l'appel réel, faute de
     clé d'annuaire), US-04 (dictée navigateur, transcription locale à faire),
     US-26 (chaînes écrites et image construite, aucun `remote` pour les
     exécuter), US-27 (chaîne de données faite, pas branchée sur le devis),
     US-28 (chaîne du modèle faite, entraînement non lancé), US-03 (tout est
     écrit et testé sauf l'appel réel, faute de clé d'OCR)
-  - *à faire* : US-17
+  - **La file de code est vide.** Ce qui reste au §« File de travail » ne
+    dépend plus d'écrire du code : une clé, un arbitrage, un dépôt distant,
+    ou de la matière écrite à la main.
 - **Le parcours de bout en bout passe 24/24, cinq fois de suite** (08/09,
   05 h 57 – 06 h 01) contre le serveur réel et `gpt-oss:20b` : 4 lignes de devis,
   620,81 € TTC, `.docx` de 37 579 octets, ~46 s par passage.
@@ -132,8 +134,11 @@ Dernière mise à jour : **08/09/2026**, commit `541544c`.
 | `862e9ad` | Journal remis à l'état vérifié après US-01 |
 | `7ad76d6` | Reprise de la mise en page d'un ancien devis déposé (US-03, partiel) |
 | `541544c` | US-03 répercutée dans la conception, le registre RGPD (T5) et l'audit |
+| `9e39a10` | Journal remis à l'état vérifié après US-03 |
+| `c63600e` | Repartir d'un devis pour un chantier voisin (US-17) |
+| `e2d4b7f` | US-17 répercutée : stories, maquettes, modèle de données, audit |
 
-**Rien n'est poussé.** **Cinquante et un commits cette nuit** (depuis `87cfb07`), soixante sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
+**Rien n'est poussé.** **Cinquante-quatre commits cette nuit** (depuis `87cfb07`), soixante-trois sur `docs/pivot-btp-vocal-docs` depuis `main`, aucun `push`.
 
 **L'audit jury au réveil : 91 ✅ / 35 🟡 / 9 ❌ sur 135** (il était à
 82 ✅ / 31 🟡 / 22 ❌ en début de nuit). **Les neuf ❌ restants sont tous
@@ -201,14 +206,13 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
    Avant toute exploitation réelle, le point RGPD du §« Ce qui manque » de
    `docs/RGPD.md` est un préalable : contrat de sous-traitance, localisation
    des traitements, rétention côté service.
-9. **US-17** — confort métier réel, aucun apport de preuve : à faire en dernier.
-10. **Brancher le devis sur la base catalogue.** La chaîne de données alimente
+9. **Brancher le devis sur la base catalogue.** La chaîne de données alimente
     l'API mais **pas encore le moteur de devis**, qui lit toujours le
     dictionnaire de `app/catalogue.py`. La couture est `resoudre_produit()` →
     `moins_cher_de_famille()`. Bloqué sur un arbitrage métier : les codes de lot
     du référentiel et les familles du dump ne se recouvrent pas, et inventer
     cette table de correspondance reviendrait à décider à votre place.
-11. **Partager les rituels, pas seulement les écrire.** `docs/RITUELS.md` existe
+10. **Partager les rituels, pas seulement les écrire.** `docs/RITUELS.md` existe
     désormais (objectifs, modalités, parties prenantes, définition de fini), mais
     C16-117 reste 🟡 volontairement : le critère demande de *partager* avec les
     parties prenantes, et un document versionné n'est pas un partage. C'est un
@@ -273,6 +277,33 @@ matière que personne ne peut écrire à votre place, et le reste à coder.
   Corrigé en écrivant le test : un intitulé orphelin est du poids mort, et
   toute surface de stockage non nécessaire est une surface où quelque chose
   peut entrer.
+- **US-17 sortie du bas du backlog une fois la file de certification vidée.**
+  Elle n'apporte aucune preuve au jury, mais c'était le dernier élément
+  codable non bloqué : la laisser en plan aurait laissé une story « à faire »
+  au tableau sans raison technique.
+- **Cinq partis pris dans US-17, tous inscrits dans `docs/STORIES.md`.**
+  (1) *Le numéro de devis n'a pas de compteur partagé* : `DEV-AAAAMMJJ-` suivi
+  du début de l'identifiant de projet, parce qu'un compteur incrémental
+  supposerait un état mutable commun à tous les projets — la numérotation
+  continue sans rupture est une obligation de *facturation*, pas de devis.
+  (2) *L'identité est fixée à l'ouverture et ne bouge plus* : la recalculer à
+  l'export changerait le numéro et la date de validité d'un devis déjà remis.
+  (3) *La copie garde la structure et laisse les prix* : le catalogue est
+  volatil, et un prix recopié présenté comme celui du jour serait le prix
+  inventé que tout le projet interdit. (4) *La copie laisse les corrections,
+  les escalades et l'historique* : ils gonfleraient le signal qualité (US-25)
+  de doublons jamais dictés, et l'historique porte le nom d'un autre client.
+  (5) *La réponse dit ce qui n'a pas suivi* : une copie silencieusement
+  amputée ferait croire à l'artisan qu'il tient son chiffrage.
+- **Défaut corrigé à la racine, découvert par US-17** : l'export écrivait
+  `DEV-{jour}-001` en dur, donc deux devis émis le même jour portaient le même
+  numéro. Version de persistance 4 → 5 ; les projets antérieurs reçoivent une
+  identité **une fois**, à la relecture, jamais recalculée à l'export.
+- **`docs/MAQUETTES.md` corrigé plutôt que laissé mentir.** Le document
+  annonçait que US-01, US-03 et US-17 seraient dessinées avant d'être codées ;
+  deux ne l'ont pas été. Une section « ce qui a été codé sans être dessiné »
+  dit désormais ce que le code a décidé à la place de la maquette, au lieu de
+  reconstituer après coup des maquettes qui n'ont rien précédé.
 
 - Quatre hypothèses par défaut concrètes quand le plafond de clarification est
   atteint : TVA à 10 %, hauteur sous plafond 2,50 m, supports sains, surfaces
