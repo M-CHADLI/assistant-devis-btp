@@ -231,10 +231,16 @@ le principe « 100 % local » affiché au jury.
   bouton (RGAA 3.1, WCAG 4.1.2) ; la saisie texte équivalente est un
   **mécanisme alternatif de plein droit**, pas un mode dégradé (WCAG 1.1.1).
 
-**Traçabilité.** C10, C14, C17 · `CADRAGE_MODELE.md` §2 · état : **partiel**
-(prototype Web Speech API navigateur dans `app/static/index.html`, qui n'est
-pas le STT local de production et sort l'audio de la machine — écart assumé et
-documenté dans le code, à résorber).
+**Traçabilité.** C10, C14, C17 · `CADRAGE_MODELE.md` §2 · `docs/RGPD.md` (T2) ·
+état : **partiel, écart encadré** (prototype Web Speech API navigateur dans
+`app/static/index.html`, qui n'est pas le STT local de production). Depuis le
+08/09/2026, le front **réclame le traitement sur l'appareil** (`processLocally`,
+Chrome 139+) et, quand le navigateur ne sait pas le faire, ne bascule pas en
+silence : il nomme ce qui sortirait de la machine et demande un accord
+explicite, refusable. Deux tests tiennent la propriété (`tests/test_front.py`),
+dont un qui interdit un second point de démarrage de la reconnaissance. L'écart
+n'est donc plus silencieux, mais il n'est pas résorbé : seul le STT local le
+supprime.
 
 ### US-05 — Relire et corriger la transcription avant traitement
 
@@ -991,7 +997,7 @@ L'objectif est un parcours continu qui tient debout devant un jury.
 | 8 | US-18 / US-14 (front) | Mention sans couleur seule, modale accessible, boutons nommés |
 | 9 | US-07 (plafond à trois tours) | Sans plafond, la clarification peut boucler en direct |
 | 10 | US-11 (bornes de plausibilité) | Rattrape la dictée mal transcrite avant le client |
-| 11 | US-04 (STT local) | Résorbe l'écart assumé : le prototype navigateur sort l'audio de la machine |
+| 11 | US-04 (STT local) | Résorbe l'écart : depuis le 08/09/2026 le prototype réclame le traitement sur l'appareil et demande un accord explicite sinon, mais seul le STT local supprime l'option de faire sortir l'audio |
 | 12 | US-06 (contradictions) | Deux dictées qui se contredisent doivent être arbitrées, pas cumulées |
 
 ### File 2 — Exigences de certification

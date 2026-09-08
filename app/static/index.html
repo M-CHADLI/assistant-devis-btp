@@ -724,9 +724,29 @@ async function demarrer() {
 
 demarrer();
 
-// Dictée — prototype navigateur (Web Speech API)
+// Dictée — prototype navigateur (Web Speech API).
+//
+// Par défaut, cette interface **ne transcrit pas dans le navigateur** : Chrome
+// envoie l'audio à un service distant, Safari au sien. La voix de l'artisan et
+// les noms de clients qu'elle porte quitteraient donc la machine, ce qui
+// contredit l'engagement « 100 % local » du cadrage (docs/RGPD.md, traitement
+// T2). Chrome 139 a ajouté `processLocally`, qui garde le traitement sur
+// l'appareil : on l'exige quand il existe.
+//
+// Quand il n'existe pas, on ne bascule pas en silence sur le service distant.
+// Le produit dit ce qui sortirait de la machine et demande un accord explicite :
+// l'artisan fait autorité, y compris sur ce qu'il accepte d'envoyer. La dictée
+// locale d'US-04 (Whisper sur la machine) est ce qui rendra ce choix inutile.
 const btnDicter = document.getElementById('btn-dicter');
 const Reco = window.SpeechRecognition || window.webkitSpeechRecognition;
+const LIBELLE_LOCAL = '🎤 Dicter (sur l\'appareil)';
+const LIBELLE_DISTANT = '🎤 Dicter (prototype navigateur)';
+const AVERTISSEMENT_DISTANT =
+  "Ce navigateur ne sait pas transcrire sur l'appareil. Si tu continues, "
+  + "l'audio part au service du navigateur : ta voix et le nom de ton client "
+  + "sortent de cette machine.\n\n"
+  + "Tu peux saisir au clavier à la place. Confirme pour dicter quand même.";
+
 if (!Reco) {
   btnDicter.disabled = true;
   btnDicter.title = "Dictée non supportée par ce navigateur";
@@ -734,16 +754,63 @@ if (!Reco) {
   const reco = new Reco();
   reco.lang = 'fr-FR';
   reco.interimResults = false;
+
+  // Le traitement sur l'appareil est demandé tant qu'il n'a pas échoué.
+  const surAppareil = 'processLocally' in reco;
+  if (surAppareil) reco.processLocally = true;
+  btnDicter.textContent = surAppareil ? LIBELLE_LOCAL : LIBELLE_DISTANT;
+
   let enCours = false;
-  reco.onresult = (e) => {
-    relireDictee(e.results[0][0].transcript);
-  };
-  reco.onend = () => { enCours = false; btnDicter.textContent = '🎤 Dicter (prototype navigateur)'; };
-  btnDicter.onclick = () => {
-    if (enCours) { reco.stop(); return; }
+  let distantAccepte = false;
+
+  function libelleCourant() {
+    return (surAppareil && reco.processLocally) ? LIBELLE_LOCAL : LIBELLE_DISTANT;
+  }
+
+  function accordPourLeDistant() {
+    if (distantAccepte) return true;
+    distantAccepte = window.confirm(AVERTISSEMENT_DISTANT);
+    if (distantAccepte) {
+      ajouterMessage("Dictée envoyée au service du navigateur, à ta demande. "
+        + "La transcription locale n'est pas disponible ici.", 'assistant', 'status');
+    } else {
+      ajouterMessage("Dictée annulée : rien n'a quitté la machine. "
+        + "Tu peux écrire ta description dans le champ ci-dessous.", 'assistant', 'status');
+      entree.focus();
+    }
+    return distantAccepte;
+  }
+
+  function lancer() {
     enCours = true;
     btnDicter.textContent = '⏺ Écoute...';
     reco.start();
+  }
+
+  reco.onresult = (e) => {
+    relireDictee(e.results[0][0].transcript);
+  };
+  reco.onend = () => { enCours = false; btnDicter.textContent = libelleCourant(); };
+  reco.onerror = (e) => {
+    enCours = false;
+    btnDicter.textContent = libelleCourant();
+    // Le paquet de langue locale peut manquer : c'est le seul cas où l'on
+    // propose le service distant, et jamais sans le dire.
+    const paquetAbsent = ['language-not-supported', 'service-not-allowed', 'network'];
+    if (surAppareil && reco.processLocally && paquetAbsent.includes(e.error)) {
+      reco.processLocally = false;
+      btnDicter.textContent = LIBELLE_DISTANT;
+      if (accordPourLeDistant()) lancer();
+      return;
+    }
+    ajouterMessage("La dictée n'a pas abouti (" + e.error + "). "
+      + "Écris ta description dans le champ ci-dessous.", 'assistant', 'status');
+  };
+
+  btnDicter.onclick = () => {
+    if (enCours) { reco.stop(); return; }
+    if (!surAppareil && !accordPourLeDistant()) return;
+    lancer();
   };
 }
 </script>

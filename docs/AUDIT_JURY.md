@@ -17,12 +17,12 @@ chose de nommé · ❌ absent · ➖ écarté, avec motif assumé.
 
 | Livrable | Critères | ✅ | 🟡 | ❌ | ➖ |
 |---|---|---|---|---|---|
-| E1 — Données (C1-C5) | 28 | 1 | 5 | 21 | 1 |
-| E2 — Veille et IA préexistante (C6-C8) | 20 | 5 | 7 | 8 | 0 |
+| E1 — Données (C1-C5) | 28 | 4 | 5 | 18 | 1 |
+| E2 — Veille et IA préexistante (C6-C8) | 20 | 7 | 7 | 6 | 0 |
 | E3 — Modèle IA (C9-C13) | 39 | 11 | 9 | 19 | 0 |
 | E4 — Application (C14-C19) | 36 | 8 | 9 | 19 | 0 |
 | E5 — Exploitation (C20-C21) | 12 | 0 | 3 | 9 | 0 |
-| **Total** | **135** | **25** | **33** | **76** | **1** |
+| **Total** | **135** | **30** | **33** | **71** | **1** |
 
 Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
 est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
@@ -98,15 +98,23 @@ des développements (C17-126).
 | 23 | Script d'import fonctionnel | ❌ | Absent. |
 | 24 | Documentation du script d'import versionnée à la racine du dépôt | ❌ | Absente. |
 | 25 | Documentations couvrant dépendances et commandes d'exécution | 🟡 | Couvert pour l'application, pas pour des scripts de données inexistants. |
-| 26 | Registre des traitements de données personnelles | ❌ | **Non écrit alors que le projet en traite** : coordonnées du client final saisies pour les mentions obligatoires BTP, transcriptions vocales, journal des corrections artisan. |
-| 27 | Procédures de tri RGPD rédigées | ❌ | Absentes. |
-| 28 | Procédures détaillant traitements et fréquence | ❌ | Absentes. |
+| 26 | Registre des traitements de données personnelles | ✅ | `docs/RGPD.md` — quatre traitements (devis, dictée, signal qualité, journalisation), chacun avec finalité, base légale, personnes concernées, destinataires, conservation et mesures de sécurité. Écrit **depuis le code**, chaque donnée citée avec son module. |
+| 27 | Procédures de tri RGPD rédigées | ✅ | `docs/RGPD.md` — tri à la collecte (ce qui n'entre pas), tri avant réutilisation (ce qui ne part pas à l'entraînement), tri à la sortie. Chaque règle porte son état : tenue par le code, ou à faire. |
+| 28 | Procédures détaillant traitements et fréquence | ✅ | `docs/RGPD.md` — tableau des opérations, chacune avec son déclencheur, sa fréquence et sa trace. Les deux purges absentes y figurent comme absentes, pas comme prévues. |
 
-> **Point sensible.** Le produit **collecte bien des données personnelles**
-> (nom, adresse de chantier du client final ; voix de l'artisan). Le registre
-> des traitements n'est pas un exercice académique ici, il est dû. C'est aussi
-> le document le moins cher à produire de tout le référentiel : trois
-> traitements, une page.
+> **Traité le 08/09/2026 — et l'exercice a trouvé un vrai défaut.** Le produit
+> collecte bien des données personnelles (nom, adresse de chantier du client
+> final ; voix de l'artisan). En remontant la trace de la voix, le registre a
+> mis au jour que la dictée du prototype **sortait de la machine** : la *Web
+> Speech API* du navigateur envoie l'audio à un service distant, contre
+> l'engagement « 100 % local » du cadrage. Corrigé le jour même
+> (`app/static/index.html`, `tests/test_front.py`). C'est l'argument à tenir
+> devant le jury : le registre n'a pas été rédigé pour cocher trois cases, il a
+> servi à quelque chose.
+>
+> `docs/RGPD.md` nomme aussi ce qui reste en défaut — aucune durée de
+> conservation implémentée, aucun tri avant entraînement, client final non
+> informé — plutôt que de décrire des mesures inexistantes.
 
 ### C5 — API de mise à disposition du jeu de données
 
@@ -128,16 +136,18 @@ des développements (C17-126).
 |---|---|---|---|
 | 36 | Thématique portant sur un outil et/ou une réglementation de la mise en situation | ✅ | « Unsloth et fine-tuning MoE » — c'est l'outil du projet (`veille/DISPOSITIF.md`). Le recadrage était nécessaire : l'ancienne thématique « IA et marché de l'emploi » ne satisfaisait pas ce critère. |
 | 37 | Temps de veille planifiés, au moins une heure hebdomadaire | ✅ | Rituel du vendredi, une heure, décrit dans `veille/DISPOSITIF.md`. |
-| 38 | Outils d'agrégation cohérents avec les sources et le budget | ✅ | Cinq flux dans `veille/sources.opml`, agrégation RSS, coût nul. |
-| 39 | Synthèses communiquées dans un format accessible | 🟡 | `veille/GABARIT-SEANCE.md` structure les comptes rendus. Aucune synthèse n'a encore été communiquée. |
-| 40 | Informations partagées répondant à la thématique | ❌ | **`veille/seances/` est vide** (un seul `.gitkeep`). C'est le manque le plus visible de E2 : le dispositif est décrit, il n'a jamais tourné. |
+| 38 | Outils d'agrégation cohérents avec les sources et le budget | ✅ | **Six** flux dans `veille/sources.opml`, agrégation RSS, coût nul. Le sixième (PyPI) a été ajouté par la séance du 08/09, qui a constaté que le flux GitHub ne portait plus le changelog de la bibliothèque. |
+| 39 | Synthèses communiquées dans un format accessible | ✅ | `veille/seances/2026-09-08.md`, au gabarit, en Markdown, contrôlé par `tools/verifier_accessibilite_docs.py` au même titre que les documents de conception. |
+| 40 | Informations partagées répondant à la thématique | 🟡 | Une séance tenue (08/09/2026) : 52 items balayés, 5 retenus, tous sur Unsloth et le fine-tuning. Elle a produit des effets réels — OPML corrigé, deux notes dans `docs/NOTES.md`, un ajout à `PLANNING.md`. **Une seule séance ne fait pas un rituel** : le critère se ferme par la récurrence hebdomadaire. |
 | 41 | Sources répondant aux critères de fiabilité (auteur identifié, notoriété, absence d'intérêt personnel) | 🟡 | Les cinq flux sont choisis, leur fiabilité n'est **pas argumentée par écrit** source par source, ce que le critère demande. |
-| 42 | Analyse du contenu valable (date récente, sources citées, document structuré) | ❌ | Sans séance, pas d'analyse. |
+| 42 | Analyse du contenu valable (date récente, sources citées, document structuré) | ✅ | Séance du 08/09 : items datés d'août-septembre 2026, sources citées une à une, structure imposée par le gabarit, un verdict unique par item et une suite donnée à chacun. |
 | 43 | Sources respectant les normes d'accessibilité privilégiées, information confirmée ailleurs | ❌ | Non traité dans le choix des sources. |
 
-> **La correction la moins chère du référentiel.** Quatre séances d'une heure
-> rédigées au gabarit ferment 40, 42 et 43, et solidifient 39 et 41. Le
-> dispositif est prêt ; il ne manque que les traces.
+> **Une séance tenue, pas quatre — délibérément.** Antidater trois séances de
+> plus fabriquerait la preuve au lieu de la produire, et la séance du 08/09 le
+> dit elle-même en tête : c'est un rattrapage assisté, sur cinq semaines de
+> balayage. 42 est fermé, 39 consolidé, 40 attend la **récurrence**, qui ne
+> s'écrit pas — elle se tient. 43 (accessibilité des sources) reste entier.
 
 ### C7 — Benchmark de services d'IA préexistants
 
@@ -361,8 +371,8 @@ des développements (C17-126).
 1. **Créer le dépôt distant et pousser.** Neuf critères, une commande. *(Décision de l'utilisateur : je n'ai pas le droit de pousser.)*
 2. **Chaîne d'intégration continue** (`.github/workflows/`). Six critères, les tests existent déjà. → C18 entier, appui pour C12 et C19.
 3. **Fiches d'incident** pour les six anomalies déjà corrigées. Cinq critères, matière déjà établie. → C21.
-4. **Quatre séances de veille** au gabarit. Trois critères fermés, deux consolidés. → C6.
-5. **Registre des traitements de données personnelles** + procédures de tri. Trois critères, une page, et c'est légalement dû. → C4.
+4. ~~**Quatre séances de veille** au gabarit.~~ **Fait pour une** (08/09/2026), et pas pour quatre : voir la note de C6. La suite est un rituel à tenir, pas un document à écrire. → C6.
+5. ~~**Registre des traitements de données personnelles** + procédures de tri.~~ **Fait** le 08/09/2026 : `docs/RGPD.md`. Trois critères fermés, et un défaut de confidentialité trouvé et corrigé au passage. → C4.
 6. **Journalisation applicative** branchée sur les escalades et corrections existantes. → C20-148, appui C11.
 7. **Modèle Merise** du référentiel métier et du catalogue. Deux critères d'un coup (C4-19 et C14-103), et il débloque le portage du catalogue en base — donc C2.
 8. **Authentification de l'API.** Quatre critères (C5-33, C9-59, C17-124, C10-70) et c'est un manque de fond, pas de forme.

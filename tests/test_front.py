@@ -253,3 +253,23 @@ def test_une_contradiction_ne_se_lit_pas_comme_une_quantite_hors_bornes(html):
     assert "a.motif === 'contradiction'" in html
     assert "au lieu de ${a.valeur_existante} déjà au devis" in html
     assert "Garder ${a.valeur_existante}" in html
+
+
+# --- Dictée : ce qui sort de la machine (docs/RGPD.md, traitement T2) --------
+
+def test_la_dictee_demande_le_traitement_sur_l_appareil(html):
+    """Par défaut, la Web Speech API n'est pas locale : Chrome envoie l'audio à
+    son service. Le front doit réclamer `processLocally` quand il existe, sinon
+    la voix de l'artisan et le nom de son client quittent le poste."""
+    assert "'processLocally' in reco" in html, "aucune détection du traitement local"
+    assert "reco.processLocally = true" in html, "le traitement local n'est pas demandé"
+
+
+def test_le_recours_au_service_distant_exige_un_accord_explicite(html):
+    """Le vrai défaut serait le repli silencieux. L'artisan fait autorité, y
+    compris sur ce qu'il accepte d'envoyer hors de sa machine."""
+    bloc = html[html.index("const btnDicter"):]
+    assert "window.confirm(AVERTISSEMENT_DISTANT)" in bloc
+    assert "sortent de cette machine" in bloc, "l'avertissement ne dit pas ce qui sort"
+    assert bloc.count("reco.start()") == 1, (
+        "un second point de démarrage contournerait la demande d'accord")

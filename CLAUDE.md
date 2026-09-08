@@ -30,6 +30,7 @@ PLANNING.md            calendrier des 4 mois
 docs/                  la conception — fait autorité
 docs/STORIES.md        les 26 stories et l'ordre du backlog
 docs/notion/           schémas et CSV de la transposition Notion
+docs/RGPD.md           registre des traitements et procédures de tri
 app/                   l'implémentation (FastAPI, moteur de devis, front)
 tests/                 la suite pytest
 tools/                 outillage hors produit (CLI Notion)
@@ -48,6 +49,10 @@ archive/renoassistant/ conception précédente
   Chaque story porte un cas dégradé, des critères d'accessibilité **au même rang** que les
   critères fonctionnels, et une ligne de traçabilité qui dit l'état du code **constaté**.
   Sa mise à jour fait partie de la définition de fini.
+- **`docs/RGPD.md`** — registre des traitements, procédures de tri, détail des opérations et de
+  leur fréquence. Écrit **depuis le code** : chaque donnée personnelle listée est citée avec son
+  module. Nomme aussi ce qui reste en défaut (aucune purge implémentée, aucun tri avant
+  entraînement) plutôt que de décrire des mesures inexistantes.
 - **`docs/NOTION_BOARD.md`** — comment poser cette organisation sur Notion (thème JIRA) sans le
   connecteur MCP, qui charge 42 outils pour six appels utiles.
 - **`docs/NOTES.md`** — bloc-notes des idées non encore arbitrées. Ce qui y est tranché remonte
