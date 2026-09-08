@@ -296,3 +296,18 @@ def test_une_validation_sans_correction_ne_laisse_pas_de_trace(client_relecture)
                               json={"propose": "22 m2 de peinture",
                                     "texte": "22 m2 de peinture"})
     assert r.json()["devis"]["corrections"] == []
+
+
+def test_l_api_expose_les_messages_de_cadrage_a_part(client):
+    """L'interface doit pouvoir les annoncer en role="alert" sans deviner
+    leur texte (docs/STORIES.md US-20)."""
+    r = client.post("/api/message", json={"texte": "d'où vient cette fissure ?"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["intent"] == "hors_perimetre"
+    assert data["cadrages"] and data["cadrages"][0] in data["messages"]
+
+
+def test_un_tour_ordinaire_ne_porte_aucun_cadrage(client):
+    r = client.post("/api/message", json={"texte": "je refais le salon, 22 m² de peinture"})
+    assert r.json()["cadrages"] == []

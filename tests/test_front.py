@@ -106,3 +106,18 @@ def test_l_ecran_de_structure_ne_comporte_aucune_colonne_prix(html):
 def test_le_bouton_de_validation_porte_un_libelle_explicite(html):
     """RGAA 11.9 / WCAG 2.4.6 : compréhensible hors contexte, pas « Valider »."""
     assert "Valider la structure du devis" in html
+
+
+def test_les_messages_de_cadrage_sont_annonces_en_role_alert(html):
+    """US-20 — le message de cadrage doit être entendu, pas seulement affiché."""
+    assert "data.cadrages" in html
+    assert "'alert'" in html
+
+
+def test_le_cadrage_reste_lisible_sans_couleur(html):
+    """Préfixe en toutes lettres + repère de forme : la couleur ne porte
+    aucune information à elle seule (RGAA 4.1, critère 3.1)."""
+    assert "'Cadrage \u2014 '" in html
+    debut = html.index(".msg.cadrage")
+    style = html[debut:debut + 200]
+    assert "border-left" in style or "font-style" in style

@@ -13,6 +13,9 @@ from pydantic import ValidationError
 
 from app.devis import (Devis, LotInconnu, ajouter_consommables, ajouter_ligne,
                        chiffrer, consommables_par_defaut)
+from app.garde_fous import (MESSAGE_INJECTION, detecter_hors_perimetre,
+                            detecter_injection, message_hors_perimetre,
+                            neutraliser, reste_du_chantier)
 from app.llm import ModeleInjoignable, SortieModeleInvalide, appeler_modele
 from app.profil import Client, ProfilArtisan
 from app.referentiel import REFERENTIEL, MENTIONS, bornes, est_plausible
@@ -47,6 +50,7 @@ class Escalade:
     horodatage: str
     motif: str  # "entree_rejetee" | "json_invalide" | "schema_invalide"
                 # | "lot_inconnu" | "intent_inconnu" | "modele_injoignable"
+                # | "injection_neutralisee" | "hors_perimetre"
     detail: str
 
 
@@ -98,6 +102,10 @@ class ResultatTour:
     mentions: list[str]
     devis: Devis
     consommables_suggeres: dict[str, list[str]]
+    # Messages de garde-fou (périmètre, injection) : ils sont déjà en tête de
+    # messages_assistant, listés à part pour que l'interface les annonce en
+    # role="alert" sans avoir à reconnaître leur texte (docs/STORIES.md US-20).
+    cadrages: list[str] = field(default_factory=list)
 
 
 def _valider_entree(texte: str) -> str | None:
@@ -244,12 +252,45 @@ MESSAGE_INDISPONIBLE = (
 
 
 def traiter_message(session: Session, texte_utilisateur: str) -> ResultatTour:
+    """Un tour complet : garde-fous, appel modèle, routage.
+
+    Les garde-fous passent **avant** le modèle (docs/DISPOSITIF_AGENT.md §3.1) :
+    une consigne injectée ne doit pas atteindre le prompt sans être vue, et une
+    demande hors périmètre ne doit pas coûter un appel pour rien.
+    """
     rejet = _valider_entree(texte_utilisateur)
     if rejet:
         _journaliser_escalade(session, "entree_rejetee", rejet)
         return ResultatTour("rejet", [rejet], [], session.devis, {})
 
-    message_suivant = texte_utilisateur
+    cadrages: list[str] = []
+    texte_modele = texte_utilisateur
+
+    injections = detecter_injection(texte_utilisateur)
+    if injections:
+        # Journaliser d'abord : c'est la trace qui rend l'attaque mesurable.
+        _journaliser_escalade(session, "injection_neutralisee", ",".join(injections))
+        cadrages.append(MESSAGE_INJECTION)
+        texte_modele = neutraliser(texte_utilisateur)
+
+    domaines = detecter_hors_perimetre(texte_utilisateur)
+    if domaines:
+        _journaliser_escalade(session, "hors_perimetre", ",".join(domaines))
+        cadrages.extend(message_hors_perimetre(d) for d in domaines)
+        if not reste_du_chantier(texte_utilisateur):
+            # Rien d'autre à traiter : on nomme la limite au lieu d'improviser.
+            return ResultatTour("hors_perimetre", cadrages, [], session.devis, {},
+                                cadrages=list(cadrages))
+
+    resultat = _tour_modele(session, texte_modele)
+    resultat.messages_assistant = cadrages + resultat.messages_assistant
+    resultat.cadrages = list(cadrages)
+    return resultat
+
+
+def _tour_modele(session: Session, message_utilisateur: str) -> ResultatTour:
+    """Appel modèle avec une reprise, puis escalade (§1.3)."""
+    message_suivant = message_utilisateur
     for tentative in range(MAX_APPELS_MODELE):
         derniere_chance = tentative == MAX_APPELS_MODELE - 1
 

@@ -138,6 +138,7 @@ def api_message(msg: MessageEntrant, request: Request, response: Response) -> di
         "messages": resultat.messages_assistant,
         "mentions": resultat.mentions,
         "consommables_suggeres": resultat.consommables_suggeres,
+        "cadrages": resultat.cadrages,
         "devis": _serialiser_devis(session),
     }
 
@@ -196,6 +197,7 @@ def api_transcription_valider(validee: TranscriptionValidee, request: Request,
         "messages": resultat.messages_assistant,
         "mentions": resultat.mentions,
         "consommables_suggeres": resultat.consommables_suggeres,
+        "cadrages": resultat.cadrages,
         "texte_traite": texte,
         "devis": _serialiser_devis(session),
     }

@@ -684,9 +684,17 @@ limite.
 - Aucune estimation de main d'œuvre ni de délai de chantier n'est produite.
 - La redirection nomme ce qui est hors périmètre, sans jargon d'agent.
 
-**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §3.3 · état : **à faire**
-(aucune détection de périmètre dans `app/pipeline.py` ; la consigne existe
-seulement dans le prompt système de `app/llm.py`).
+**Traçabilité.** C13, C17 · `DISPOSITIF_AGENT.md` §3.3 · état : **fait** —
+`app/garde_fous.py` (`HORS_PERIMETRE`, cinq domaines, `detecter_hors_perimetre`,
+`reste_du_chantier`) est appelé par `traiter_message` **avant** le modèle : une
+demande purement hors périmètre répond `intent="hors_perimetre"` sans consommer
+d'appel, une demande mixte est traitée pour sa partie chantier et cadrée pour
+l'autre. Les messages nomment la limite et ne portent aucun chiffre — le test
+`test_la_redirection_nomme_la_limite_sans_inventer_de_chiffre` l'impose.
+Chaque détection laisse une `Escalade` de motif `hors_perimetre`. Tests :
+`tests/test_garde_fous.py`. **Reste** : le seuil ≥ 95 % (métrique nº 6) n'est pas
+mesuré — il demande le jeu d'essai écrit à la main, et les règles actuelles sont
+des expressions régulières, pas un classifieur.
 
 ### US-20 — Que l'application résiste à une tentative d'injection
 
@@ -709,9 +717,19 @@ visible.
 - *Accessibilité* — le message de cadrage est annoncé en `role="alert"` et reste
   lisible sans couleur.
 
-**Traçabilité.** C17, C21 · `DISPOSITIF_AGENT.md` §3.1 · état : **partiel** —
-seule la longueur est contrôlée (`LONGUEUR_MAX_ENTREE` dans `app/pipeline.py`) ;
-détection d'injection, neutralisation et journalisation **absentes**.
+**Traçabilité.** C17, C21 · `DISPOSITIF_AGENT.md` §3.1 · état : **fait** —
+`app/garde_fous.py` porte cinq familles de motifs (`MOTIFS_INJECTION`), la
+comparaison se faisant sans accents, sans ligature ni casse. L'entrée n'est pas
+mutilée : `neutraliser()` l'encadre comme donnée (`CADRE_DONNEE`) avant de
+l'envoyer, et chaque tentative écrit une `Escalade` horodatée de motif
+`injection_neutralisee` listant les codes déclenchés. Le tour se poursuit ;
+l'artisan est prévenu par `MESSAGE_INJECTION`, exposé à part dans le champ
+`cadrages` de `/api/message` pour que le front l'annonce en `role="alert"`,
+préfixé « Cadrage — » et distingué par un filet et l'italique — jamais par la
+couleur seule. Un test paramétré vérifie qu'aucun message utilisateur ne contient
+chemin, trace de pile, nom de modèle ni port, le détail restant dans la trace
+interne. Tests : `tests/test_garde_fous.py`, `tests/test_front.py`,
+`tests/test_api.py`. **Reste** : mêmes limites de mesure que US-19.
 
 ### US-21 — Pouvoir escalader quand l'agent échoue
 
