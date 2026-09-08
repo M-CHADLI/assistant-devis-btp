@@ -194,6 +194,24 @@
     </fieldset>
 
     <fieldset>
+      <legend>Mise en page de vos devis</legend>
+      <p class="aide" id="gabarit-aide">Déposez un de vos anciens devis (PDF ou
+        photo) pour que les devis produits reprennent l'ordre de vos sections et
+        vos intitulés. <strong>Ce fichier est envoyé à un service de lecture
+        extérieur à cette machine</strong> ; seule la structure en est retenue,
+        jamais le nom du client ni les montants. C'est facultatif : sans dépôt,
+        la mise en page par défaut est complète et conforme.</p>
+      <label for="p-gabarit">Ancien devis (PDF, JPEG ou PNG)</label>
+      <input type="file" id="p-gabarit" name="gabarit"
+             accept="application/pdf,image/png,image/jpeg"
+             aria-describedby="gabarit-aide gabarit-erreur">
+      <p class="erreur" id="gabarit-erreur" role="alert"></p>
+      <button type="button" id="btn-gabarit">Lire ce devis</button>
+      <button type="button" id="btn-gabarit-oubli">Revenir à la mise en page par défaut</button>
+      <p class="consequence" id="gabarit-retour" aria-live="polite">Mise en page par défaut.</p>
+    </fieldset>
+
+    <fieldset>
       <legend>Ce chantier</legend>
       <label for="p-client">Nom du client</label>
       <input type="text" id="p-client" name="client_nom">
@@ -685,6 +703,74 @@ btnSiret.addEventListener('click', async () => {
   }
   remplirProfil(corps.profil);
   retourSiret.textContent = corps.explication;
+});
+
+// US-03 — reprendre la mise en page d'un ancien devis. Le dépôt passe par un
+// Le champ de dépôt est un champ fichier natif : atteignable au clavier sans une ligne de
+// script, et un glisser-déposer ne viendrait qu'en confort par-dessus
+// (RGAA 7.3). La progression est écrite dans une région annoncée, jamais
+// portée par une seule animation (WCAG 4.1.3).
+const champGabarit = document.getElementById('p-gabarit');
+const erreurGabarit = document.getElementById('gabarit-erreur');
+const retourGabarit = document.getElementById('gabarit-retour');
+const btnGabarit = document.getElementById('btn-gabarit');
+const btnGabaritOubli = document.getElementById('btn-gabarit-oubli');
+
+function poserErreurGabarit(message) {
+  erreurGabarit.textContent = message ? '⚠ ' + message : '';
+  champGabarit.setAttribute('aria-invalid', message ? 'true' : 'false');
+}
+
+function annoncerGabarit(corps) {
+  // Le texte dit toujours l'état obtenu, jamais seulement « terminé » : c'est
+  // la seule information qui serve à l'artisan.
+  retourGabarit.textContent = corps.explication;
+}
+
+btnGabarit.addEventListener('click', async () => {
+  poserErreurGabarit('');
+  const fichier = champGabarit.files && champGabarit.files[0];
+  if (!fichier) {
+    poserErreurGabarit("Choisissez d'abord un fichier : le PDF de votre devis, ou sa photo.");
+    champGabarit.focus();
+    return;
+  }
+  retourGabarit.textContent = 'Lecture du devis en cours…';
+  btnGabarit.disabled = true;
+  const paquet = new FormData();
+  paquet.append('fichier', fichier);
+  let resp, corps;
+  try {
+    resp = await fetch('/api/profil/gabarit', {method: 'POST', body: paquet});
+    corps = await resp.json();
+  } catch (e) {
+    retourGabarit.textContent =
+      "La lecture n'a pas abouti. Vos devis gardent la mise en page par défaut, qui est complète et conforme.";
+    btnGabarit.disabled = false;
+    return;
+  }
+  btnGabarit.disabled = false;
+  if (resp.status === 422) {
+    retourGabarit.textContent = '';
+    poserErreurGabarit(corps.detail.detail || corps.detail);
+    champGabarit.focus();
+    return;
+  }
+  annoncerGabarit(corps);
+});
+
+btnGabaritOubli.addEventListener('click', async () => {
+  poserErreurGabarit('');
+  retourGabarit.textContent = 'Oubli en cours…';
+  btnGabaritOubli.disabled = true;
+  try {
+    const resp = await fetch('/api/profil/gabarit', {method: 'DELETE'});
+    annoncerGabarit(await resp.json());
+  } catch (e) {
+    retourGabarit.textContent =
+      "L'oubli n'a pas abouti — réessayez. Vos devis restent conformes dans les deux cas.";
+  }
+  btnGabaritOubli.disabled = false;
 });
 
 function lireProfil() {

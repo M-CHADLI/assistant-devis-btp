@@ -10,11 +10,12 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from app.api_schema import (Erreur401, Erreur404, Erreur409, Erreur422Siret,
+from app.api_schema import (DepotGabaritSortie, Erreur401, Erreur404,
+                            Erreur409, Erreur422Gabarit, Erreur422Siret,
                             Erreur503, FamilleIncomplete, FamilleSynthese,
                             MetriquesSortie, ProduitCatalogue, ProfilSortie,
                             RechercheSiretSortie, ReponseDevis,
@@ -31,6 +32,9 @@ from app.pipeline import (Session, abandonner_quantite, confirmer_quantite,
                           valider_transcription)
 from app.annuaire import (Indisponible, SiretInvalide, normaliser_siret,
                           rechercher)
+from app.gabarit import (DepotInvalide, Gabarit, PasUnDevis)
+from app.gabarit import Indisponible as GabaritIndisponible
+from app.gabarit import extraire as extraire_gabarit
 from app.profil import (CHAMPS_PREREMPLISSABLES, ORIGINE_ANNUAIRE,
                         ORIGINE_ARTISAN, Client, RegimeTVA,
                         champs_manquants)
@@ -429,6 +433,22 @@ def _serialiser_profil(session: Session) -> dict:
         "mentions_manquantes": champs_manquants(
             session.profil, session.client, session.delai_execution),
         "origines": {c: p.origine_de(c) for c in CHAMPS_PREREMPLISSABLES},
+        "gabarit": _serialiser_gabarit(p.gabarit),
+    }
+
+
+def _serialiser_gabarit(gabarit: Gabarit) -> dict:
+    """Ce que le front a le droit de savoir de la mise en page.
+
+    Les libellés sont calculés par `Gabarit.libelle`, donc pris dans le
+    vocabulaire d'`app/gabarit.py` : rien du document déposé ne remonte au
+    navigateur, pas plus qu'il n'est descendu au disque.
+    """
+    ordre = gabarit.ordre()
+    return {
+        "par_defaut": gabarit.par_defaut,
+        "blocs": list(ordre),
+        "libelles": {bloc: gabarit.libelle(bloc) for bloc in ordre},
     }
 
 
@@ -673,6 +693,90 @@ def api_profil_siret(entrant: RechercheSiret, request: Request,
             "profil": _serialiser_profil(session)}
 
 
+@app.post("/api/profil/gabarit", response_model=DepotGabaritSortie,
+          tags=["Profil"],
+          responses={422: {"model": Erreur422Gabarit,
+                           "description": "Dépôt refusé, aucun octet n'est "
+                                          "sorti de la machine"}},
+          summary="Reprendre la mise en page d'un ancien devis (US-03)")
+async def api_profil_gabarit_deposer(request: Request, response: Response,
+                                     fichier: UploadFile = File(...)) -> dict:
+    """Le fichier part chez un service d'OCR, jamais au modèle.
+
+    Trois issues, et **aucune n'est un échec de l'application** : un gabarit,
+    un motif de repli sur la mise en page par défaut, ou un 422 quand le
+    dépôt se refuse sans même sortir de la machine.
+    """
+    projet_id, session = _projet(request)
+    octets = await fichier.read()
+    try:
+        resultat = extraire_gabarit(octets)
+    except DepotInvalide as exc:
+        # 422 et non 400 : la requête est bien formée, c'est son contenu qui
+        # ne peut pas être traité. Rien n'a été transmis à un tiers.
+        JOURNAL.enregistrer("gabarit_refuse", projet=projet_id, motif="depot")
+        raise HTTPException(status_code=422, detail={
+            "detail": str(exc), "champ": "fichier"}) from exc
+    except PasUnDevis as exc:
+        # 200 : le document a bien été lu, il n'est simplement pas un devis.
+        # Répondre une erreur ferait croire à une panne du produit.
+        JOURNAL.enregistrer("gabarit_refuse", projet=projet_id,
+                            motif="pas_un_devis")
+        _poser_cookie(response, projet_id)
+        return {"origine": "defaut", "motif": "pas_un_devis",
+                "explication": exc.explication,
+                "gabarit": _serialiser_gabarit(session.profil.gabarit)}
+
+    if isinstance(resultat, GabaritIndisponible):
+        # Le motif seul est journalisé : ni le nom du fichier, ni son contenu,
+        # ni la clé. Un journal qui porterait le nom du client d'un ancien
+        # devis serait un traitement de données personnelles non déclaré.
+        JOURNAL.enregistrer("gabarit_indisponible", projet=projet_id,
+                            motif=resultat.motif)
+        _poser_cookie(response, projet_id)
+        return {"origine": "defaut", "motif": resultat.motif,
+                "explication": resultat.explication,
+                "gabarit": _serialiser_gabarit(session.profil.gabarit)}
+
+    session.profil.gabarit = resultat
+    REGISTRE.enregistrer(projet_id, session)
+    JOURNAL.enregistrer("gabarit_retenu", projet=projet_id,
+                        blocs=len(resultat.blocs))
+    _poser_cookie(response, projet_id)
+    titres = ", ".join(resultat.libelle(b) for b in resultat.blocs)
+    return {
+        "origine": "devis_depose", "motif": None,
+        "explication": (
+            f"Mise en page reprise de votre devis : {titres}. Les sections "
+            f"que votre devis ne portait pas restent ajoutées à la fin — un "
+            f"devis amputé d'une mention obligatoire n'est plus opposable. "
+            f"Vous pouvez revenir à la mise en page par défaut à tout moment."),
+        "gabarit": _serialiser_gabarit(resultat),
+    }
+
+
+@app.delete("/api/profil/gabarit", response_model=DepotGabaritSortie,
+            tags=["Profil"],
+            summary="Revenir à la mise en page par défaut (US-03)")
+def api_profil_gabarit_oublier(request: Request, response: Response) -> dict:
+    """La mémoire utilisateur est révocable (`docs/DISPOSITIF_AGENT.md` §2.2).
+
+    Révoquer réussit même s'il n'y avait rien à révoquer : demander l'oubli et
+    s'entendre répondre 404 serait une réponse absurde à une demande légitime.
+    """
+    projet_id, session = _projet(request)
+    session.profil.gabarit = Gabarit()
+    REGISTRE.enregistrer(projet_id, session)
+    JOURNAL.enregistrer("gabarit_oublie", projet=projet_id)
+    _poser_cookie(response, projet_id)
+    return {
+        "origine": "defaut", "motif": None,
+        "explication": "Vos devis reprennent la mise en page par défaut, "
+                       "qui est complète et conforme.",
+        "gabarit": _serialiser_gabarit(session.profil.gabarit),
+    }
+
+
 @app.get("/api/export", tags=["Devis"],
          summary="Exporter le devis en .docx, mentions obligatoires comprises",
          response_class=Response,
@@ -693,7 +797,8 @@ def api_export(request: Request) -> Response:
         })
     try:
         contenu = generer_docx(session.devis, session.pieces, session.profil,
-                               session.client, session.delai_execution)
+                               session.client, session.delai_execution,
+                               gabarit=session.profil.gabarit)
     except MentionsIncompletes as exc:
         # 409 et non 400 : la requête est correcte, c'est l'état du projet qui
         # ne permet pas encore un document légalement recevable (US-15, dégradé).

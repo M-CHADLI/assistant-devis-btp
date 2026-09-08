@@ -21,6 +21,7 @@ from pathlib import Path
 from app.catalogue import Produit
 from app.devis import Devis, LigneChiffree
 from app.pipeline import Correction, Escalade, LigneEnAttente, Session
+from app.gabarit import Gabarit
 from app.profil import Client, Decennale, ProfilArtisan, RegimeTVA
 
 # Chemin absolu par défaut, dérivé de l'emplacement du paquet : l'application
@@ -74,6 +75,9 @@ def _profil_en_dict(p: ProfilArtisan) -> dict:
         # deviendrait indiscernable d'une décision, et cesserait d'être
         # écrasable par une nouvelle recherche.
         "origines": dict(p.origines),
+        # Le gabarit ne porte que du vocabulaire d'`app/gabarit.py` — rien du
+        # document déposé — et c'est revérifié à la relecture.
+        "gabarit": p.gabarit.en_dict(),
         "decennale": {
             "assureur": d.assureur, "numero_contrat": d.numero_contrat,
             "couverture_geographique": d.couverture_geographique,
@@ -93,6 +97,7 @@ def _profil_depuis_dict(brut: dict) -> ProfilArtisan:
         tva_intracommunautaire=brut.get("tva_intracommunautaire", ""),
         regime_tva=RegimeTVA(brut.get("regime_tva", RegimeTVA.REEL)),
         origines={k: str(v) for k, v in (brut.get("origines") or {}).items()},
+        gabarit=Gabarit.depuis_dict(brut.get("gabarit")),
         decennale=Decennale(
             assureur=d.get("assureur", ""), numero_contrat=d.get("numero_contrat", ""),
             couverture_geographique=d.get("couverture_geographique", ""),

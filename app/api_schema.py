@@ -146,6 +146,7 @@ class ProfilSortie(BaseModel):
     origines: dict[str, str] = Field(
         default_factory=dict,
         description="artisan | annuaire, par champ légal (US-01)")
+    gabarit: "GabaritSortie"
 
 
 class RechercheSiretSortie(BaseModel):
@@ -168,6 +169,53 @@ class RechercheSiretSortie(BaseModel):
         default_factory=list,
         description="Champs non écrasés parce que l'artisan les a saisis")
     profil: ProfilSortie
+
+
+class GabaritSortie(BaseModel):
+    """La mise en page des devis produits (US-03).
+
+    `par_defaut` vrai signifie qu'aucun gabarit n'est retenu — ce n'est pas un
+    défaut de configuration mais un état normal et complet : la mise en page
+    par défaut est conforme.
+
+    `blocs` ne peut contenir que des clés d'`app.gabarit.BLOCS`, et `libelles`
+    que des synonymes déclarés dans ce même module : rien du document déposé
+    n'y transite.
+    """
+    par_defaut: bool
+    blocs: list[str] = Field(
+        default_factory=list,
+        description="Ordre des sections, clés d'app.gabarit.BLOCS")
+    libelles: dict[str, str] = Field(
+        default_factory=dict,
+        description="Titre imprimé pour chaque section, dans l'ordre de blocs")
+
+
+class DepotGabaritSortie(BaseModel):
+    """Réponse au dépôt d'un ancien devis (US-03).
+
+    Comme pour le SIRET, il n'y a pas d'issue en échec : une panne de l'OCR,
+    une photo illisible ou une clé absente basculent sur la mise en page par
+    défaut en nommant le motif. Un service tiers en défaut n'empêche pas de
+    faire des devis.
+    """
+    origine: str = Field(description="devis_depose | defaut")
+    motif: str | None = Field(
+        default=None,
+        description="cle_absente | injoignable | quota | trop_gros | "
+                    "illisible | inattendu | pas_un_devis")
+    explication: str = Field(
+        description="Phrase destinée à l'artisan : dit toujours la suite")
+    gabarit: GabaritSortie
+
+
+class Erreur422Gabarit(BaseModel):
+    """Dépôt refusé **avant tout appel réseau** : ni PDF, ni photo, ou vide.
+
+    Le fichier ne sort pas de la machine tant qu'on sait déjà le refuser.
+    """
+    detail: str
+    champ: str = "fichier"
 
 
 class Erreur422Siret(BaseModel):

@@ -16,6 +16,8 @@ import datetime as dt
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from app.gabarit import Gabarit
+
 MENTION_293B = "TVA non applicable, art. 293 B du CGI"
 
 
@@ -71,6 +73,11 @@ class ProfilArtisan:
     # a été mis à la main, et c'est la lecture la plus prudente — elle protège
     # la saisie plutôt que le pré-remplissage.
     origines: dict[str, str] = field(default_factory=dict)
+
+    # Mise en page reprise d'un ancien devis de l'artisan (US-03). Vide vaut
+    # « mise en page par défaut » : c'est une mémoire utilisateur révocable
+    # (`docs/DISPOSITIF_AGENT.md` §2.2), et la révoquer se fait en la vidant.
+    gabarit: Gabarit = field(default_factory=Gabarit)
 
     @property
     def en_franchise(self) -> bool:

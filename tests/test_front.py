@@ -405,3 +405,48 @@ def test_le_front_ignore_le_nom_de_l_annuaire(html):
 def test_l_origine_d_un_champ_prerempli_est_visible_sans_etre_bloquante(html):
     assert "dataset.origine" in html
     assert "votre correction fait autorité" in html
+
+
+# --- US-03 — dépôt d'un ancien devis pour en reprendre la mise en page ------
+
+def test_le_depart_du_fichier_est_annonce_avant_le_selecteur(html):
+    """Le seul endroit du produit où un document sort de la machine.
+
+    Le dire *après* le sélecteur reviendrait à l'annoncer une fois le fichier
+    choisi : dans l'ordre du DOM, l'avertissement précède le champ.
+    """
+    aide = html.index('id="gabarit-aide"')
+    champ = html.index('id="p-gabarit"')
+    assert aide < champ
+    bloc = " ".join(html[aide:champ].split())   # le texte est replié sur trois lignes
+    assert "service de lecture extérieur à cette machine" in bloc
+    assert "<strong>" in bloc
+
+
+def test_le_selecteur_de_fichier_est_natif_et_decrit(html):
+    """RGAA 7.3 — un champ natif reste atteignable au clavier sans script."""
+    champ = re.search(r'<input[^>]*id="p-gabarit"[^>]*>', html)
+    assert champ, "sélecteur de gabarit introuvable"
+    balise = champ.group(0)
+    assert 'type="file"' in balise
+    assert "accept=" in balise
+    for cible in re.search(r'aria-describedby="([^"]+)"', balise).group(1).split():
+        assert f'id="{cible}"' in html, f"aria-describedby pointe dans le vide : {cible}"
+
+
+def test_l_erreur_de_depot_est_une_alerte_textuelle(html):
+    erreur = re.search(r'<p[^>]*id="gabarit-erreur"[^>]*>', html)
+    assert erreur and 'role="alert"' in erreur.group(0)
+
+
+def test_le_resultat_du_depot_est_annonce_sans_voler_le_focus(html):
+    """WCAG 4.1.3 — un retour d'état s'annonce, il n'interrompt pas."""
+    retour = re.search(r'<p[^>]*id="gabarit-retour"[^>]*>', html)
+    assert retour and 'aria-live="polite"' in retour.group(0)
+
+
+def test_la_mise_en_page_reprise_est_revocable_depuis_l_ecran(html):
+    """Une mémoire utilisateur qu'on ne peut pas retirer n'est pas révocable."""
+    assert 'id="btn-gabarit-oubli"' in html
+    assert "'/api/profil/gabarit'" in html
+    assert "method: 'DELETE'" in html
