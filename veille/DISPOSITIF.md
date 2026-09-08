@@ -23,12 +23,22 @@ comme veille.
 
 ## Sources
 
-Toutes les URL ci-dessous ont été **vérifiées actives** le 31/07/2026. Le
-fichier `sources.opml` les importe d'un coup dans n'importe quel lecteur RSS.
+Toutes les URL ci-dessous ont été **vérifiées actives** le 31/07/2026, et
+revérifiées le 08/09/2026. Le fichier `sources.opml` les importe d'un coup dans
+n'importe quel lecteur RSS.
+
+> **Correction du 08/09/2026.** Le dépôt `unslothai/unsloth` héberge désormais
+> l'**application de bureau** Unsloth, et ses releases GitHub (`v0.1.80x-beta`)
+> ne disent rien des versions de la bibliothèque Python, publiées sur PyPI sous
+> une numérotation distincte (`2026.9.2` au 08/09). Surveiller le seul flux
+> GitHub revenait à croire suivre l'outil sans le suivre. Un sixième flux, celui
+> de PyPI, a été ajouté ; le flux GitHub est conservé, l'application embarquant
+> le moteur d'entraînement. Détail dans `seances/2026-09-08.md`, item 1.
 
 | Source | Flux | Rôle | Rythme observé |
 |---|---|---|---|
-| **Unsloth — releases** | `github.com/unslothai/unsloth/releases.atom` | L'outil lui-même. Priorité 1 | Soutenu |
+| **Unsloth — bibliothèque (PyPI)** | `pypi.org/rss/project/unsloth/releases.xml` | L'outil lui-même, celui qu'on installe. Priorité 1 | Soutenu |
+| **Unsloth — releases GitHub** | `github.com/unslothai/unsloth/releases.atom` | L'application de bureau. **Ne porte pas** le changelog de la bibliothèque | Soutenu |
 | **PEFT — releases** | `github.com/huggingface/peft/releases.atom` | L'état de l'art LoRA en pratique | Soutenu |
 | **arXiv — MoE (cs.LG)** | requête Atom `export.arxiv.org/api/query` | La recherche MoE, triée par date | Quotidien, bruyant |
 | **Hugging Face — blog** | `huggingface.co/blog/feed.xml` | Écosystème, modèles ouverts | Quotidien, large |
@@ -52,7 +62,7 @@ seulement le résultat final.
 Déroulé, dans cet ordre :
 
 1. **Ouvrir `unsloth.ai/blog`** (la source sans flux) — 1 min.
-2. **Balayer le lecteur RSS**, ne rien lire encore — 5 min.
+2. **Balayer le lecteur RSS** (six flux), ne rien lire encore — 5 min.
 3. **Retenir 3 à 5 items maximum.** Le filtre n'est pas « est-ce
    intéressant » mais **« est-ce que ça change une décision du projet »**.
 4. **Lire et consigner** chaque item retenu dans une entrée de séance — 40 min.

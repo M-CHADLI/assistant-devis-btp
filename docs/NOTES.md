@@ -199,3 +199,53 @@ Voir aussi le lien possible avec les compétences RNCP de la couche application
 **Statut : non arbitré.** En attente de la séance de grill-me dédiée — aucune
 de ces briques n'est encore engagée dans `CADRAGE_MODELE.md` ni
 `DISPOSITIF_AGENT.md`.
+
+---
+
+## Fixer les hyperparamètres du LoRA sur une mesure, pas sur les défauts
+
+*(sorti de la séance de veille du 08/09/2026, item 2 — verdict « impacte le projet »)*
+
+**Le manque.** Le projet devra fixer taux d'apprentissage, taille de lot, nombre
+d'époques, rang du LoRA et optimiseur pour gpt-oss-20b. Aujourd'hui la seule
+justification disponible devant un jury serait « les valeurs par défaut
+d'Unsloth » — ce qui est un choix par omission, pas une décision.
+
+**La matière.** *Post-Training Science for Supervised Fine-Tuning*
+(arXiv 2609.01244, 01/09/2026) mesure ces leviers un par un dans un protocole
+unique, et couvre les modèles **denses et MoE** — rare, et exactement notre cible.
+
+**Ce qu'il faut en faire.** Le lire en entier **avant** la première session
+d'entraînement, en tirer une valeur de départ argumentée par levier, et citer la
+source en note des choix retenus. Ne pas transposer les valeurs mécaniquement :
+le papier balaie des datasets de taille usuelle, le nôtre fera quelques centaines
+d'exemples écrits à la main — un régime où l'on surapprend vite.
+
+**Statut : non arbitré.** Lecture à planifier sur le mois d'octobre, avant
+l'entraînement. Lié à [[la note MonteCLoRA de la séance du 08/09]] : si
+l'entraînement se révèle instable d'une graine à l'autre, l'hyperparamétrage est
+la première chose à regarder, avant le dataset.
+
+---
+
+## GRPO en seconde passe, si le taux de JSON valide plafonne
+
+*(sorti de la séance de veille du 08/09/2026, item 3 — verdict « à surveiller »)*
+
+**L'idée.** *Fine-tuning a 350M Model for Better Structured Outputs in 100 GRPO
+Steps* (blog Hugging Face, 03/09/2026) entraîne un petit modèle à respecter un
+schéma de sortie par renforcement, la récompense étant calculée par du code :
+le JSON parse, ou il ne parse pas. La métrique nº 1 du projet — le **taux de JSON
+valide** — est précisément de cette nature : vérifiable sans juge humain.
+
+**Pourquoi ce n'est pas pour maintenant.** Le protocole de preuve est figé :
+*20b brut bien promptté vs 20b fine-tuné en supervisé*. Changer de régime
+d'entraînement en cours de route rendrait la comparaison illisible, et c'est
+elle qui porte la démonstration devant le jury.
+
+**Quand ce redeviendrait pertinent.** Après la mesure du SFT, et seulement si le
+taux de JSON valide plafonne sous la cible. GRPO viendrait alors en **seconde
+passe** sur le modèle déjà fine-tuné, avec sa propre mesure avant/après — sans
+toucher au comparatif initial, qui reste publié tel quel.
+
+**Statut : non arbitré.** Rien à engager avant d'avoir le chiffre du SFT.

@@ -11,9 +11,16 @@
       <outline type="rss"
                text="Unsloth — releases"
                title="Unsloth — releases"
-               description="L'outil de fine-tuning du projet. Priorite 1."
+               description="Notes de version de l'application de bureau. Ne porte PAS le changelog de la bibliotheque Python : voir le flux PyPI ci-dessous (seance du 08/09/2026, item 1)."
                xmlUrl="https://github.com/unslothai/unsloth/releases.atom"
                htmlUrl="https://github.com/unslothai/unsloth/releases"/>
+
+      <outline type="rss"
+               text="Unsloth — bibliotheque Python (PyPI)"
+               title="Unsloth — bibliotheque Python (PyPI)"
+               description="L'outil de fine-tuning du projet, celui qu'on installe. Priorite 1. Numerotation AAAA.M.N, sans release GitHub correspondante."
+               xmlUrl="https://pypi.org/rss/project/unsloth/releases.xml"
+               htmlUrl="https://pypi.org/project/unsloth/"/>
 
       <outline type="rss"
                text="PEFT — releases"

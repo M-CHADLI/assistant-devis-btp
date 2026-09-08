@@ -54,6 +54,17 @@ rend le jeu de test manuel encore plus central.
 **Sortie :** dataset v1 + jeu de test gelé, dans deux fichiers distincts qui ne se croisent
 jamais.
 
+**Ajout du 08/09/2026 — le benchmark STT se fait sur un corpus maison.** Sorti de la séance de
+veille du 08/09 (item 5, verdict *impacte le planning*). L'arbitrage Whisper local vs Gladia
+devait s'appuyer sur les WER publiés ; ceux-ci mesurent des corpus de lecture, pas une dictée de
+chantier en français avec bruit de fond, unités du bâtiment et noms de produits — et les modèles
+sont partiellement optimisés pour ces corpus (*Measuring benchmark optimization in speech
+recognition*, HF, 21/08/2026). Le classement public ne sert donc qu'au **pré-tri des candidats** ;
+la mesure se fait sur **une dizaine de dictées réelles enregistrées par nos soins**, avec la
+colonne éco-responsabilité déjà prévue (traitement local vs appel distant). Coût : une demi-journée
+d'enregistrement et de transcription de référence, à prendre sur septembre — le mois porte déjà le
+jeu de test manuel, c'est la marge la plus tendue du calendrier.
+
 ## Octobre — la preuve
 
 Inchangé pour l'essentiel. Le code déterministe à écrire perd la brique facture (retirée du

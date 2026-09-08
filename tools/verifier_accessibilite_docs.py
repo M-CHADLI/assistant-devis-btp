@@ -24,6 +24,10 @@ RACINE = pathlib.Path(__file__).resolve().parent.parent
 def corpus() -> list[pathlib.Path]:
     fichiers = sorted((RACINE / "docs").glob("*.md"))
     fichiers += sorted((RACINE / "veille").glob("*.md"))
+    # Les comptes rendus de séance sont un livrable de C6 au même titre que le
+    # dispositif qui les encadre : les laisser hors du contrôle reviendrait à
+    # exempter la partie qui grossit chaque semaine.
+    fichiers += sorted((RACINE / "veille" / "seances").glob("*.md"))
     fichiers += [RACINE / nom for nom in ("README.md", "CLAUDE.md", "PLANNING.md")]
     return [f for f in fichiers if f.exists()]
 
