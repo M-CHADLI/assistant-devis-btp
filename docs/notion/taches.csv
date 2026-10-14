@@ -36,7 +36,7 @@ T-034,Phrase de passe scrypt et jeton signé en cookie HttpOnly,US-23,S4,Dévelo
 T-035,Middleware fermé par défaut : seuls / et /api/session sont ouverts,US-23,S4,Développement,3,Terminé,app/main.py
 T-036,"Test : balayage des routes, aucune n'est ouverte par oubli",US-23,S4,Test,2,Terminé,tests/test_auth.py
 T-037,Panneau de connexion accessible et bascule sur 401,US-23,S4,Accessibilité,3,Terminé,app/static/index.html
-T-038,Section 3.4 Contrôle d'accès et table des mesures OWASP,US-23,S4,Documentation,2,Terminé,docs/DISPOSITIF_AGENT.md
+T-038,Section 3.4 Contrôle d'accès et table des mesures OWASP,US-23,S4,Documentation,2,Terminé,docs/produit/DISPOSITIF_AGENT.md
 T-039,Capturer le triplet entrée / sortie modèle / corrigé à chaque correction,US-25,S6,Développement,4,Terminé,app/pipeline.py
 T-040,Refuser d'exporter le signal qualité sur un disque distant ou synchronisé,US-25,S6,Développement,3,Terminé,app/boucle_qualite.py
 T-041,"CLI d'export du jeu de candidats, avec passage à blanc",US-25,S6,Développement,2,Terminé,tools/exporter_signal_qualite.py

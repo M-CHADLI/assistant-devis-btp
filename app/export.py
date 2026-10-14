@@ -1,6 +1,6 @@
 """Export du devis en .docx, avec les mentions obligatoires BTP.
 
-Deux règles gouvernent ce module (docs/CADRAGE_MODELE.md §6, docs/STORIES.md
+Deux règles gouvernent ce module (docs/produit/CADRAGE_MODELE.md §6, docs/produit/STORIES.md
 US-15) :
 
 1. **Une donnée légale manquante bloque l'export.** Produire un document
@@ -15,7 +15,7 @@ US-15) :
 
 La structure passe par `add_heading` et un vrai tableau à ligne d'en-tête :
 l'export vers PDF produit alors un document balisé, exigence d'accessibilité du
-projet (docs/ACCESSIBILITE_DOCUMENTS.md).
+projet (docs/exploitation/ACCESSIBILITE_DOCUMENTS.md).
 """
 from __future__ import annotations
 
@@ -90,7 +90,7 @@ def generer_docx(devis: Devis, pieces: list[str], profil: ProfilArtisan,
         )
         if decennale.perimee(jour):
             # On signale sans bloquer : l'artisan reste maître de l'émission
-            # (docs/STORIES.md US-02, scénario 3).
+            # (docs/produit/STORIES.md US-02, scénario 3).
             doc.add_paragraph(
                 f"Attention : attestation décennale expirée depuis le "
                 f"{decennale.valide_jusqu_au:%d/%m/%Y}."

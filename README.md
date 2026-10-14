@@ -1,22 +1,24 @@
-# Assistant Bricolage — projet de soutenance
+# Assistant devis BTP vocal — projet de soutenance
 
-Fine-tuning d'un modèle MoE local (gpt-oss) en expert du chantier peinture et
-sols : il cadre un projet de travaux, calcule les quantités et restitue un devis
-structuré **sans jamais inventer un prix**. Le modèle décrit, le code calcule.
+Application B2B pour artisans du bâtiment : l'artisan dicte son chantier
+(peinture, sols, plomberie, électricité), un modèle de langage (gpt-oss)
+structure la demande, et un code déterministe restitue un devis exportable
+**sans jamais inventer un prix**. Le modèle décrit, le code calcule.
 
-Cible matérielle : NVIDIA DGX Spark, 128 Go de mémoire unifiée. Tout est local,
-les données ne sortent pas de la machine.
+Déploiement sur GCP (Cloud Run), modèle hébergé appelé par API. **Commencer par
+[DOSSIER_SPRINT_1.md](DOSSIER_SPRINT_1.md)** : le dossier de conception V1.
 
 ## Où lire quoi
 
 | Entrer par | Pour |
 |---|---|
 | [PLANNING.md](PLANNING.md) | Les quatre mois, jalon par jalon |
-| [docs/CADRAGE_MODELE.md](docs/CADRAGE_MODELE.md) | **Le document de référence** — périmètre, dataset, protocole de preuve |
-| [docs/DISPOSITIF_AGENT.md](docs/DISPOSITIF_AGENT.md) | Workflow, mémoire, garde-fous, plan d'évaluation |
-| [docs/LIVRABLES.md](docs/LIVRABLES.md) | Grille de contrôle : ce que le projet couvre, ce qu'il ne couvre pas |
-| [docs/NOTES.md](docs/NOTES.md) | Bloc-notes — idées attrapées au vol, pas encore arbitrées |
-| [docs/SOURCES_DONNEES.md](docs/SOURCES_DONNEES.md) | Structure du dump catalogue et contrainte légale sur les données |
+| [docs/produit/CADRAGE_MODELE.md](docs/produit/CADRAGE_MODELE.md) | **Le document de référence** — périmètre, dataset, protocole de preuve |
+| [docs/produit/DISPOSITIF_AGENT.md](docs/produit/DISPOSITIF_AGENT.md) | Workflow, mémoire, garde-fous, plan d'évaluation |
+| [DOSSIER_SPRINT_1.md](DOSSIER_SPRINT_1.md) | **Le dossier de conception V1** — besoin, périmètre, composante agentique, stack, schémas, contrat, plan |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | **Le journal des décisions** — pourquoi, et les questions encore ouvertes |
+| [docs/produit/STORIES.md](docs/produit/STORIES.md) | Les stories et leur état constaté |
+| [docs/pilotage/COUVERTURE_RNCP.md](docs/pilotage/COUVERTURE_RNCP.md) | Grille de contrôle : ce que le projet couvre, ce qu'il ne couvre pas |
 
 ## Arborescence
 
@@ -25,6 +27,7 @@ les données ne sortent pas de la machine.
 ├── README.md                  ← vous êtes ici
 ├── CLAUDE.md                  consignes pour Claude Code
 ├── PLANNING.md                le calendrier des 4 mois
+├── DOSSIER_SPRINT_1.md        le dossier de conception V1 — à lire d'abord
 ├── Dockerfile                 empaquetage du produit en image OCI
 │
 ├── app/                       l'implémentation : API, moteur de devis, front
@@ -34,15 +37,23 @@ les données ne sortent pas de la machine.
 ├── dataset/                   exemples de référence et de contrôle de la validation
 ├── catalogue/                 sources, extraits bruts et jeu de données agrégé
 │
-├── docs/                      la conception du projet — fait autorité
-├── veille/                    livrables de veille (thématique à recadrer)
-├── reference/                 référentiel de compétences, matière première
-└── archive/renoassistant/     conception précédente, valeur historique
+├── docs/                      l'état courant de la conception — fait autorité
+│   ├── DECISIONS.md           le journal des décisions (seul fichier d'histoire)
+│   ├── produit/               cadrage, dispositif agent, stories, maquettes
+│   ├── donnees/               chaîne de données, modèle de données, RGPD
+│   ├── modele/                chaîne MLOps, benchmark STT, conclusion du POC
+│   ├── exploitation/          CI/CD, incidents, accessibilité des documents
+│   ├── pilotage/              rituels, tableau Notion, couverture RNCP
+│   ├── notion/                schémas et CSV de la transposition Notion
+│   └── sprint/                consignes et grilles des sprints de conception
+├── veille/                    veille technique (thématique précédente rangée à part)
+└── reference/                 référentiel de compétences, matière première
 ```
 
-**Règle de rangement :** `docs/` fait autorité, `archive/` ne fait plus autorité.
-Un document qui n'est plus la cible descend dans `archive/`, il ne reste pas à la
-racine « au cas où ».
+**Règle de rangement :** `docs/` décrit l'état **courant** et rien d'autre ;
+l'histoire des choix vit dans **un seul fichier**, `docs/DECISIONS.md`. Un
+document qui n'est plus la cible est supprimé (git garde l'historique), il ne
+reste pas « au cas où ».
 
 ## Lancer l'application
 
@@ -99,7 +110,7 @@ VIRTUAL_ENV=~/.venvs/the-project uv run python -m tools.donnees.importer
 Aucune des deux ne touche au réseau : elles repartent des extraits versionnés
 dans `catalogue/brut/`. La collecte elle-même (`extraire_api.py`,
 `extraire_scraping.py`) n'a besoin d'être relancée que pour rafraîchir ces
-extraits. Tout est décrit dans `docs/CHAINE_DONNEES.md`.
+extraits. Tout est décrit dans `docs/donnees/CHAINE_DONNEES.md`.
 
 **Attention au montage.** Ce dépôt est sur un montage OneDrive synchronisé : tout ce
 qui y est écrit part en ligne. C'est pourquoi l'export du signal qualité refuse une
@@ -122,7 +133,7 @@ VIRTUAL_ENV=~/.venvs/the-project uv run python tools/parcours_bout_en_bout.py
 
 Rejoué cinq fois de suite le 08/09/2026 : **24/24 à chaque exécution**, 21 appels à
 `gpt-oss:20b`. Ce qu'on en a conclu — et le taux de JSON valide relevé, qui n'est pas
-bon — est dans `docs/CONCLUSION_POC.md`.
+bon — est dans `docs/modele/CONCLUSION_POC.md`.
 
 Vingt-quatre étapes : application fermée sans jeton, profil, relecture de dictée
 (HITL-0), tour modèle, absence de prix avant validation (HITL-2), chiffrage,
@@ -147,17 +158,17 @@ préparation, entraînement, validation — et **trois** états possibles : `ré
 `échoué`, ou `ignoré` faute de prérequis. Aujourd'hui, le dataset restant à
 écrire à la main, seule la première tourne ; les trois autres se déclarent
 `ignoré` en nommant ce qui leur manque, jamais `réussi`. Tout est dans
-`docs/CHAINE_MLOPS.md`.
+`docs/modele/CHAINE_MLOPS.md`.
 
 ## État d'avancement
 
 Le cadrage est figé et **l'implémentation est engagée** : FastAPI, moteur de devis
-déterministe, front mono-fichier, suite de tests. `docs/STORIES.md` porte l'état
+déterministe, front mono-fichier, suite de tests. `docs/produit/STORIES.md` porte l'état
 constaté story par story — c'est lui qui fait foi, pas cette section.
 
 Les décisions actées :
 
 - Chantier pilote **quatre corps de métier** : peinture, sols, plomberie, électricité
 - Entrée du produit **la voix**, canal de démonstration **web uniquement**
-- Preuve : **20b brut bien promptté vs 20b fine-tuné** — le 120b est la démo
+- Preuve : **20b brut bien promptté vs 20b fine-tuné** — le 120b est suspendu
 - Frontière **modèle / code** stricte : aucun montant n'est produit par le modèle

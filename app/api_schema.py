@@ -1,4 +1,4 @@
-"""Contrat de sortie de l'API (docs/STORIES.md US-22).
+"""Contrat de sortie de l'API (docs/produit/STORIES.md US-22).
 
 L'API est la frontière entre le front et le moteur, et l'artefact que le jury
 peut lire sans exécuter le produit. Ces modèles la rendent contractuelle : ce
@@ -45,7 +45,7 @@ class MentionSortie(BaseModel):
     La sévérité est publiée comme donnée et non déduite du texte : le front la
     lit dans `niveau` au lieu de chercher un emoji dans la phrase, et un
     changement de formulation ne change plus la couleur d'un avertissement
-    (docs/STORIES.md US-18).
+    (docs/produit/STORIES.md US-18).
     """
     niveau: str = Field(description="simple | forte")
     texte: str
@@ -71,7 +71,7 @@ class CorrectionSortie(BaseModel):
     auteur: str
     description: str
     # D'où vient la correction — le triplet d'entraînement, lui, ne sort pas par
-    # l'API : il ne quitte pas la machine (docs/STORIES.md US-25).
+    # l'API : il ne quitte pas la machine (docs/produit/STORIES.md US-25).
     origine: str = ""
 
 
@@ -272,7 +272,7 @@ class Erreur409(BaseModel):
 
 class Erreur401(BaseModel):
     """Le message est le même pour toutes les causes de refus : ni « phrase
-    incorrecte », ni « projet inconnu » (docs/STORIES.md US-23, OWASP A01)."""
+    incorrecte », ni « projet inconnu » (docs/produit/STORIES.md US-23, OWASP A01)."""
     detail: str
 
 
@@ -286,7 +286,7 @@ class Erreur404(BaseModel):
 
 
 # --------------------------------------------------------------------------
-# Jeu de données catalogue (docs/CHAINE_DONNEES.md)
+# Jeu de données catalogue (docs/donnees/CHAINE_DONNEES.md)
 # --------------------------------------------------------------------------
 
 class SourceDonnees(BaseModel):

@@ -5,7 +5,7 @@ siens : l'adoption tient à ce détail. Déposer un ancien devis permet de
 reprendre **l'ordre de ses blocs et ses intitulés d'usage**.
 
 **Le document déposé ne passe jamais par le modèle.** L'OCR est une API
-externe (`docs/CADRAGE_MODELE.md` §6) : `gpt-oss` est purement textuel, et
+externe (`docs/produit/CADRAGE_MODELE.md` §6) : `gpt-oss` est purement textuel, et
 faire entrer un modèle vision dans le projet en ferait un second projet.
 L'analyse du Markdown obtenu est ensuite du **Python déterministe** — même
 frontière que partout ailleurs : le modèle décrit, le code décide.
@@ -25,7 +25,7 @@ Quatre partis pris, qui sont les critères d'US-03 rendus exécutables :
   document déposé reste émis à sa place par défaut. Laisser un gabarit
   supprimer un bloc reviendrait à laisser un ancien devis mal fichu retirer
   des mentions obligatoires du devis suivant, et produire un document
-  inopposable sans que l'artisan le voie (`docs/STORIES.md` US-15).
+  inopposable sans que l'artisan le voie (`docs/produit/STORIES.md` US-15).
 - **Un échec d'OCR ne dégrade pas l'export.** Panne, illisibilité, clé
   absente, document qui n'est pas un devis : tous retombent sur le gabarit par
   défaut, en nommant le motif. Le module ne lève donc pas d'exception réseau,
@@ -33,7 +33,7 @@ Quatre partis pris, qui sont les critères d'US-03 rendus exécutables :
 - **Le fichier sort de la machine, et cela se dit avant le dépôt.** C'est le
   seul endroit du produit où une donnée personnelle est transmise à un tiers.
   L'interface l'annonce avant que l'artisan choisisse son fichier, et
-  `docs/RGPD.md` porte le traitement.
+  `docs/donnees/RGPD.md` porte le traitement.
 
 Réserve honnête sur la correspondance des champs : la ligne de requête
 (`POST` sur le point d'entrée, jeton en en-tête `Authorization: Bearer`) est

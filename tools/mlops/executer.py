@@ -5,7 +5,7 @@ compte cinq étapes, tourne sur une machine, et doit rester lisible par un jury
 en trois minutes. Un orchestrateur ajouterait un serveur à tenir, une base de
 métadonnées, et une couche d'abstraction entre la commande et ce qu'elle fait.
 Le jour où la chaîne s'exécutera sur plusieurs machines, ce choix se
-rediscutera — il est écrit dans `docs/CHAINE_MLOPS.md` pour cela.
+rediscutera — il est écrit dans `docs/modele/CHAINE_MLOPS.md` pour cela.
 
 **Trois états, pas deux.** Une étape est `réussie`, `échouée`, ou `ignorée`
 faute de prérequis (code de sortie 3). La troisième existe parce que la chaîne

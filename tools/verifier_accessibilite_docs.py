@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Contrôle mécanique des règles d'accessibilité documentaire.
 
-Trois des neuf règles de `docs/ACCESSIBILITE_DOCUMENTS.md` se vérifient sans
+Trois des neuf règles de `docs/exploitation/ACCESSIBILITE_DOCUMENTS.md` se vérifient sans
 jugement humain : un seul titre de niveau 1 par document (règle 1), aucun saut
 dans la hiérarchie des titres (règle 2), aucun libellé de lien creux (règle 4).
 Les six autres se relisent — elles sont courtes exprès.
@@ -19,16 +19,15 @@ import sys
 
 RACINE = pathlib.Path(__file__).resolve().parent.parent
 
-# Les fichiers du dossier, hors archive/ (valeur historique, non livré) et hors
-# CONTEXTE_COMPLET_PROJET.md (fichier généré, destiné à être collé ailleurs).
+# Le corpus contrôlé : docs/**/*.md (hors sprint), veille/*.md et les comptes rendus de séance.
 def corpus() -> list[pathlib.Path]:
-    fichiers = sorted((RACINE / "docs").glob("*.md"))
+    fichiers = sorted(f for f in (RACINE / "docs").rglob("*.md") if "sprint" not in f.relative_to(RACINE).parts)
     fichiers += sorted((RACINE / "veille").glob("*.md"))
     # Les comptes rendus de séance sont un livrable de C6 au même titre que le
     # dispositif qui les encadre : les laisser hors du contrôle reviendrait à
     # exempter la partie qui grossit chaque semaine.
     fichiers += sorted((RACINE / "veille" / "seances").glob("*.md"))
-    fichiers += [RACINE / nom for nom in ("README.md", "CLAUDE.md", "PLANNING.md")]
+    fichiers += [RACINE / nom for nom in ("README.md", "CLAUDE.md", "PLANNING.md", "DOSSIER_SPRINT_1.md")]
     return [f for f in fichiers if f.exists()]
 
 
@@ -94,7 +93,7 @@ def main() -> int:
         print("Accessibilité documentaire — manquements :\n")
         for m in manquements:
             print(f"  {m}")
-        print(f"\n{len(manquements)} manquement(s). Voir docs/ACCESSIBILITE_DOCUMENTS.md.")
+        print(f"\n{len(manquements)} manquement(s). Voir docs/exploitation/ACCESSIBILITE_DOCUMENTS.md.")
         return 1
 
     print(f"Accessibilité documentaire : {len(corpus())} documents conformes "

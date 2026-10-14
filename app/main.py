@@ -1,8 +1,8 @@
 """Interface web de la démo — canal web uniquement, un seul interlocuteur :
-l'artisan (docs/CADRAGE_MODELE.md §4).
+l'artisan (docs/produit/CADRAGE_MODELE.md §4).
 
 Chaque navigateur travaille sur **son** projet, identifié par un cookie et
-persisté sur disque (docs/STORIES.md US-16). Avant, une unique `Session` de
+persisté sur disque (docs/produit/STORIES.md US-16). Avant, une unique `Session` de
 module était partagée par tous les visiteurs et perdue à chaque redémarrage.
 """
 from __future__ import annotations
@@ -49,14 +49,14 @@ app = FastAPI(
         "API de l'assistant de devis pour artisans du bâtiment. Le modèle "
         "décrit, le code calcule : aucun prix ne vient du LLM. Tant que "
         "l'artisan n'a pas validé la structure du devis (HITL-2), les réponses "
-        "ne portent **aucune clé de prix** — voir `docs/STORIES.md` US-12."
+        "ne portent **aucune clé de prix** — voir `docs/produit/STORIES.md` US-12."
     ),
 )
 
 REGISTRE = Registre()
 
 # --------------------------------------------------------------------------
-# Authentification (docs/STORIES.md US-23)
+# Authentification (docs/produit/STORIES.md US-23)
 # --------------------------------------------------------------------------
 
 AUTH = Configuration()
@@ -76,6 +76,42 @@ if AUTH.phrase_engendree:
 CHEMINS_LIBRES = frozenset({"/", "/api/session"})
 
 
+# La politique tient en une ligne parce que l'application n'appelle aucun tiers
+# depuis le navigateur : tout vient de la même origine. `frame-ancestors 'none'`
+# interdit l'encadrement (clickjacking), `object-src 'none'` les greffons.
+#
+# Réserve assumée : `'unsafe-inline'` reste nécessaire. Le front est un fichier
+# unique dont le script et les styles sont en ligne, avec des gestionnaires
+# `onclick=` dans le balisage. Tant que c'est le cas, la CSP **ne bloque pas**
+# un script injecté dans la page — elle l'empêche seulement de charger du code
+# ou d'exfiltrer vers un autre hôte. La défense qui compte contre l'injection
+# HTML est l'échappement, fait dans `app/static/index.html` (fonction `esc`).
+# Retirer `'unsafe-inline'` demande de sortir le script dans un fichier servi et
+# de remplacer les `onclick=` par des écouteurs : ce n'est pas un réglage, c'est
+# une reprise du front, et elle n'est pas faite.
+CSP = ("default-src 'self'; "
+       "script-src 'self' 'unsafe-inline'; "
+       "style-src 'self' 'unsafe-inline'; "
+       "img-src 'self' data:; "
+       "connect-src 'self'; "
+       "form-action 'self'; "
+       "base-uri 'none'; "
+       "object-src 'none'; "
+       "frame-ancestors 'none'")
+
+EN_TETES_SECURITE = {
+    "Content-Security-Policy": CSP,
+    # Empêche le navigateur de deviner un type MIME : un fichier déposé qui
+    # reviendrait servi en text/html s'exécuterait sinon comme une page.
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    # L'application ne demande ni caméra, ni micro d'API tierce, ni position.
+    # Le micro reste autorisé : la dictée en dépend (US-04).
+    "Permissions-Policy": "camera=(), geolocation=(), payment=(), usb=()",
+}
+
+
 @app.middleware("http")
 async def exiger_authentification(request: Request, call_next):
     """Contrôle d'accès **avant** toute recherche de ressource (OWASP A01).
@@ -93,6 +129,22 @@ async def exiger_authentification(request: Request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def poser_en_tetes_securite(request: Request, call_next):
+    """Ajoute les en-têtes de sécurité à **toute** réponse, y compris les 401.
+
+    Déclaré **après** le contrôle d'accès, et c'est délibéré : Starlette empile
+    les middlewares de sorte que le dernier enregistré est le plus externe. Le
+    401 émis par `exiger_authentification` repasse donc par ici avant de sortir.
+    Dans l'autre ordre, un refus partait sans le moindre en-tête — constaté en
+    écrivant le test, pas deviné.
+    """
+    reponse = await call_next(request)
+    for nom, valeur in EN_TETES_SECURITE.items():
+        reponse.headers.setdefault(nom, valeur)
+    return reponse
+
+
 class OuvertureSession(BaseModel):
     phrase: str
 
@@ -107,7 +159,7 @@ def api_session(ouverture: OuvertureSession, request: Request,
     """Échange la phrase de passe contre un jeton signé, à durée de vie bornée.
 
     La phrase n'est comparée qu'à son empreinte scrypt, en temps constant, et
-    n'est jamais journalisée (docs/STORIES.md US-23)."""
+    n'est jamais journalisée (docs/produit/STORIES.md US-23)."""
     origine = request.client.host if request.client else "inconnu"
     if not AUTH.tentative_permise(origine):
         raise HTTPException(status_code=429,
@@ -150,7 +202,7 @@ def _poser_cookie(response: Response, projet_id: str) -> None:
 def _serialiser_devis(session: Session) -> dict:
     """Sérialise le devis pour le navigateur.
 
-    Avant HITL-2 (docs/STORIES.md US-12), **aucune clé de prix n'existe dans la
+    Avant HITL-2 (docs/produit/STORIES.md US-12), **aucune clé de prix n'existe dans la
     réponse** : ni prix unitaire, ni total, ni ventilation. Ce n'est pas un
     masquage d'affichage — rien n'a été calculé côté serveur non plus.
     """
@@ -227,7 +279,7 @@ def index() -> HTMLResponse:
 
 
 @app.get("/metriques", response_class=HTMLResponse, tags=["Interface"],
-         summary="Tableau de bord d'exploitation (docs/STORIES.md US-24)")
+         summary="Tableau de bord d'exploitation (docs/produit/STORIES.md US-24)")
 def page_metriques() -> HTMLResponse:
     """Lit le journal applicatif : reste consultable modèle arrêté."""
     return HTMLResponse(METRIQUES_HTML.read_text(encoding="utf-8"))
@@ -294,7 +346,7 @@ class DicteeEntrante(BaseModel):
 class TranscriptionValidee(BaseModel):
     propose: str = ""
     # La dictée avant remise en forme : c'est l'« entrée d'origine » du triplet
-    # exporté au réentraînement (docs/STORIES.md US-25).
+    # exporté au réentraînement (docs/produit/STORIES.md US-25).
     brut: str = ""
     texte: str
 
@@ -304,7 +356,7 @@ class TranscriptionValidee(BaseModel):
 def api_transcription(dictee: DicteeEntrante, request: Request,
                       response: Response) -> dict:
     """HITL-0 — remet la dictée en forme et la rend à relire. **Aucune étape
-    aval n'est déclenchée ici** (docs/STORIES.md US-05) : le pipeline ne démarre
+    aval n'est déclenchée ici** (docs/produit/STORIES.md US-05) : le pipeline ne démarre
     qu'à `/api/transcription/valider`.
 
     La reformulation passe par `app.transcription`, qui utilise un modèle
@@ -488,7 +540,7 @@ def _serialiser_gabarit(gabarit: Gabarit) -> dict:
 
 
 # --------------------------------------------------------------------------
-# Jeu de données catalogue (docs/CHAINE_DONNEES.md, référentiel C5)
+# Jeu de données catalogue (docs/donnees/CHAINE_DONNEES.md, référentiel C5)
 # --------------------------------------------------------------------------
 #
 # Ces cinq points de terminaison exposent le jeu de données produit par la
@@ -794,7 +846,7 @@ async def api_profil_gabarit_deposer(request: Request, response: Response,
             tags=["Profil"],
             summary="Revenir à la mise en page par défaut (US-03)")
 def api_profil_gabarit_oublier(request: Request, response: Response) -> dict:
-    """La mémoire utilisateur est révocable (`docs/DISPOSITIF_AGENT.md` §2.2).
+    """La mémoire utilisateur est révocable (`docs/produit/DISPOSITIF_AGENT.md` §2.2).
 
     Révoquer réussit même s'il n'y avait rien à révoquer : demander l'oubli et
     s'entendre répondre 404 serait une réponse absurde à une demande légitime.

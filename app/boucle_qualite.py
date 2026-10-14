@@ -1,6 +1,6 @@
 """US-25 — faire sortir le signal qualité du produit, sans le faire sortir de la machine.
 
-Deux points de capture alimentent la boucle (`docs/DISPOSITIF_AGENT.md` §5.2) :
+Deux points de capture alimentent la boucle (`docs/produit/DISPOSITIF_AGENT.md` §5.2) :
 la relecture de la dictée (HITL-0) et la correction de l'artisan (HITL-2). Tant
 qu'ils restent en mémoire de session, ils ne servent à rien : §4.2 demande que
 tout défaut constaté devienne un cas de non-régression, et §5.2 en fait la

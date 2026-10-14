@@ -1,7 +1,7 @@
-"""Journal applicatif et agrégation des métriques (docs/DISPOSITIF_AGENT.md §4.3).
+"""Journal applicatif et agrégation des métriques (docs/produit/DISPOSITIF_AGENT.md §4.3).
 
 « Une application qui définit ses métriques sans les mesurer ne les respecte
-pas : elle les espère » (docs/STORIES.md US-24). Ce module écrit une ligne JSON
+pas : elle les espère » (docs/produit/STORIES.md US-24). Ce module écrit une ligne JSON
 par événement et sait relire ce journal pour en tirer les seuils du §4.3.
 
 Trois partis pris :

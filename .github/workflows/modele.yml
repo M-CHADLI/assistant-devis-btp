@@ -1,4 +1,4 @@
-# Chaîne MLOps — voir docs/CHAINE_MLOPS.md
+# Chaîne MLOps — voir docs/modele/CHAINE_MLOPS.md
 #
 # Elle n'exécute que les étapes qui n'ont pas besoin de GPU : validation du
 # dataset et préparation. L'entraînement et la mesure tournent sur la DGX

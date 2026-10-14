@@ -8,7 +8,7 @@ Deux vocabulaires se rencontrent ici, et ils n'ont pas été écrits ensemble :
   le modèle produit et que l'artisan reconnaît.
 - les **familles** (`catalogue/catalogue.sqlite3`) regroupent des *matières*
   achetables — « SOL_STRATIFIE », « ELECTRICITE_TABLEAU ». C'est la langue du
-  fournisseur, imposée par les sources de `docs/CHAINE_DONNEES.md`.
+  fournisseur, imposée par les sources de `docs/donnees/CHAINE_DONNEES.md`.
 
 Ce fichier est le seul endroit où les deux se touchent, et il est **déclaratif à
 dessein** : une correspondance devinée à l'exécution (par ressemblance de nom,
@@ -20,7 +20,7 @@ famille désignent la même chose ; elle est `ARBITRAGE_REQUIS` quand ils n'en
 désignent pas tout à fait la même — et dans ce cas **elle ne sert pas**. C'est
 la règle qui fait tenir le reste : chiffrer « un tableau électrique » au prix
 d'un disjoncteur produirait un devis faux sans le signaler, ce qui est
-exactement ce que ce projet refuse (`docs/CADRAGE_MODELE.md` : zéro prix
+exactement ce que ce projet refuse (`docs/produit/CADRAGE_MODELE.md` : zéro prix
 inventé). Un lot en attente d'arbitrage retombe sur le catalogue simulé, et le
 dit.
 

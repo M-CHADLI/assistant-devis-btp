@@ -297,12 +297,12 @@ def test_les_options_absentes_sont_toutes_connues(unused: Path, schema_path: Pat
     schema = charger_schema(Path(__file__).parents[1] / schema_path)
 
     constatees = {
-        (str(schema_path), nom)
+        (schema_path.as_posix(), nom)
         for nom, definition in schema.get("proprietes", {}).items()
         if notion_cli.definition_type(definition) in ("select", "multi_select")
         and not definition.get(notion_cli.definition_type(definition), {}).get("options")
     }
-    attendues = {couple for couple in SANS_OPTIONS_DECLAREES if couple[0] == str(schema_path)}
+    attendues = {couple for couple in SANS_OPTIONS_DECLAREES if couple[0] == schema_path.as_posix()}
 
     nouvelles = constatees - attendues
     assert not nouvelles, (

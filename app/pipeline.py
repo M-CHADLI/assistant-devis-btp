@@ -1,4 +1,4 @@
-"""Orchestrateur — enchaîne les étapes de docs/DISPOSITIF_AGENT.md §1.
+"""Orchestrateur — enchaîne les étapes de docs/produit/DISPOSITIF_AGENT.md §1.
 
 Le modèle décrit (clarifie, décompose, quantifie, propose des consommables) ;
 le code calcule (app.devis) et contrôle (schéma, lot_code connu, bornes). Toute
@@ -30,12 +30,12 @@ LONGUEUR_MAX_ENTREE = 2000
 # Budget d'appels modèle pour UN message utilisateur : 1 essai + 1 reprise.
 # Le pipeline est le seul à reprendre — app.llm n'a plus de boucle interne, sans
 # quoi les deux se composaient et un message coûtait jusqu'à 4 appels
-# (docs/DISPOSITIF_AGENT.md §1.3 et §4.3, objectif de latence p95 < 30 s).
+# (docs/produit/DISPOSITIF_AGENT.md §1.3 et §4.3, objectif de latence p95 < 30 s).
 MAX_APPELS_MODELE = 2
 
 # HITL-1 : au-delà de trois tours de clarification, on arrête d'interroger et
-# on pose des hypothèses par défaut *explicites* (docs/DISPOSITIF_AGENT.md §1.4,
-# docs/STORIES.md US-07). Un agent qui questionne sans fin est un agent qui ne
+# on pose des hypothèses par défaut *explicites* (docs/produit/DISPOSITIF_AGENT.md §1.4,
+# docs/produit/STORIES.md US-07). Un agent qui questionne sans fin est un agent qui ne
 # sait pas décider — sur un chantier, c'est intenable.
 MAX_TOURS_CLARIFICATION = 3
 
@@ -50,7 +50,7 @@ HYPOTHESES_PAR_DEFAUT = [
 @dataclass
 class Escalade:
     """Trace d'un échec de tour. Le motif est un code stable, exploitable en
-    agrégat (docs/DISPOSITIF_AGENT.md §5.2) ; le détail sert au débogage."""
+    agrégat (docs/produit/DISPOSITIF_AGENT.md §5.2) ; le détail sert au débogage."""
     horodatage: str
     motif: str  # "entree_rejetee" | "json_invalide" | "schema_invalide"
                 # | "lot_inconnu" | "intent_inconnu" | "modele_injoignable"
@@ -64,7 +64,7 @@ class Correction:
 
     `description` reste le texte lisible à l'écran ; le triplet
     `entree` / `sortie_modele` / `corrige` est ce qui fait d'une correction un
-    candidat d'entraînement (docs/DISPOSITIF_AGENT.md §5.2). Les trois champs
+    candidat d'entraînement (docs/produit/DISPOSITIF_AGENT.md §5.2). Les trois champs
     sont optionnels parce que les projets écrits avant la version 4 du format
     n'en ont pas : `app.boucle_qualite` les compte comme incomplets plutôt que
     de les exporter amputés."""
@@ -110,14 +110,14 @@ class Session:
     tours_clarification: int = 0
     a_confirmer: list[LigneEnAttente] = field(default_factory=list)
     # Mentions légales du devis : déclarées une fois, reportées sur chaque
-    # export (docs/STORIES.md US-02 et US-15). Le modèle n'y touche jamais.
+    # export (docs/produit/STORIES.md US-02 et US-15). Le modèle n'y touche jamais.
     profil: ProfilArtisan = field(default_factory=ProfilArtisan)
     client: Client = field(default_factory=Client)
     delai_execution: str = ""
-    # HITL-2 (docs/STORIES.md US-12) : tant que l'artisan n'a pas validé la
+    # HITL-2 (docs/produit/STORIES.md US-12) : tant que l'artisan n'a pas validé la
     # structure, aucun prix n'est calculé — donc aucun ne peut fuiter vers le
     # navigateur. On valide ce qui est stable avant d'y accrocher ce qui est
-    # volatil (docs/DISPOSITIF_AGENT.md §1.4).
+    # volatil (docs/produit/DISPOSITIF_AGENT.md §1.4).
     structure_validee: bool = False
     # Compteur de reprises du dernier tour — sert au journal (§4.3), pas à la
     # logique métier : il n'est donc pas persisté.
@@ -141,12 +141,12 @@ class ResultatTour:
     consommables_suggeres: dict[str, list[str]]
     # Messages de garde-fou (périmètre, injection) : ils sont déjà en tête de
     # messages_assistant, listés à part pour que l'interface les annonce en
-    # role="alert" sans avoir à reconnaître leur texte (docs/STORIES.md US-20).
+    # role="alert" sans avoir à reconnaître leur texte (docs/produit/STORIES.md US-20).
     cadrages: list[str] = field(default_factory=list)
 
 
 def _valider_entree(texte: str) -> str | None:
-    """Contrôle d'entrée (docs/DISPOSITIF_AGENT.md §3.1). Renvoie un message
+    """Contrôle d'entrée (docs/produit/DISPOSITIF_AGENT.md §3.1). Renvoie un message
     de rejet si l'entrée est irrecevable, None si elle est acceptée."""
     if not texte or not texte.strip():
         return "Message vide — décris ton chantier pour que je puisse t'aider."
@@ -188,7 +188,7 @@ def _router(session: Session, sortie: dict,
     """Route une sortie modèle déjà parsée en JSON vers le bon traitement.
 
     Peut lever ValidationError ou LotInconnu — l'appelant décide de reprendre
-    ou d'escalader (docs/DISPOSITIF_AGENT.md §1.3 : « Reprise, puis escalade »).
+    ou d'escalader (docs/produit/DISPOSITIF_AGENT.md §1.3 : « Reprise, puis escalade »).
     """
     intent = sortie.get("intent")
     payload = sortie.get("payload", {})
@@ -302,7 +302,7 @@ def _router(session: Session, sortie: dict,
 
 
 def _journaliser_escalade(session: Session, motif: str, detail: object) -> None:
-    """Toute sortie non retenue laisse une trace (docs/DISPOSITIF_AGENT.md §2.4).
+    """Toute sortie non retenue laisse une trace (docs/produit/DISPOSITIF_AGENT.md §2.4).
 
     Sans motif explicite, on sait qu'un tour a échoué mais pas *pourquoi* — donc
     on ne peut pas décider quoi corriger dans le dataset."""
@@ -334,7 +334,7 @@ MESSAGE_INDISPONIBLE = (
 def traiter_message(session: Session, texte_utilisateur: str) -> ResultatTour:
     """Un tour complet : garde-fous, appel modèle, routage.
 
-    Les garde-fous passent **avant** le modèle (docs/DISPOSITIF_AGENT.md §3.1) :
+    Les garde-fous passent **avant** le modèle (docs/produit/DISPOSITIF_AGENT.md §3.1) :
     une consigne injectée ne doit pas atteindre le prompt sans être vue, et une
     demande hors périmètre ne doit pas coûter un appel pour rien.
     """
@@ -449,7 +449,7 @@ def valider_structure(session: Session) -> bool:
     """HITL-2 — l'artisan valide lots et quantités ; **alors** on chiffre.
 
     Valider un devis déjà chiffré, c'est valider un prix ; valider un devis nu,
-    c'est valider le métier (docs/DISPOSITIF_AGENT.md §1.4). L'artisan valide
+    c'est valider le métier (docs/produit/DISPOSITIF_AGENT.md §1.4). L'artisan valide
     seul : depuis le pivot, le client n'a plus de rôle actif ici.
     """
     if not session.devis.lignes:
@@ -470,12 +470,12 @@ def _derniere_dictee(session: Session) -> str:
 
 def valider_transcription(session: Session, propose: str, corrige: str,
                           brut: str = "") -> str:
-    """HITL-0 : l'artisan relit sa dictée et la valide (docs/STORIES.md US-05).
+    """HITL-0 : l'artisan relit sa dictée et la valide (docs/produit/STORIES.md US-05).
 
     Rien ne s'exécute avant cet appel — c'est ici que le pipeline démarre. Si
     l'artisan a corrigé le texte, l'écart est journalisé au même titre qu'une
     correction de devis : c'est le **premier point de capture du signal qualité**
-    (docs/DISPOSITIF_AGENT.md §5.2), celui qui dit ce que la chaîne dictée +
+    (docs/produit/DISPOSITIF_AGENT.md §5.2), celui qui dit ce que la chaîne dictée +
     reformulation a mal entendu.
 
     `brut` est la dictée avant remise en forme. Quand l'appelant ne la fournit

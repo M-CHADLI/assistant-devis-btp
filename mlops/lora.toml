@@ -2,7 +2,7 @@
 # doit pas demander de modifier un script, et leur historique doit se lire dans
 # git — c'est ce qui permettra de rattacher une mesure à une configuration.
 #
-# Ces valeurs sont celles du cadrage (docs/CADRAGE_MODELE.md) et n'ont pas
+# Ces valeurs sont celles du cadrage (docs/produit/CADRAGE_MODELE.md) et n'ont pas
 # encore été confrontées à un entraînement réel. Elles bougeront.
 
 [lora]

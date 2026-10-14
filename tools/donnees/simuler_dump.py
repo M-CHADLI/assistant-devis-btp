@@ -1,6 +1,6 @@
 """Fabrique le dump fournisseur **simulé** qui sert de source « fichier ».
 
-Contrainte légale héritée de `docs/SOURCES_DONNEES.md` : un vrai export de
+Contrainte légale héritée de `docs/DECISIONS.md` D-12 : un vrai export de
 catalogue Leroy Merlin ne peut être ni redistribué ni versionné. La parade du
 projet est constante depuis l'origine — **structure réelle, valeurs simulées**.
 

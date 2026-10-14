@@ -1,9 +1,9 @@
-"""Schéma de sortie unique — docs/CADRAGE_MODELE.md §6.
+"""Schéma de sortie unique — docs/produit/CADRAGE_MODELE.md §6.
 
 Un seul schéma partagé par les 6 capacités : le modèle signale sa tâche via
 `intent`, le code route derrière. Aucun champ prix ni référence produit —
 le modèle ne peut pas halluciner ce qu'il n'a pas la possibilité d'exprimer
-(garde-fou structurel, docs/DISPOSITIF_AGENT.md §3.2).
+(garde-fou structurel, docs/produit/DISPOSITIF_AGENT.md §3.2).
 """
 from __future__ import annotations
 

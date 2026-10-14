@@ -1,12 +1,12 @@
 """Le catalogue vu par le moteur de devis — deux sources, une seule interface.
 
 **Source `simule`** (par défaut) : la liste `CATALOGUE` ci-dessous. Contrainte
-légale héritée de `docs/SOURCES_DONNEES.md` : on ne peut pas redistribuer un
+légale héritée de `docs/DECISIONS.md` (D-12) : on ne peut pas redistribuer un
 vrai dump catalogue Leroy Merlin, mais la structure (référence, prix, promo,
 unité de vente) est fidèle à ce qu'un vrai catalogue expose.
 
 **Source `base`** : la base construite par la chaîne de données
-(`docs/CHAINE_DONNEES.md`), lue par `app/catalogue_base.py`, atteinte par la
+(`docs/donnees/CHAINE_DONNEES.md`), lue par `app/catalogue_base.py`, atteinte par la
 table de correspondance de `app/correspondance.py`.
 
 Le choix est **explicite**, jamais implicite : `BTP_CATALOGUE_SOURCE=base`.
@@ -71,7 +71,7 @@ CATALOGUE: list[Produit] = [
     Produit("LM-EL-003", "Tableau électrique 3 rangées équipé", "ELEC_TABLEAU", "u", 249.00),
 ]
 
-# Consommables (fonction « oublis », docs/CADRAGE_MODELE.md §4) — prix indicatif
+# Consommables (fonction « oublis », docs/produit/CADRAGE_MODELE.md §4) — prix indicatif
 # forfaitaire par occurrence, pas de conditionnement à calculer pour la démo.
 PRIX_CONSOMMABLE_FORFAIT = 4.90
 

@@ -1,4 +1,4 @@
-# Empaquetage du produit — voir docs/LIVRAISON_CONTINUE.md
+# Empaquetage du produit — voir docs/exploitation/CHAINE_CI_CD.md
 #
 # Trois intentions, dans cet ordre :
 #   1. qu'un jury puisse lancer le produit sans installer Python ni uv ;

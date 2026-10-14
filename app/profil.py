@@ -2,13 +2,13 @@
 
 Un devis BTP non conforme est inopposable : ce n'est pas un devis. Les mentions
 qui font sa validité ne peuvent **ni être devinées, ni être produites par le
-modèle** (docs/CADRAGE_MODELE.md §6). Elles sont déclarées une fois au profil,
+modèle** (docs/produit/CADRAGE_MODELE.md §6). Elles sont déclarées une fois au profil,
 et le code les reporte sur chaque document.
 
 Le régime de TVA n'est pas une variante d'affichage. En franchise en base
 (article 293 B du CGI), le devis ne porte **aucune** ligne de TVA et affiche la
 mention légale correspondante : un devis d'auto-entrepreneur qui affiche une TVA
-est un devis faux (docs/STORIES.md, US-02).
+est un devis faux (docs/produit/STORIES.md, US-02).
 """
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ class ProfilArtisan:
     regime_tva: RegimeTVA = RegimeTVA.REEL
     decennale: Decennale = field(default_factory=Decennale)
 
-    # Origine de chaque champ légal (`docs/DISPOSITIF_AGENT.md` §2.3). Absent
+    # Origine de chaque champ légal (`docs/produit/DISPOSITIF_AGENT.md` §2.3). Absent
     # du dictionnaire vaut `artisan` : par défaut, ce qui est dans le profil y
     # a été mis à la main, et c'est la lecture la plus prudente — elle protège
     # la saisie plutôt que le pré-remplissage.
@@ -76,7 +76,7 @@ class ProfilArtisan:
 
     # Mise en page reprise d'un ancien devis de l'artisan (US-03). Vide vaut
     # « mise en page par défaut » : c'est une mémoire utilisateur révocable
-    # (`docs/DISPOSITIF_AGENT.md` §2.2), et la révoquer se fait en la vidant.
+    # (`docs/produit/DISPOSITIF_AGENT.md` §2.2), et la révoquer se fait en la vidant.
     gabarit: Gabarit = field(default_factory=Gabarit)
 
     @property

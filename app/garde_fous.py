@@ -1,4 +1,4 @@
-"""Garde-fous d'entrée — périmètre et injection (docs/DISPOSITIF_AGENT.md §3.1, §3.3).
+"""Garde-fous d'entrée — périmètre et injection (docs/produit/DISPOSITIF_AGENT.md §3.1, §3.3).
 
 Deux contrôles **déterministes**, faits avant et autour de l'appel modèle :
 
@@ -145,7 +145,7 @@ def reste_du_chantier(texte: str) -> bool:
 
 def detecter_injection(texte: str) -> list[str]:
     """Les motifs d'injection repérés, en codes stables et exploitables en
-    agrégat (docs/DISPOSITIF_AGENT.md §5.2)."""
+    agrégat (docs/produit/DISPOSITIF_AGENT.md §5.2)."""
     normalise = _normaliser(texte)
     return [code for code, motif in MOTIFS_INJECTION.items()
             if motif.search(normalise)]

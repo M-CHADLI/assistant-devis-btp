@@ -1,6 +1,6 @@
 {
   "titre": "Backlog — Stories",
-  "description": "Les 28 stories de docs/STORIES.md. Source de vérité : le dépôt, pas Notion.",
+  "description": "Les 28 stories de docs/produit/STORIES.md. Source de vérité : le dépôt, pas Notion.",
   "proprietes": {
     "Titre": { "title": {} },
     "Clé": { "rich_text": {} },

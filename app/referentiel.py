@@ -1,4 +1,4 @@
-"""Référentiel métier — 4 corps de métier pilotes (docs/CADRAGE_MODELE.md §4).
+"""Référentiel métier — 4 corps de métier pilotes (docs/produit/CADRAGE_MODELE.md §4).
 
 Valeurs comblées pour la démo, pas sourcées ligne à ligne (décision assumée du
 pivot, §6). Chaque lot porte ses rendements, ses taux de chute et ses
@@ -64,7 +64,7 @@ REFERENTIEL: dict[str, Lot] = {
 }
 
 
-# Postes qui déclenchent une mention réglementaire (docs/DISPOSITIF_AGENT.md §3.3)
+# Postes qui déclenchent une mention réglementaire (docs/produit/DISPOSITIF_AGENT.md §3.3)
 MENTIONS: dict[str, str] = {
     "ELEC_TABLEAU": "forte",
     "PLOMB_ALIM": "simple",
@@ -82,7 +82,7 @@ TEXTE_MENTION: dict[str, str] = {
 }
 
 
-# --- Bornes de plausibilité (docs/DISPOSITIF_AGENT.md §3.2) ---
+# --- Bornes de plausibilité (docs/produit/DISPOSITIF_AGENT.md §3.2) ---
 #
 # Une dictée sur chantier produit des erreurs de saisie : « 220 m² » pour
 # « 22 m² », un point décimal avalé, une unité confondue. Le modèle n'a aucun
@@ -124,7 +124,7 @@ def lots_du_corps_metier(corps_metier: str) -> list[Lot]:
     )
 
 
-# --- TVA (docs/CADRAGE_MODELE.md §6 — contenu réglementaire) ---
+# --- TVA (docs/produit/CADRAGE_MODELE.md §6 — contenu réglementaire) ---
 
 TAUX_TVA = {
     "20": "Neuf, logement < 2 ans, agrandissement, gros équipements",

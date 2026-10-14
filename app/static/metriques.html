@@ -25,7 +25,7 @@
 <body>
 <a href="/">← Retour à l'assistant</a>
 <h1>Métriques d'exploitation</h1>
-<p class="note">Seuils repris de <code>docs/DISPOSITIF_AGENT.md</code> §4.3, sans
+<p class="note">Seuils repris de <code>docs/produit/DISPOSITIF_AGENT.md</code> §4.3, sans
 réinterprétation. Cette page lit le journal applicatif : elle reste consultable
 même quand le modèle est arrêté.</p>
 
@@ -65,20 +65,26 @@ function texteSeuil(m) {
 
 fetch('/api/metriques').then(r => r.json()).then(data => {
   const corps = document.querySelector('#table-metriques tbody');
+  // Même règle que dans index.html : ce tableau lit le journal applicatif, dont
+  // les libellés et commentaires viennent de l'usage réel. Rien n'y est balisage.
+  const esc = (v) => String(v ?? '')
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+
   data.metriques.forEach(m => {
     const tr = document.createElement('tr');
     const mesure = (m.valeur === null) ? '—' : m.valeur + ' ' + m.unite;
     const classe = m.statut === 'conforme' ? 'conforme'
                  : (m.statut === 'sous le seuil' ? 'sous' : '');
-    tr.innerHTML = `<th scope="row">${m.numero}</th><td>${m.libelle}</td>
-      <td>${texteSeuil(m)}</td><td>${mesure}</td>
-      <td class="statut ${classe}">${m.statut}${m.commentaire ? ' — ' + m.commentaire : ''}</td>`;
+    tr.innerHTML = `<th scope="row">${esc(m.numero)}</th><td>${esc(m.libelle)}</td>
+      <td>${esc(texteSeuil(m))}</td><td>${esc(mesure)}</td>
+      <td class="statut ${classe}">${esc(m.statut)}${m.commentaire ? ' — ' + esc(m.commentaire) : ''}</td>`;
     corps.appendChild(tr);
   });
   const volumes = document.querySelector('#table-volumes tbody');
   for (const [cle, valeur] of Object.entries(data.volumes)) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<th scope="row">${LIBELLES[cle] || cle}</th><td>${valeur}</td>`;
+    tr.innerHTML = `<th scope="row">${LIBELLES[cle] || esc(cle)}</th><td>${esc(valeur)}</td>`;
     volumes.appendChild(tr);
   }
   document.getElementById('periode').textContent = data.depuis

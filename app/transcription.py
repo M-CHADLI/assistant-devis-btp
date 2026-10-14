@@ -2,7 +2,7 @@
 
 Frontière volontairement séparée de `app.llm` : la reformulation est faite par un
 modèle **prompté**, jamais par le modèle fine-tuné du pipeline
-(docs/STORIES.md US-05, docs/DISPOSITIF_AGENT.md §1.4). Ce module n'importe donc
+(docs/produit/STORIES.md US-05, docs/produit/DISPOSITIF_AGENT.md §1.4). Ce module n'importe donc
 rien de `app.llm` — c'est vérifiable, et un test le vérifie
 (`tests/test_transcription.py`).
 

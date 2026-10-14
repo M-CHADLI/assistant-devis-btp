@@ -2,7 +2,7 @@
 
 Source : `catalogue/sources/export_fournisseur_simule.csv`, point-virgule,
 UTF-8, une ligne par référence vendable. Le fichier est **simulé** (contrainte
-légale, `docs/SOURCES_DONNEES.md`) mais sa structure est celle d'un vrai export,
+légale, `docs/DECISIONS.md` D-12) mais sa structure est celle d'un vrai export,
 et ce script ne fait aucune hypothèse qui tomberait sur un vrai dump.
 
 **Ce script n'interprète rien.** Il lit, il compte, il trace. Le nettoyage

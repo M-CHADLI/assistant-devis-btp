@@ -9,7 +9,7 @@ valent ici aussi :
 2. **Aucune valeur n'est inventée.** Un exemple incomplet est refusé, jamais
    complété par défaut. Un `reasoning` vide reste vide et fait échouer l'étape.
 3. **L'écart à la cible est une donnée**, pas une erreur à masquer. La
-   répartition visée par `docs/CADRAGE_MODELE.md` (≈ 72 % de raisonné, ~15 % de
+   répartition visée par `docs/produit/CADRAGE_MODELE.md` (≈ 72 % de raisonné, ~15 % de
    mention simple, ~5 % de forte) est comparée à la répartition réelle, avec sa
    tolérance, et l'écart est écrit.
 
@@ -53,7 +53,7 @@ ESSAI = Path("dataset/essai.jsonl")
 GABARIT = Path("dataset/gabarit.jsonl")
 GABARIT_FAUTIFS = Path("dataset/gabarit_fautifs.jsonl")
 
-# `docs/CADRAGE_MODELE.md` §Répartition cible. Les volumes y sont donnés pour
+# `docs/produit/CADRAGE_MODELE.md` §Répartition cible. Les volumes y sont donnés pour
 # ~2000 exemples ; ce qui compte ici est la **part**, pas le nombre absolu, car
 # le dataset se construit progressivement.
 CIBLE_PART = {

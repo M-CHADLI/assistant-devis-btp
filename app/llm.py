@@ -1,7 +1,7 @@
 """Client du modèle — gpt-oss:20b brut, servi localement par Ollama.
 
 C'est la baseline « brute, bien promptée » du protocole de preuve
-(docs/CADRAGE_MODELE.md §7) : pas le modèle fine-tuné (chantier de plusieurs
+(docs/produit/CADRAGE_MODELE.md §7) : pas le modèle fine-tuné (chantier de plusieurs
 mois, hors portée d'une démo), mais le même modèle de base, avec un prompt
 sérieux qui décrit le schéma et donne des exemples — donc une comparaison
 honnête reste possible plus tard.
@@ -63,7 +63,7 @@ class ModeleInjoignable(Exception):
     """Ollama n'a pas répondu du tout — panne, timeout, service arrêté.
 
     Distinct de SortieModeleInvalide : une reprise n'a aucune chance d'aboutir,
-    l'appelant doit escalader tout de suite (docs/DISPOSITIF_AGENT.md §1.3).
+    l'appelant doit escalader tout de suite (docs/produit/DISPOSITIF_AGENT.md §1.3).
     """
 
 
@@ -81,7 +81,7 @@ def appeler_modele(historique: list[dict], nouveau_message: str, timeout: int = 
     **Un seul appel modèle, sans reprise interne.** La reprise appartient au
     pipeline, qui est le seul à voir l'ensemble des motifs d'échec (JSON illisible
     *et* schéma non conforme) et le seul à pouvoir borner le nombre total d'appels
-    (docs/DISPOSITIF_AGENT.md §1.3, objectif de latence §4.3 : p95 < 30 s).
+    (docs/produit/DISPOSITIF_AGENT.md §1.3, objectif de latence §4.3 : p95 < 30 s).
     """
     messages = [{"role": "system", "content": SYSTEM_PROMPT}, *historique,
                 {"role": "user", "content": nouveau_message}]

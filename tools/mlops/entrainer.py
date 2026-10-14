@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     raise SystemExit(
         "Prérequis réunis, mais l'entraînement reste à écrire avec la machine "
         "sous la main : le code d'appel Unsloth n'a jamais été exécuté et ne "
-        "sera pas versionné avant de l'avoir été. Voir docs/CHAINE_MLOPS.md.")
+        "sera pas versionné avant de l'avoir été. Voir docs/modele/CHAINE_MLOPS.md.")
 
 
 if __name__ == "__main__":

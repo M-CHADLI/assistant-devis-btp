@@ -169,12 +169,21 @@ def test_destination_unc_refusee():
         verifier_destination("\\\\serveur\\partage\\jeu.jsonl")
 
 
+def _point_de_montage(chemin):
+    """Le chemin tel que /proc/mounts l'écrit : résolu, espaces en \\040.
+
+    Sans cela le test dépend de la machine : un chemin temporaire abrégé
+    (Windows) ou contenant une espace ne se reconnaît plus une fois résolu."""
+    return str(chemin.resolve()).replace(" ", "\\040")
+
+
 def test_destination_sur_montage_synchronise_refusee(tmp_path):
     """Ce dépôt est sur un montage rclone vers OneDrive : y écrire le jeu le
     ferait sortir de la machine. La table de montages est injectée pour que le
     test ne dépende pas de la machine qui l'exécute."""
     table = tmp_path / "mounts"
-    table.write_text(f"onedrive: {tmp_path} fuse.rclone rw 0 0\n", encoding="utf-8")
+    table.write_text(f"onedrive: {_point_de_montage(tmp_path)} fuse.rclone rw 0 0\n",
+                     encoding="utf-8")
     with pytest.raises(DestinationNonLocale) as capture:
         verifier_destination(tmp_path / "jeu.jsonl", table=table)
     assert "fuse.rclone" in str(capture.value)
@@ -188,7 +197,8 @@ def test_destination_sur_disque_local_acceptee(tmp_path):
 
 def test_exporter_refuse_avant_toute_ecriture(tmp_path):
     table = tmp_path / "mounts"
-    table.write_text(f"onedrive: {tmp_path} fuse.rclone rw 0 0\n", encoding="utf-8")
+    table.write_text(f"onedrive: {_point_de_montage(tmp_path)} fuse.rclone rw 0 0\n",
+                     encoding="utf-8")
     cible = tmp_path / "jeu.jsonl"
     with pytest.raises(DestinationNonLocale):
         exporter([_candidat()], cible, table=table)

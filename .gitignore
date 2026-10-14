@@ -27,7 +27,7 @@ outputs/
 adapters/
 wandb/
 
-# Données brutes catalogue (contrainte légale — voir SOURCES_DONNEES.md)
+# Données brutes catalogue (contrainte légale — voir docs/DECISIONS.md D-12)
 data/raw/
 *.dump
 *.sql

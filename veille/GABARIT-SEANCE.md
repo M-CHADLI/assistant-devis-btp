@@ -38,11 +38,11 @@
 l'auteur ne démontre aucune lecture.
 
 **Ce que ça change pour le projet** — la seule question qui compte. Nommer le
-document ou le jalon touché (`CADRAGE_MODELE.md` §x, mois d'octobre, …).
+document ou le jalon touché (`docs/produit/CADRAGE_MODELE.md` §x, mois d'octobre, …).
 
 **Verdict :** `sans effet` | `à surveiller` | `impacte le projet` | `impacte le planning`
 
-**Suite donnée :** <note créée dans docs/NOTES.md, entrée au planning, reconduit
+**Suite donnée :** <question ouverte créée dans docs/DECISIONS.md, entrée au planning, reconduit
 à la semaine prochaine, ou rien>
 
 ---

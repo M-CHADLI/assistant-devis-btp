@@ -1,4 +1,4 @@
-# Chaîne d'intégration continue — voir docs/INTEGRATION_CONTINUE.md
+# Chaîne d'intégration continue — voir docs/exploitation/CHAINE_CI_CD.md
 #
 # Déclencheurs : tout push sur main ou sur une branche de travail, toute pull
 # request visant main, et le lancement manuel depuis l'onglet Actions.
@@ -46,7 +46,7 @@ jobs:
         run: uv run --frozen pytest -q
 
       - name: Vérifier l'accessibilité des documents
-        # Règles 1, 2 et 4 de docs/ACCESSIBILITE_DOCUMENTS.md : un seul titre de
+        # Règles 1, 2 et 4 de docs/exploitation/ACCESSIBILITE_DOCUMENTS.md : un seul titre de
         # niveau 1, aucun saut de hiérarchie, aucun libellé de lien creux.
         run: python3 tools/verifier_accessibilite_docs.py
 

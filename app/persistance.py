@@ -3,7 +3,7 @@
 Avant : `SESSION = Session()` au niveau du module `app.main`. Tous les visiteurs
 partageaient le même devis, et un redémarrage d'uvicorn le perdait. C'est
 acceptable pour une démo jouée seul, pas pour un artisan qui dicte un chantier
-le matin et le rouvre l'après-midi (docs/STORIES.md US-16).
+le matin et le rouvre l'après-midi (docs/produit/STORIES.md US-16).
 
 Le stockage est volontairement du **JSON à plat sur disque** : pas de base de
 données à ce stade du projet, et un fichier lisible à l'œil vaut mieux qu'un
@@ -33,7 +33,7 @@ RACINE_DONNEES = Path(
 )
 
 # Un identifiant de projet finit en nom de fichier : liste blanche stricte, pour
-# qu'aucune entrée ne puisse remonter l'arborescence (docs/STORIES.md US-20).
+# qu'aucune entrée ne puisse remonter l'arborescence (docs/produit/STORIES.md US-20).
 MOTIF_ID = re.compile(r"^[a-z0-9]{8,32}$")
 
 
@@ -249,7 +249,7 @@ class Registre:
         Ce qui ne l'est pas, et pourquoi :
 
         - **Les prix.** Le catalogue est volatil, la structure ne l'est pas
-          (`docs/CADRAGE_MODELE.md`). Recopier le chiffrage de la semaine
+          (`docs/produit/CADRAGE_MODELE.md`). Recopier le chiffrage de la semaine
           dernière et le présenter comme celui d'aujourd'hui produirait
           exactement le prix faux que tout le projet s'interdit. La copie
           revient donc non chiffrée, structure à revalider (HITL-2) : les

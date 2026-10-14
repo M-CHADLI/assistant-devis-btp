@@ -3,7 +3,7 @@
 > Ce fichier décrit **le rituel**, pas ses résultats. Les résultats sont les
 > livrables de synthèse rangés à côté.
 >
-> Raison d'être : `docs/LIVRABLES.md` §E2 constate que la veille existante porte
+> Raison d'être : `docs/pilotage/COUVERTURE_RNCP.md` §E2 constate que la veille existante porte
 > sur « IA et marché du travail », thématique que le référentiel n'accepte pas —
 > C6 exige **un outil ou une réglementation mobilisée dans le projet**.
 
@@ -17,7 +17,7 @@ chaîne de fine-tuning, et gpt-oss-20b/120b comme des MoE quantifiés FP4. Une
 d'octobre.
 
 Thématique **écartée** : devis BTP et TVA travaux. Sujet réel et déjà travaillé
-(`docs/CADRAGE_MODELE.md` §6), mais trop stable pour alimenter une séance
+(`docs/produit/CADRAGE_MODELE.md` §6), mais trop stable pour alimenter une séance
 hebdomadaire pendant quatre mois. Il reste traité comme référentiel métier, pas
 comme veille.
 
@@ -145,7 +145,7 @@ Chaque item retenu sort avec **exactement un** de ces quatre verdicts :
 |---|---|
 | **Sans effet** | Consigné, rien d'autre. Le cas majoritaire, et c'est normal |
 | **À surveiller** | Reconduit à la séance suivante. Deux reconductions sans suite → devient « sans effet » |
-| **Impacte le projet** | Une note dans `docs/NOTES.md`, qui suivra le cycle normal d'arbitrage |
+| **Impacte le projet** | Une question ouverte dans `docs/DECISIONS.md`, qui suivra le cycle normal d'arbitrage |
 | **Impacte le planning** | Remonte dans `PLANNING.md`. Rappel : tout ajout se paie sur le mois en cours |
 
 ## Format des livrables
@@ -165,7 +165,7 @@ Deux niveaux, à ne pas confondre :
 À traiter séparément, pour ne pas laisser croire que E2 est bouclé :
 
 - **C7 — benchmark de services IA préexistants.** N'existe nulle part
-  (`docs/LIVRABLES.md` §E2). C'est un document distinct, pas une sortie de la
+  (`docs/pilotage/COUVERTURE_RNCP.md` §E2). C'est un document distinct, pas une sortie de la
   veille : pourquoi fine-tuner gpt-oss plutôt qu'appeler une API généraliste,
   avec les services écartés et le motif de chaque exclusion.
 - **C8 — paramétrer un service IA préexistant.** L'API OCR du §6 du cadrage.

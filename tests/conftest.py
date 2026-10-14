@@ -1,6 +1,6 @@
 """Configuration commune des tests.
 
-L'authentification (docs/STORIES.md US-23) est **toujours active** : il n'existe
+L'authentification (docs/produit/STORIES.md US-23) est **toujours active** : il n'existe
 pas de mode ouvert à activer pour les tests. On fixe donc ici une phrase de passe
 connue, avant que `app.main` ne soit importé, et les fixtures de client HTTP
 ouvrent une vraie session. Les tests traversent ainsi le même chemin qu'un

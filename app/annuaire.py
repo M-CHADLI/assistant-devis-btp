@@ -3,7 +3,7 @@
 Un devis BTP porte une dizaine de mentions d'identité obligatoires. Les faire
 saisir à la main, c'est garantir des devis faux et un abandon à l'inscription.
 L'annuaire des entreprises les restitue à partir du seul SIRET
-(`docs/CADRAGE_MODELE.md` §6).
+(`docs/produit/CADRAGE_MODELE.md` §6).
 
 **Ce module n'est pas une brique d'IA et ne doit jamais être présenté comme
 telle.** C'est un appel HTTP à un annuaire public, plus une validation de

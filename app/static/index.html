@@ -252,6 +252,23 @@ const fil = document.getElementById('fil');
 const entree = document.getElementById('entree');
 const devisCorps = document.getElementById('devis-corps');
 
+// Tout ce qui est assemblé en chaîne puis posé dans innerHTML passe par ici.
+// La désignation d'une ligne vient du modèle, donc en dernier ressort de la
+// dictée de l'artisan ou d'un ancien devis déposé (US-03) : c'est de la donnée
+// tierce, jamais du balisage. `app/garde_fous.py` protège l'invite du modèle
+// contre l'injection de consignes ; il ne dit rien du HTML, et ce n'est pas son
+// rôle. L'échappement se fait ici, au seul endroit qui écrit du balisage.
+// Les guillemets sont échappés aussi : plusieurs valeurs atterrissent dans un
+// attribut aria-label, où une apostrophe suffirait à en sortir.
+function esc(valeur) {
+  return String(valeur ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function ajouterMessage(texte, classe, role) {
   const div = document.createElement('div');
   div.className = 'msg ' + classe;
@@ -267,7 +284,7 @@ function rendreAlerteMentions(devis) {
   if (!manquantes.length) { zone.hidden = true; zone.innerHTML = ''; return; }
   zone.hidden = false;
   zone.innerHTML = '<strong>Mentions obligatoires manquantes — le devis ne peut pas être émis :</strong><ul>'
-    + manquantes.map(m => `<li>${m}</li>`).join('') + '</ul>';
+    + manquantes.map(m => `<li>${esc(m)}</li>`).join('') + '</ul>';
 }
 
 function rendreDevis(devis) {
@@ -289,16 +306,16 @@ function rendreDevis(devis) {
     ? `<table><tr><th scope="col">Poste</th><th scope="col">Qté</th><th scope="col">PU${suffixe}</th>${remises ? '<th scope="col">Remise</th>' : ''}<th scope="col">Total${suffixe}</th><th></th></tr>`
     : '<table><tr><th scope="col">Lot</th><th scope="col">Quantité</th><th></th></tr>';
   devis.lignes.forEach((l, i) => {
-    const nom = `${l.designation}${l.origine === 'consommable' ? ' <small>(consommable)</small>' : ''}`;
-    const supprimer = `<td><button class="btn-supprimer" aria-label="Supprimer la ligne ${i + 1} : ${l.designation}" onclick="corrigerLigne(${i})"><span aria-hidden="true">✕</span></button></td>`;
+    const nom = `${esc(l.designation)}${l.origine === 'consommable' ? ' <small>(consommable)</small>' : ''}`;
+    const supprimer = `<td><button class="btn-supprimer" aria-label="Supprimer la ligne ${i + 1} : ${esc(l.designation)}" onclick="corrigerLigne(${i})"><span aria-hidden="true">✕</span></button></td>`;
     const remise = remises
       ? `<td>${l.remise_pct > 0 ? `− ${l.remise_pct.toFixed(0)} %` : '—'}</td>`
       : '';
     html += validee
-      ? `<tr><td>${nom}</td><td>${l.quantite} ${l.unite}</td>
+      ? `<tr><td>${nom}</td><td>${l.quantite} ${esc(l.unite)}</td>
          <td>${l.prix_unitaire_ht.toFixed(2)} €</td>${remise}
          <td>${l.prix_ht.toFixed(2)} €</td>${supprimer}</tr>`
-      : `<tr><td>${nom}</td><td>${l.quantite} ${l.unite}</td>${supprimer}</tr>`;
+      : `<tr><td>${nom}</td><td>${l.quantite} ${esc(l.unite)}</td>${supprimer}</tr>`;
   });
   html += '</table>';
 
@@ -334,7 +351,7 @@ function rendreDevis(devis) {
       simple: 'Vigilance — à vérifier avant de te lancer'
     };
     html += `<p><strong>Mentions :</strong> ${devis.mentions
-      .map(m => LIBELLE_MENTION[m] || m).join(' · ')}</p>`;
+      .map(m => LIBELLE_MENTION[m] || esc(m)).join(' · ')}</p>`;
   }
   if ((devis.a_confirmer || []).length) {
     // role="alert" : la demande de confirmation doit être entendue tout de
@@ -342,21 +359,21 @@ function rendreDevis(devis) {
     html += '<div class="a-confirmer" id="zone-a-confirmer" role="alert" aria-label="Quantités à confirmer">';
     html += '<strong>À trancher — je n\'ai rien ajouté :</strong><ul>';
     devis.a_confirmer.forEach((a, i) => {
-      const nom = a.lot_nom || a.lot_code;
+      const nom = esc(a.lot_nom || a.lot_code);
       // Deux motifs, deux questions. Une contradiction (US-06) n'est pas une
       // quantité invraisemblable : l'artisan choisit entre deux valeurs qu'il a
       // dictées lui-même, et les deux doivent être devant lui.
       const contradiction = a.motif === 'contradiction';
       const explication = contradiction
-        ? `au lieu de ${a.valeur_existante} déjà au devis.`
+        ? `au lieu de ${esc(a.valeur_existante)} déjà au devis.`
         : `— habituellement entre ${a.borne_min} et ${a.borne_max}.`;
       const garder = contradiction ? 'Retenir cette valeur' : "C'est bien ça";
       const jeter = contradiction
-        ? `Garder ${a.valeur_existante}` : 'Erreur de dictée';
-      html += `<li>${a.dimension_valeur} (${a.dimension_type}) sur ${nom}
+        ? `Garder ${esc(a.valeur_existante)}` : 'Erreur de dictée';
+      html += `<li>${esc(a.dimension_valeur)} (${esc(a.dimension_type)}) sur ${nom}
         ${explication}
         <button onclick="arbitrerQuantite(${i}, 'confirmer')"
-          aria-label="${garder} : ${a.dimension_valeur} ${a.dimension_type} sur ${nom}">${garder}</button>
+          aria-label="${garder} : ${esc(a.dimension_valeur)} ${esc(a.dimension_type)} sur ${nom}">${garder}</button>
         <button onclick="arbitrerQuantite(${i}, 'abandonner')"
           aria-label="${jeter}, sur ${nom}">${jeter}</button>
       </li>`;
@@ -366,7 +383,7 @@ function rendreDevis(devis) {
   if (devis.corrections.length) {
     html += '<div class="corrections"><strong>Corrections artisan (signal qualité) :</strong><ul>';
     devis.corrections.forEach(c => {
-      html += `<li>${c.horodatage} — ${c.description}</li>`;
+      html += `<li>${esc(c.horodatage)} — ${esc(c.description)}</li>`;
     });
     html += '</ul></div>';
   }
@@ -928,7 +945,7 @@ demarrer();
 // Par défaut, cette interface **ne transcrit pas dans le navigateur** : Chrome
 // envoie l'audio à un service distant, Safari au sien. La voix de l'artisan et
 // les noms de clients qu'elle porte quitteraient donc la machine, ce qui
-// contredit l'engagement « 100 % local » du cadrage (docs/RGPD.md, traitement
+// contredit l'engagement « 100 % local » du cadrage (docs/donnees/RGPD.md, traitement
 // T2). Chrome 139 a ajouté `processLocally`, qui garde le traitement sur
 // l'appareil : on l'exige quand il existe.
 //

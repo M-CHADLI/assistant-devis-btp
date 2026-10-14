@@ -1,4 +1,4 @@
-# Chaîne MLOps — déclaration des étapes. Documentation : docs/CHAINE_MLOPS.md
+# Chaîne MLOps — déclaration des étapes. Documentation : docs/modele/CHAINE_MLOPS.md
 #
 # Ce fichier est la source de vérité de l'ordre des étapes. L'exécuteur
 # (tools/mlops/executer.py) ne connaît aucune étape en dur : ajouter une étape

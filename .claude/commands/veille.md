@@ -68,7 +68,7 @@ n. <titre> — source, date
 
 Le bloc `PRÉREQUIS` est celui qui fait apprendre — ne jamais le sauter, même quand
 l'item paraît simple. Le bloc `IMPACT ?` est **toujours une hypothèse**, jamais une
-conclusion, et nomme précisément la cible : `docs/CADRAGE_MODELE.md` §4, le mois
+conclusion, et nomme précisément la cible : `docs/produit/CADRAGE_MODELE.md` §4, le mois
 d'octobre…
 
 Le développement (les trois lignes détaillées) va dans le **corps de l'item** au moment
@@ -119,7 +119,7 @@ ils se calculent seuls.
 
 Selon les verdicts prononcés :
 
-- `Impacte le projet` → proposer une note dans `docs/NOTES.md` (bloc-notes des idées non
+- `Impacte le projet` → proposer une question ouverte dans `docs/DECISIONS.md` (section « Questions ouvertes », idées non
   arbitrées), qui suivra le cycle normal
 - `Impacte le planning` → proposer une ligne dans `PLANNING.md`, en rappelant que tout
   ajout se paie sur le mois en cours

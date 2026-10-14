@@ -1,4 +1,4 @@
-# Chaîne de livraison continue — voir docs/LIVRAISON_CONTINUE.md
+# Chaîne de livraison continue — voir docs/exploitation/CHAINE_CI_CD.md
 #
 # Elle est distincte de la chaîne d'intégration (tests.yml) parce qu'elle
 # répond à une autre question. L'intégration demande « le code est-il juste ? » ;

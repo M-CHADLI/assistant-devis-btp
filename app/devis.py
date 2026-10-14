@@ -27,14 +27,14 @@ class LigneChiffree:
     prix_ht: float
     taux_tva: str
     origine: str = "modèle"  # "modèle" | "consommable" | "défaut"
-    # HITL-2 (docs/STORIES.md US-12) : une ligne existe d'abord **sans prix**.
+    # HITL-2 (docs/produit/STORIES.md US-12) : une ligne existe d'abord **sans prix**.
     # `quantite_technique` est ce que le métier sait dire (m², litres, ml) sans
     # ouvrir le catalogue ; `quantite_achat` et les prix n'apparaissent qu'au
     # chiffrage, après validation de la structure par l'artisan.
     quantite_technique: float = 0.0
     unite_technique: str = ""
     chiffree: bool = False
-    # Dimension source (docs/DISPOSITIF_AGENT.md §2.3 — traçabilité) : permet de
+    # Dimension source (docs/produit/DISPOSITIF_AGENT.md §2.3 — traçabilité) : permet de
     # détecter une reconfirmation orale identique et de l'ignorer (idempotence).
     dimension_type: str | None = None
     dimension_valeur: float | None = None
@@ -94,7 +94,7 @@ class Devis:
 def _quantite_technique(lot_code: str, type_dimension: str, valeur: float) -> tuple[float, str]:
     """La quantité que le métier sait calculer **sans le catalogue** : rendement,
     taux de chute, unité du lot. Aucun produit n'est résolu ici — c'est ce qui
-    permet de montrer une structure sans prix (docs/STORIES.md US-12)."""
+    permet de montrer une structure sans prix (docs/produit/STORIES.md US-12)."""
     lot = REFERENTIEL.get(lot_code)
     if lot is None:
         raise LotInconnu(f"lot_code inconnu du référentiel : {lot_code!r}")
@@ -148,7 +148,7 @@ def ajouter_ligne(devis: Devis, lot_code: str, type_dimension: str, valeur: floa
     `chiffrer_maintenant=False` s'arrête à la structure : ni requête catalogue,
     ni prix. C'est le mode utilisé tant que l'artisan n'a pas validé la structure
     (HITL-2) — « on fait valider ce qui est stable avant d'y accrocher ce qui est
-    volatil » (docs/DISPOSITIF_AGENT.md §1.4).
+    volatil » (docs/produit/DISPOSITIF_AGENT.md §1.4).
     """
     quantite_technique, unite = _quantite_technique(lot_code, type_dimension, valeur)
     lot = REFERENTIEL[lot_code]

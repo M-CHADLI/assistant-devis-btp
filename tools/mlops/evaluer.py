@@ -1,7 +1,7 @@
 """Étape « validation » : mesurer le modèle sur le jeu d'essai, jamais vu.
 
 Trois métriques seulement, celles que ce jeu permet de mesurer honnêtement
-(numérotation de `DISPOSITIF_AGENT.md` §4.3, seuils lus dans
+(numérotation de `docs/produit/DISPOSITIF_AGENT.md` §4.3, seuils lus dans
 `app.observabilite.SEUILS` — jamais recopiés ici) :
 
 - **nº 1, taux de JSON valide** — la mesure directe de l'apport du fine-tuning ;
@@ -41,7 +41,7 @@ MOTIFS_INTERDITS = (
 
 # Deux seuils seulement font échouer la validation : le taux de JSON valide,
 # métrique nº 1 du projet, et les prix inventés, dont le seuil est zéro et
-# « non négociable » (`docs/CADRAGE_MODELE.md`). Les autres sont des
+# « non négociable » (`docs/produit/CADRAGE_MODELE.md`). Les autres sont des
 # indicateurs : un modèle qui rate la justesse de mention reste utilisable, un
 # modèle qui invente des prix ne l'est pas. Cette liste vit ici, et non dans
 # `app.observabilite`, parce qu'elle qualifie la **validation d'un modèle

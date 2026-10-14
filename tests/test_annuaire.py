@@ -407,4 +407,4 @@ def test_la_cle_n_apparait_pas_au_journal(monkeypatch, tmp_path):
 # observée. Ce qui est prouvé ici, c'est que le code **tolère** de se tromper :
 # un champ absent reste vide, une réponse vide bascule en saisie manuelle, et
 # rien n'est inventé. La correspondance elle-même reste à vérifier le jour où
-# une clé sera configurée — c'est écrit dans `docs/STORIES.md`, US-01.
+# une clé sera configurée — c'est écrit dans `docs/produit/STORIES.md`, US-01.

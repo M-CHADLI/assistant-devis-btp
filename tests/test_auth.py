@@ -51,7 +51,7 @@ def test_la_page_d_accueil_reste_ouverte(client):
 
 def test_la_documentation_de_l_api_est_fermee(client):
     """`/docs` et `/openapi.json` décrivent l'API : ils ne sont pas la page
-    d'accueil, donc ils sont fermés (docs/STORIES.md US-23)."""
+    d'accueil, donc ils sont fermés (docs/produit/STORIES.md US-23)."""
     assert client.get("/openapi.json").status_code == 401
     assert client.get("/docs").status_code == 401
 

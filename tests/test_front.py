@@ -160,7 +160,7 @@ def test_les_donnees_sont_un_tableau_et_pas_un_graphique(metriques):
 
 def test_l_etat_d_une_metrique_est_ecrit_pas_seulement_colore(metriques):
     """La colonne « État » porte le mot ; la couleur n'est qu'un rappel."""
-    assert "${m.statut}" in metriques
+    assert "${esc(m.statut)}" in metriques
     assert "RGAA 3.1" in metriques
 
 
@@ -251,11 +251,11 @@ def test_une_contradiction_ne_se_lit_pas_comme_une_quantite_hors_bornes(html):
     """US-06 — l'artisan choisit entre deux valeurs qu'il a dictées ; lui parler
     de bornes du référentiel n'aurait aucun sens."""
     assert "a.motif === 'contradiction'" in html
-    assert "au lieu de ${a.valeur_existante} déjà au devis" in html
-    assert "Garder ${a.valeur_existante}" in html
+    assert "au lieu de ${esc(a.valeur_existante)} déjà au devis" in html
+    assert "Garder ${esc(a.valeur_existante)}" in html
 
 
-# --- Dictée : ce qui sort de la machine (docs/RGPD.md, traitement T2) --------
+# --- Dictée : ce qui sort de la machine (docs/donnees/RGPD.md, traitement T2) --------
 
 def test_la_dictee_demande_le_traitement_sur_l_appareil(html):
     """Par défaut, la Web Speech API n'est pas locale : Chrome envoie l'audio à
@@ -296,7 +296,7 @@ def test_les_cibles_tactiles_font_au_moins_44_pixels(html):
 
 
 # --- Propriétés d'accessibilité annotées sur les maquettes ------------------
-# docs/MAQUETTES.md renvoie à ces tests : une annotation de maquette qui n'est
+# docs/produit/MAQUETTES.md renvoie à ces tests : une annotation de maquette qui n'est
 # tenue par rien décrit une intention, pas un contrat.
 
 def test_le_lien_d_evitement_est_le_premier_element_focalisable(html):
