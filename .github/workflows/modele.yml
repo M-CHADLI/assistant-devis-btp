@@ -1,0 +1,63 @@
+# Chaîne MLOps — voir docs/modele/CHAINE_MLOPS.md
+#
+# Elle n'exécute que les étapes qui n'ont pas besoin de GPU : validation du
+# dataset et préparation. L'entraînement et la mesure tournent sur la DGX
+# Spark, à la main, et déposent leur rapport dans mlops/ — un exécuteur GitHub
+# n'a ni le matériel, ni le droit de voir les données.
+#
+# Déclencheurs : toute modification du dataset ou de la chaîne, plus un passage
+# hebdomadaire pour attraper une dérive introduite ailleurs.
+name: Modèle
+
+on:
+  push:
+    paths:
+      - "dataset/**"
+      - "mlops/**"
+      - "tools/mlops/**"
+      - ".github/workflows/modele.yml"
+  pull_request:
+    paths:
+      - "dataset/**"
+      - "mlops/**"
+      - "tools/mlops/**"
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: modele-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  donnees:
+    name: Valider le dataset et préparer l'entraînement
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Récupérer les sources
+        uses: actions/checkout@v4
+
+      - name: Installer uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Installer Python et les dépendances
+        run: uv sync --frozen --all-groups
+
+      # Le gabarit fautif passe en premier : un validateur dont un détecteur a
+      # cassé en silence donnerait un feu vert qui ne vaut rien.
+      - name: Dérouler la chaîne jusqu'à la préparation
+        run: uv run --frozen python -m tools.mlops.executer --jusqu-a preparation
+
+      - name: Déposer le rapport d'exécution
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-mlops-${{ github.sha }}
+          path: mlops/executions/
+          retention-days: 30
+          if-no-files-found: ignore

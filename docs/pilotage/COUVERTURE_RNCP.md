@@ -1,0 +1,446 @@
+# Audit critère par critère du référentiel RNCP
+
+> **À quoi sert ce document.** C'est le seul suivi de couverture du référentiel :
+> les **135 critères d'évaluation** que le jury coche un par un, extraits de
+> `reference/referentiel-rncp-ai-engineer.xlsx`, confrontés à l'**état constaté
+> du dépôt** au commit `9c5b8c3` (08/09/2026).
+>
+> Même règle que la grille de contrôle : **on ne dénature pas le projet pour
+> cocher une case.** Un critère hors périmètre est écrit comme tel, avec la
+> raison — c'est plus défendable devant un jury qu'une case cochée de travers.
+>
+> **Ce document périme.** La première version datait du commit `a019878` ;
+> vingt commits ont atterri derrière sans qu'elle bouge, et une dizaine de
+> lignes affirmaient encore l'absence de choses déjà écrites — chaîne
+> d'intégration, authentification, journalisation, incidents. Un audit faux
+> est pire qu'un audit manquant : il rassure. La ligne de commit ci-dessus dit
+> jusqu'où il a été vérifié ; si `git log` en montre d'autres derrière,
+> **relire avant de s'y fier**.
+>
+> **Changement d'infrastructure du 12/10/2026** (`docs/DECISIONS.md` D-18 à D-21) :
+> plus de DGX Spark ni de « 100 % local », le produit passe sur GCP. Les lignes
+> qui s'appuyaient sur ces deux points ont été corrigées (C7-49, C7-51,
+> C15-110) ; les autres constats restent ceux du commit `9c5b8c3`.
+
+**Convention.** ✅ couvert, preuve dans le dépôt · 🟡 partiel, il manque quelque
+chose de nommé · ❌ absent · ➖ écarté, avec motif assumé. La colonne ➖ est à
+zéro depuis que C5-34 est traité : le seul écart assumé du référentiel tenait à
+l'absence de jeu de données à exposer, et cette absence a cessé.
+
+## Le compte
+
+| Livrable | Critères | ✅ | 🟡 | ❌ | ➖ |
+|---|---|---|---|---|---|
+| E1 — Données (C1-C5) | 28 | 18 | 8 | 2 | 0 |
+| E2 — Veille et IA préexistante (C6-C8) | 20 | 15 | 5 | 0 | 0 |
+| E3 — Modèle IA (C9-C13) | 39 | 27 | 8 | 4 | 0 |
+| E4 — Application (C14-C19) | 36 | 23 | 10 | 3 | 0 |
+| E5 — Exploitation (C20-C21) | 12 | 7 | 5 | 0 | 0 |
+| **Total** | **135** | **90** | **36** | **9** | **0** |
+
+Le compte est **volontairement sévère** : un critère n'est ✅ que si la preuve
+est dans le dépôt aujourd'hui, pas si elle est prévue. Trois mois de calendrier
+restent (`PLANNING.md`), et l'essentiel des ❌ sont des livrables de rédaction
+ou d'outillage, pas des impasses de conception.
+
+---
+
+## Deux constats qui coûtent cher, et qui se règlent vite
+
+**1. Il n'y a pas de dépôt Git distant.** `git remote -v` ne renvoie rien. Or
+**neuf critères** exigent explicitement « versionné et accessible depuis un
+dépôt Git **distant** » : C1-8, C3-16, C4-24, C9-62, C11-83, C12-91, C17-129,
+C18-136, C19-143. C'est aujourd'hui le plus gros gisement de points perdus du
+référentiel, et le moins cher à combler — un `git remote add` puis un `push`.
+Rien d'autre dans le dépôt ne bloque ces neuf critères.
+
+**2. Des trois exigences transverses, deux sont traitées, une ne l'est pas.**
+L'accessibilité est citée dans **huit** compétences, et pas seulement sur
+l'interface : sur les *documents livrés* (C6-39, C8-57, C9-66, C11-85, C12-93,
+C13-101, C18-137, C20-151). Elle est désormais une **règle écrite**
+(`docs/exploitation/ACCESSIBILITE_DOCUMENTS.md`, neuf règles) dont trois sont **vérifiées
+mécaniquement** à chaque exécution de la chaîne — un critère transverse tenu
+par une machine ne se perd pas en route. Les huit sont désormais ✅ :
+`docs/modele/CHAINE_MLOPS.md` a fermé le dernier, C13-101. OWASP top 10, exigé sur les deux
+API (C9-61, C17-127), est couvert par six mesures nommées dans
+`app/authentification.py` plus les garde-fous d'entrée.
+
+**L'éco-responsabilité** (C7-49, C15-110, C17-126) est passée de l'intention à
+l'argument : `docs/modele/BENCHMARK_STT.md` refuse l'argument facile — servir
+soi-même la transcription n'est sobre que sur un GPU déjà allumé pour le LLM. Elle
+reste **non mesurée**, et depuis le passage sur GCP plus rien n'est mesurable au
+wattmètre : c'est ce qui maintient C7-49, C15-110 et C17-126 à mi-chemin.
+
+---
+
+## E1 — Extraction et stockage des données (C1-C5)
+
+### C1 — Automatiser l'extraction de données
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 3 | Présentation du projet et du contexte : acteurs, objectifs, environnements, contraintes, budget, organisation, planification | 🟡 | `docs/produit/CADRAGE_MODELE.md` et `PLANNING.md` couvrent acteurs, objectifs, contraintes techniques et planification. **Le budget n'est chiffré nulle part.** |
+| 4 | Spécifications techniques : technologies, outils, services externes, langages, accessibilité | 🟡 | Technologies et contraintes matérielles sont précises (`docs/produit/CADRAGE_MODELE.md` §Contraintes). **Deux services externes sur trois sont désormais spécifiés** : l'annuaire d'entreprises (`app/annuaire.py`, `docs/produit/STORIES.md` US-01) et l'OCR de reprise de mise en page (`app/gabarit.py`, US-03) ont chacun leur point d'entrée, leur variable de clé, leur délai, leur table de motifs de panne et leur réserve sur la correspondance des champs. L'OCR a en outre son traitement au registre RGPD (T5), le seul du produit à sortir des données personnelles de la machine. Gladia reste cité sans spécification, et c'est cohérent : le choix « 100 % local ou distant » n'est pas tranché. |
+| 5 | Périmètre complet des spécifications d'extraction et d'agrégation | ✅ | `docs/donnees/CHAINE_DONNEES.md` — les trois sources avec leur licence, les six étapes, ce que le nettoyage jette et pourquoi, le schéma de destination. Le §8 énonce en outre les trois choses que la chaîne **ne fait pas**, pour qu'elles ne passent pas pour des oublis. |
+| 6 | Script d'extraction fonctionnel | ✅ | Trois scripts, un par type de source : `tools/donnees/extraire_fichier.py`, `extraire_api.py` (Base Carbone de l'ADEME, 292 facteurs), `extraire_scraping.py` (Wikipédia, 106 masses volumiques). Exécutés, sorties versionnées dans `catalogue/brut/`. |
+| 7 | Le script comprend point de lancement, dépendances, connexions, règles, gestion d'erreurs, sauvegarde | ✅ | Chaque module porte sa commande de lancement dans sa docstring, un `main()` qui rend un code de sortie, des reprises avec temporisation sur l'API, et une écriture **atomique** avec en-tête de provenance (source, licence, date, nombre de lignes) — `tools/donnees/commun.py`. |
+| 8 | Script versionné et accessible depuis un dépôt Git | ❌ | Voir le constat nº 1 : **pas de remote**. |
+| 9 | Mix d'au moins : API REST, fichier, scraping, base de données, big data | 🟡 | Trois types sur cinq, réellement différents : fichier CSV, API REST publique paginée, analyse de page web. La base de données n'est ici que **destination**, pas source — le dire autrement serait tricher. Le big data est écarté : 539 lignes brutes n'en relèvent pas, et fabriquer du volume pour cocher la case dénaturerait le cadrage. |
+
+### C2 — Requêtes SQL
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 11 | Requêtes SQL fonctionnelles | ✅ | `tools/donnees/requetes.py` — sept requêtes nommées sur `catalogue/catalogue.sqlite3` (104 produits, 14 familles), dont une jointure externe et une agrégation. Éprouvées par `tests/test_chaine_donnees.py`, y compris sur une référence hostile : les valeurs passent par des paramètres liés, jamais par concaténation. |
+| 12 | Documentation des choix : sélections, filtrages, jointures | ✅ | Chaque requête porte sa justification en docstring, et `docs/donnees/CHAINE_DONNEES.md` §7 les récapitule. Exemple du genre de choix documenté : le classement se fait sur le prix **remisé**, jamais sur le prix affiché, sinon un produit à 40 € remisé de 30 % passerait derrière un produit à 32 € sans promotion. |
+| 13 | Documentation des optimisations | 🟡 | Les deux index sont écrits avec le motif de leur existence (les deux accès réels : « tous les produits de cette famille », « cette référence »), et le prix remisé est une **vue** plutôt qu'une colonne, pour qu'une remise ne puisse pas se désynchroniser. Mais aucune mesure : à 104 lignes, un plan d'exécution ne prouverait rien. |
+
+> **Ce que la mise en base a coûté, et rapporté.** Le geste attendu ici était
+> petit — porter `app/catalogue.py` en SQLite. Il a été fait autrement : une
+> chaîne complète, de trois sources hétérogènes jusqu'à la base. Le gain n'est
+> pas le SQL, qui est trivial, mais ce que la collecte a fait apparaître —
+> l'ADEME publie au kilogramme quand le fournisseur vend au litre, et aucune
+> source publique ne donne la masse volumique d'une peinture. Ces trous sont
+> maintenant des données, interrogeables par `familles_incompletes()`.
+> Le moteur de devis y est **branché derrière un réglage explicite**
+> (`BTP_CATALOGUE_SOURCE=base`), par une table lot ↔ famille déclarée dans
+> `app/correspondance.py`. Onze lots sur treize s'apparient sans ambiguïté ; deux
+> portent l'état `arbitrage_requis` et ne servent pas, faute d'un arbitrage métier
+> qui appartient à l'artisan. Le défaut reste `simule` tant qu'ils ne sont pas
+> rendus.
+
+### C3 — Agrégation des données
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 15 | Script d'agrégation fonctionnel (nettoyage, normalisation) | ✅ | `tools/donnees/agreger.py` — 539 lignes brutes en entrée, 104 produits en sortie. Prix, unités, libellés, dates et doublons normalisés ; facteurs d'émission ramenés au kilogramme et réduits à une médiane publiée avec son étendue ; masses volumiques lues depuis des intervalles écrits en toutes lettres. |
+| 16 | Script versionné sur dépôt Git | ❌ | Voir constat nº 1. |
+| 17 | Documentation : dépendances, commandes, algorithme, choix de nettoyage | ✅ | `docs/donnees/CHAINE_DONNEES.md` §3 et §4 : les six étapes, les commandes, le tableau défaut semé → traitement, et le bilan chiffré des rejets. Le §5 documente le choix le plus lourd de conséquences — **déclarer le manque plutôt que l'interpoler** — et la colonne `qualite_correspondance` qui empêche l'aval de prendre un proxy pour une mesure. |
+
+### C4 — Base de données et RGPD
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 19 | Modélisations respectant Merise | ✅ | `docs/donnees/MODELE_DONNEES.md` — modèle conceptuel Merise (neuf entités, cardinalités justifiées), dictionnaire des données champ par champ avec le module qui le définit, modèle logique en tables. Le niveau conceptuel et le dictionnaire **décrivent le code**, pas une intention ; le niveau logique est marqué comme cible. |
+| 20 | Modèle physique fonctionnel | 🟡 | Le modèle physique n'est pas écrit, et le document dit pourquoi : il n'a pas lieu d'être avant que la migration en base soit décidée. Les quatre déclencheurs de cette décision sont nommés. |
+| 21 | Base choisie au regard de la modélisation et des contraintes | 🟡 | Le catalogue est en SQLite, avec l'argument écrit (`docs/donnees/CHAINE_DONNEES.md` §6) : schéma en troisième forme normale dont le déterminant est la **famille** et non la matière — stratifié et parquet sont tous deux du bois sans partager leur densité, une table `matiere` aurait posé une dépendance fonctionnelle inexistante. Contraintes exécutoires (clé étrangère, `CHECK` sur unité, prix et taux), quatre tests les éprouvent en écriture. **Les devis, eux, restent en JSON à plat.** |
+| 22 | Procédures d'installation reproductibles (base + API) | ✅ | L'API s'installe et se lance (`README.md`, `CLAUDE.md`) ; la base se reconstruit en deux commandes depuis des extraits versionnés, **sans réseau** (`docs/donnees/CHAINE_DONNEES.md` §3). |
+| 23 | Script d'import fonctionnel | ✅ | `tools/donnees/importer.py`, idempotent : la base est reconstruite depuis zéro à chaque exécution, le jeu agrégé faisant foi. L'application l'ouvre ensuite en **lecture seule**, pour que cette règle tienne à l'exécution et pas seulement dans la documentation. |
+| 24 | Documentation du script d'import versionnée à la racine du dépôt | 🟡 | `docs/donnees/CHAINE_DONNEES.md` §6, versionné et référencé depuis `CLAUDE.md`. Le critère demande la racine du dépôt : le document est dans `docs/`, avec tous les autres — et le dépôt n'a toujours pas de remote (constat nº 1). |
+| 25 | Documentations couvrant dépendances et commandes d'exécution | ✅ | `docs/donnees/CHAINE_DONNEES.md` §3 donne les trois commandes de rejeu, chaque module porte la sienne en docstring, et la chaîne ne dépend que de la bibliothèque standard plus `requests` — déjà au `pyproject.toml`. |
+| 26 | Registre des traitements de données personnelles | ✅ | `docs/donnees/RGPD.md` — quatre traitements (devis, dictée, signal qualité, journalisation), chacun avec finalité, base légale, personnes concernées, destinataires, conservation et mesures de sécurité. Écrit **depuis le code**, chaque donnée citée avec son module. |
+| 27 | Procédures de tri RGPD rédigées | ✅ | `docs/donnees/RGPD.md` — tri à la collecte (ce qui n'entre pas), tri avant réutilisation (ce qui ne part pas à l'entraînement), tri à la sortie. Chaque règle porte son état : tenue par le code, ou à faire. |
+| 28 | Procédures détaillant traitements et fréquence | ✅ | `docs/donnees/RGPD.md` — tableau des opérations, chacune avec son déclencheur, sa fréquence et sa trace. Les deux purges absentes y figurent comme absentes, pas comme prévues. |
+
+> **Traité le 08/09/2026 — et l'exercice a trouvé un vrai défaut.** Le produit
+> collecte bien des données personnelles (nom, adresse de chantier du client
+> final ; voix de l'artisan). En remontant la trace de la voix, le registre a
+> mis au jour que la dictée du prototype **sortait de la machine** : la *Web
+> Speech API* du navigateur envoie l'audio à un service distant, contre
+> l'engagement « 100 % local » du cadrage. Corrigé le jour même
+> (`app/static/index.html`, `tests/test_front.py`). C'est l'argument à tenir
+> devant le jury : le registre n'a pas été rédigé pour cocher trois cases, il a
+> servi à quelque chose.
+>
+> `docs/donnees/RGPD.md` nomme aussi ce qui reste en défaut — aucune durée de
+> conservation implémentée, aucun tri avant entraînement, client final non
+> informé — plutôt que de décrire des mesures inexistantes.
+
+### C5 — API de mise à disposition du jeu de données
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 30 | Documentation technique couvrant tous les points de terminaison | 🟡 | FastAPI génère `/openapi.json` et `/docs` pour les **vingt-cinq** opérations existantes, chacune avec `summary`, `tags` et modèle de sortie déclaré (`app/api_schema.py`). Les cinq du groupe « Jeu de données » déclarent en plus leurs erreurs 404 et 503, et un test vérifie qu'elles figurent bien dans l'OpenAPI. |
+| 31 | Documentation des règles d'authentification/autorisation | ✅ | Les règles sont écrites au plus près du code qui les applique : docstring de `app/authentification.py` (un seul compte, empreinte scrypt en variable d'environnement, jeton HMAC de 12 h, 5 tentatives par fenêtre de 5 minutes, cookie `httponly`/`samesite=strict`), et tableau des variables d'environnement dans `README.md`. |
+| 32 | Documentation respectant un standard (OpenAPI) | ✅ | OpenAPI 3.1 servi automatiquement par FastAPI. |
+| 33 | API restreignant l'accès aux données par autorisation | ✅ | Depuis `0442fbe` : un appel sans jeton reçoit 401 **avant toute recherche de ressource**, `/openapi.json` compris. `tests/test_auth.py` (19 tests) et les deux premières étapes du parcours de bout en bout le vérifient. |
+| 34 | API fonctionnelle pour la mise à disposition du jeu de données | ✅ | Cinq points de terminaison sous le groupe « Jeu de données » : sources et licences, synthèse par famille, produits d'une famille, produit par référence, et **manques**. Derrière la même authentification que le reste. Le critère était écarté tant qu'il n'y avait rien à exposer ; la chaîne de données a produit ce quelque chose, l'écart n'avait plus lieu d'être. |
+
+---
+
+## E2 — Veille et services d'IA préexistants (C6-C8)
+
+### C6 — Veille technique et réglementaire
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 36 | Thématique portant sur un outil et/ou une réglementation de la mise en situation | ✅ | « Unsloth et fine-tuning MoE » — c'est l'outil du projet (`veille/DISPOSITIF.md`). Le recadrage était nécessaire : l'ancienne thématique « IA et marché de l'emploi » ne satisfaisait pas ce critère. |
+| 37 | Temps de veille planifiés, au moins une heure hebdomadaire | ✅ | Rituel du vendredi, une heure, décrit dans `veille/DISPOSITIF.md`. |
+| 38 | Outils d'agrégation cohérents avec les sources et le budget | ✅ | **Six** flux dans `veille/sources.opml`, agrégation RSS, coût nul. Le sixième (PyPI) a été ajouté par la séance du 08/09, qui a constaté que le flux GitHub ne portait plus le changelog de la bibliothèque. |
+| 39 | Synthèses communiquées dans un format accessible | ✅ | `veille/seances/2026-09-08.md`, au gabarit, en Markdown, contrôlé par `tools/verifier_accessibilite_docs.py` au même titre que les documents de conception. |
+| 40 | Informations partagées répondant à la thématique | 🟡 | Une séance tenue (08/09/2026) : 52 items balayés, 5 retenus, tous sur Unsloth et le fine-tuning. Elle a produit des effets réels — OPML corrigé, deux notes dans `docs/DECISIONS.md`, un ajout à `PLANNING.md`. **Une seule séance ne fait pas un rituel** : le critère se ferme par la récurrence hebdomadaire. |
+| 41 | Sources répondant aux critères de fiabilité (auteur identifié, notoriété, absence d'intérêt personnel) | 🟡 | Les six flux sont choisis, leur fiabilité n'est **pas argumentée par écrit** source par source, ce que le critère demande. |
+| 42 | Analyse du contenu valable (date récente, sources citées, document structuré) | ✅ | Séance du 08/09 : items datés d'août-septembre 2026, sources citées une à une, structure imposée par le gabarit, un verdict unique par item et une suite donnée à chacun. |
+| 43 | Sources respectant les normes d'accessibilité privilégiées, information confirmée ailleurs | ✅ | `veille/DISPOSITIF.md`, section « Accessibilité des sources, et recoupement ». Le point de fond : **le format du flux est la première mesure d'accessibilité** — cinq sources sur six sont suivies en Atom/RSS, donc en texte structuré, lisible au lecteur d'écran comme au terminal ; la seule sans flux est nommée comme le point faible. S'y ajoute un relevé daté de ce que publie chaque éditeur (GitHub publie des rapports de conformité, Substack nomme WCAG 2.1, arXiv un engagement sans standard, PyPI et Hugging Face rien de trouvé) **avec ce que ce relevé ne prouve pas**. Le recoupement est une règle : la séance du 08/09 en donne le cas où il a *infirmé*. |
+
+> **Une séance tenue, pas quatre — délibérément.** Antidater trois séances de
+> plus fabriquerait la preuve au lieu de la produire, et la séance du 08/09 le
+> dit elle-même en tête : c'est un rattrapage assisté, sur cinq semaines de
+> balayage. 42 est fermé, 39 consolidé, 40 attend la **récurrence**, qui ne
+> s'écrit pas — elle se tient. 43 (accessibilité des sources) reste entier.
+
+### C7 — Benchmark de services d'IA préexistants
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 45 | Expression de besoin reformulée, objectifs et contraintes | ✅ | `docs/modele/BENCHMARK_STT.md` §1 : le besoin est reformulé pour l'usage réel (dictée sur chantier bruyant, noms propres de clients, relecture HITL-0), assorti d'un tableau besoin → contrainte imposée au service, et d'une liste explicite de **ce qui n'est pas un besoin** (diarisation, traduction, temps réel sub-seconde) — c'est elle qui écarte des services excellents mais hors sujet. |
+| 46 | Benchmark listant services étudiés **et non étudiés** | ✅ | `docs/modele/BENCHMARK_STT.md` §2 : six solutions étudiées (Web Speech API, faster-whisper large-v3-turbo, Parakeet TDT 0.6b v3, Gladia, Deepgram, Azure AI Speech) **et** un second tableau des solutions écartées sans étude avec leur motif (AssemblyAI, Speechmatics, Google, AWS, API OpenAI, Vosk, dictée système, outils de réunion). |
+| 47 | Raisons d'écarter un service explicitées | ✅ | `docs/modele/BENCHMARK_STT.md` §7 : chaque écart tient sur un fait nommé — Deepgram sur l'usage par défaut de l'audio client pour l'entraînement, Azure sur le poids d'exploitation et la contrainte de régions européennes, Web Speech API sur la sortie de l'audio hors machine (INC-10). |
+| 48 | Niveau d'adéquation par ensemble fonctionnel | 🟡 | `docs/modele/BENCHMARK_STT.md` §5 : grille de neuf ensembles fonctionnels × six solutions, en mots et non en couleur. Mais cinq lignes sur neuf sont « partiel » partout — jargon métier, noms propres, bruit — et le document le dit : la documentation des fournisseurs ne permet pas de les départager. Le protocole de mesure (§8) est écrit, **pas encore tenu**. |
+| 49 | Niveau de démarche éco-responsable de chaque service | 🟡 | `docs/modele/BENCHMARK_STT.md` §6 : ce que chaque fournisseur publie et ce qu'il tait, et la condition d'usage — servir soi-même n'est sobre que sur le GPU déjà allumé pour le LLM. **L'ordre de grandeur chiffré a été retiré le 12/10/2026** : il portait sur la DGX Spark. À refaire avec l'estimation d'empreinte de GCP. |
+| 50 | Contraintes techniques et pré-requis par solution | ✅ | `docs/modele/BENCHMARK_STT.md` §4 : une fiche par solution — prérequis, empreinte mémoire, limites connues (la version *turbo* dégrade la traduction et boucle sur les silences sans VAD ; Parakeet gagne en glouton plutôt qu'en faisceau ; Azure impose des régions), coût public et pérennité du fournisseur. |
+| 51 | Conclusions délimitant services retenus et écartés | ✅ | `docs/modele/BENCHMARK_STT.md` §7 : trois écartés sur faits, deux finalistes servis par nous, Gladia recevable. L'arbitrage restant est **nommé et rendu à son propriétaire** — « la transcription tourne-t-elle sur notre service GPU, ou chez Gladia ? » — avec, pour chaque branche, ce qu'elle change dans le code et dans quels documents. |
+
+> **Le benchmark a été fait là où le projet hésite vraiment.** Pas sur le choix
+> du LLM, tranché depuis le cadrage, mais sur le STT : c'est le seul endroit où
+> la région des données, le coût et l'éco-responsabilité tirent dans des sens
+> différents, et où la conclusion changera le code. Le document s'arrête volontairement
+> avant l'arbitrage de principe, qui n'appartient pas à un benchmark.
+
+### C8 — Paramétrage d'un service d'IA
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 53 | Service installé et accessible, avec authentification éventuelle | ✅ | Ollama répond sur `localhost:11434` et sert `gpt-oss:20b`. Vérifié. |
+| 54 | Service configuré correctement, répondant aux besoins et contraintes | ✅ | `app/llm.py` : température 0,2, `stream: false`, timeout 60 s, prompt système imposant l'enveloppe JSON unique. |
+| 55 | Monitorage disponible du service opérationnel | ✅ | `app/observabilite.py` écrit un événement JSON par appel au modèle (validité, motif d'échec, tentative, latence) et `/metriques` restitue le tout, **consultable modèle arrêté**. C'est du monitorage du service opérationnel, produit par le projet plutôt qu'acheté. |
+| 56 | Documentation : accès, installation, test, dépendances, données impliquées | 🟡 | `CLAUDE.md` et `README.md` donnent les commandes ; la procédure d'installation d'Ollama et le choix du modèle ne sont pas documentés. |
+| 57 | Documentation communiquée dans un format accessible | ✅ | `docs/exploitation/ACCESSIBILITE_DOCUMENTS.md` pose neuf règles, dont trois sont vérifiées mécaniquement par `tools/verifier_accessibilite_docs.py` sur les 19 documents du dépôt, étape de la chaîne d'intégration continue. |
+
+---
+
+## E3 — Modèle d'intelligence artificielle (C9-C13)
+
+### C9 — API exposant le modèle
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 59 | L'API restreint l'accès au modèle par authentification | ✅ | `app/authentification.py` — phrase de passe unique dérivée par scrypt, jeton HMAC-SHA256 à durée bornée inscrite dans le jeton. **Aucun chemin non authentifié n'existe dans le code** : sans empreinte dans l'environnement, le module en tire une au hasard et l'affiche sur la console plutôt que d'ouvrir l'application. |
+| 60 | L'API donne accès aux fonctions du modèle selon les spécifications | ✅ | Sept endpoints, dont `/api/message` qui porte le cycle complet. |
+| 61 | Recommandations OWASP top 10 intégrées quand nécessaire | ✅ | Six mesures nommées et tenues : A01 (401 avant toute recherche de ressource), A02 (scrypt, HMAC, comparaisons en temps constant), A05 (cookie `httponly`/`samesite=strict`/`secure` en HTTPS, clé tirée au hasard au démarrage), A07 (jeton de 12 h, 5 tentatives par fenêtre), A09 (chaque échec journalisé sans jamais recopier la phrase essayée), CSRF (`samesite=strict` et API JSON seulement). S'y ajoutent la validation Pydantic stricte, la liste blanche du chemin de projet et la **neutralisation des injections de prompt** (`app/garde_fous.py`, US-20). |
+| 62 | Sources versionnées sur dépôt Git **distant** | ❌ | Voir constat nº 1. |
+| 63 | Tests couvrant tous les points de terminaison | ✅ | `tests/test_api.py` couvre les sept endpoints. |
+| 64 | Tests s'exécutant sans bug, résultats interprétés | ✅ | `62 passed`. Vérifié au commit `d783b9a`. |
+| 65 | Documentation : architecture, endpoints, règles d'authentification | ✅ | Architecture dans `docs/produit/CADRAGE_MODELE.md` §2, points de terminaison décrits par OpenAPI avec modèles de sortie et erreurs déclarées (`app/api_schema.py`, `tests/test_contrat_api.py`), règles d'authentification documentées — voir C5-31. |
+| 66 | Documentation et API respectant un standard, format accessible | ✅ | OpenAPI pour l'API ; pour les documents, la règle d'accessibilité est écrite et **tenue par la chaîne d'intégration**. |
+
+### C10 — Intégration de l'API dans une application
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 68 | Application de départ installée et fonctionnelle en développement | ✅ | `uvicorn app.main:app --reload` sert l'interface et l'API. Vérifié. |
+| 69 | Communication avec l'API fonctionnelle | ✅ | Le front mono-fichier `app/static/index.html` appelle les sept endpoints. |
+| 70 | Authentification et renouvellement des jetons intégrés | 🟡 | Le front ouvre la session, la ferme, et **tout 401 le ramène au formulaire quel que soit l'appel** (`tests/test_front.py`). Il n'y a en revanche **aucun renouvellement silencieux** : à l'expiration des 12 h, l'artisan ressaisit sa phrase. Acceptable pour une journée de chantier, à nommer devant le jury plutôt qu'à cacher. |
+| 71 | Tous les endpoints du projet intégrés selon les spécifications | ✅ | Les sept sont appelés depuis le front. |
+| 72 | Adaptations d'interface intégrées | ✅ | Interface conforme RGAA 4.1, désormais **adossée à des maquettes annotées**. L'exercice a produit une adaptation réelle : sous 45 rem, les deux panneaux s'empilent au lieu de se serrer (WCAG 2.1, critère 1.4.10), ce qui manquait pour un produit dont l'entrée est la dictée sur chantier. |
+| 73 | Tests d'intégration couvrant tous les endpoints exploités | ✅ | `tests/test_api.py` via `TestClient`. |
+| 74 | Tests s'exécutant en totalité, résultats interprétés | ✅ | `62 passed`. |
+| 75 | Sources versionnées sur le dépôt Git de l'application | 🟡 | Versionnées localement depuis `e669883`. **Pas de remote.** |
+
+### C11 — Monitorage du modèle
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 77 | Métriques expliquées sans erreur d'interprétation | ✅ | Huit métriques définies avec seuils dans `docs/produit/DISPOSITIF_AGENT.md` §4, dont deux au rang sécurité (justesse de la mention ≥ 95 %, prix ou référence inventés = 0). Le raisonnement derrière chaque seuil est écrit. |
+| 78 | Outils de monitorage adaptés au contexte | ✅ | Outil fait maison, et l'argument est écrit dans `app/observabilite.py` : JSONL d'un seul fichier, relisible à l'œil, sans dépendance ni service tiers — cohérent avec un produit dont le principe premier est que rien ne sort de la machine. Toute écriture est protégée : un disque plein dégrade l'observabilité, pas le produit. |
+| 79 | Au moins un vecteur de restitution temps réel | ✅ | La page `/metriques` agrège le journal à chaque chargement et reste **consultable modèle arrêté** — c'est précisément quand on en a besoin. |
+| 80 | Enjeux d'accessibilité pris en compte dans le choix de l'outil | ✅ | Le tableau de bord est un **tableau**, pas un graphique ; l'état d'une métrique est **écrit**, pas seulement coloré. Quatre tests le tiennent (`tests/test_front.py`). |
+| 81 | Chaîne testée en bac à sable | ✅ | `tests/test_observabilite.py` (11 tests) exerce l'écriture et l'agrégation sur un journal jetable, `BTP_DONNEES` isolant la racine de données — c'est le bac à sable, et la chaîne d'intégration l'utilise. |
+| 82 | Chaîne en état de marche | ✅ | Vérifié en conditions réelles : l'étape « les métriques sont servies » du parcours de bout en bout passe contre le serveur réel. |
+| 83 | Sources versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
+| 84 | Documentation d'installation, configuration, utilisation | 🟡 | Les huit métriques, leurs seuils et le sens de comparaison sont écrits (`docs/produit/DISPOSITIF_AGENT.md` §4.3) et recopiés sans réinterprétation dans `SEUILS`. Il manque une **procédure d'installation et d'exploitation** du dispositif rédigée pour quelqu'un d'autre que son auteur. |
+| 85 | Documentation au format accessible | ✅ | Voir C8-57 : règle écrite, contrôle mécanique dans la chaîne. |
+
+> **C11 est la compétence la plus déséquilibrée du dossier** : la partie
+> difficile — décider *quoi* mesurer et *à quel seuil* — est faite et bien
+> faite ; la partie mécanique — collecter, restituer, alerter — est entièrement
+> à faire. Huit critères sur neuf tiennent à l'outillage.
+
+### C12 — Tests automatisés du modèle
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 87 | Cas à tester listés : partie visée, périmètre, stratégie | 🟡 | La stratégie d'évaluation du modèle est posée (`docs/produit/DISPOSITIF_AGENT.md` §4 : jeu de test de 150-200 exemples écrits à la main, protocole 20b brut contre 20b fine-tuné). Les cas ne sont pas listés un par un. |
+| 88 | Outils de test cohérents avec l'environnement | ✅ | pytest, cohérent avec la stack Python/uv. |
+| 89 | Tests intégrés respectant la couverture établie | 🟡 | **520 tests** couvrent le code déterministe : référentiel, moteur de devis, pipeline, garde-fous, persistance, API, contrat OpenAPI, transcription, export, authentification, observabilité, boucle qualité, chaîne de données, chaîne du modèle, annuaire d'entreprises, reprise de mise en page, duplication de devis, correspondance lot ↔ famille, front. S'y ajoute `tools/parcours_bout_en_bout.py`, qui ne neutralise rien (24/24 étapes contre le serveur et `gpt-oss:20b` réels). Aucun test ne porte encore sur le **modèle** lui-même — or c'est l'objet de C12, et cela reste le manque de fond. |
+| 90 | Tests s'exécutant sans problème technique | ✅ | `62 passed` en ~4 s. |
+| 91 | Sources versionnées sur dépôt Git distant (DVC, GitLab…) | ❌ | Voir constat nº 1. Aucun versionnement de données non plus. |
+| 92 | Documentation : installation, dépendances, exécution, couverture | 🟡 | Installation et exécution documentées dans `CLAUDE.md` et `docs/exploitation/CHAINE_CI_CD.md`. **Aucune mesure de couverture** n'est produite. |
+| 93 | Documentation au format accessible | ✅ | Voir C8-57. |
+
+### C13 — Chaîne de livraison continue du modèle (MLOps)
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 95 | Documentation couvrant étapes, tâches, déclencheurs | ✅ | `docs/modele/CHAINE_MLOPS.md` — les quatre étapes avec leur module et leurs prérequis, le tableau des déclencheurs, les deux fichiers de configuration, et une section « ce que cette chaîne ne fait pas » qui nomme l'entraînement jamais exécuté. |
+| 96 | Déclencheurs intégrés comme définis | 🟡 | `.github/workflows/modele.yml` : `push` et `pull_request` sur `dataset/`, `mlops/`, `tools/mlops/`, plus un rendez-vous hebdomadaire et un lancement manuel — conformes au tableau documenté. **Jamais exécutés**, faute de dépôt distant (constat nº 1). |
+| 97 | Fichiers de configuration reconnus et exécutés | ✅ | `mlops/pipeline.toml` (ordre, prérequis, caractère bloquant) et `mlops/lora.toml` (hyperparamètres). L'exécuteur ne connaît aucune étape en dur : il lit la déclaration, refuse les doublons de nom, et l'exécution locale enchaîne bien les quatre étapes déclarées. |
+| 98 | Étape de test des données intégrée et sans erreur | ✅ | `tools/mlops/valider_dataset.py`, étape `donnees`, **réussie**. Elle valide l'enveloppe et le `payload` avec les modèles Pydantic du produit, compte chaque refus avec son motif (retenus + refusés = lus), détecte les fuites entraînement/essai sans tolérance, et se teste elle-même sur `dataset/gabarit_fautifs.jsonl` — six exemples portant chacun un défaut et son motif attendu. 33 tests dans `tests/test_mlops.py`. |
+| 99 | Étapes de test, entraînement et validation du modèle intégrées | 🟡 | Les trois sont déclarées, câblées et exécutables ; l'exécuteur les rapporte `ignoré` en **nommant le prérequis manquant**, pas `réussi`. L'entraînement n'a jamais tourné — le dataset reste à écrire à la main — et ne feint rien : ni artefact factice, ni métrique inventée. |
+| 100 | Sources de la chaîne versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
+| 101 | Documentation d'installation, configuration, test, au format accessible | ✅ | `docs/modele/CHAINE_MLOPS.md` : aucune installation supplémentaire (bibliothèque standard seule), les commandes d'exécution complète, en simulation et étape par étape, la sortie attendue en l'état, et le format d'un exemple. Conforme aux règles vérifiées par `tools/verifier_accessibilite_docs.py`. |
+
+> C13 passe de sept ❌ à un seul — le dépôt distant. La chaîne a été écrite
+> **avant** l'entraînement, délibérément : écrite après, elle n'aurait plus pu
+> porter la trace de l'entraînement, seulement le récit qu'on en fait. D'où ses
+> trois états — `réussi`, `échoué`, `ignoré` — plutôt que deux : confondre
+> « pas encore lancé » avec « réussi » ferait mentir le rapport.
+
+---
+
+## E4 — Application (C14-C19)
+
+### C14 — Analyse du besoin et spécifications fonctionnelles
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 103 | Modélisation des données respectant un formalisme (Merise, entités-relations) | ✅ | Même document qu'en C4-19. Il couvre en plus les **structures propres à l'application** — projet, ligne de devis, correction, escalade — et les quatre contraintes d'intégrité qu'un schéma relationnel ne peut pas porter, avec ce qui les vérifie. |
+| 104 | Modélisation des parcours utilisateurs (schéma fonctionnel, wireframes) | ✅ | `docs/produit/MAQUETTES.md` — le parcours complet en schéma fonctionnel (les trois points d'arrêt HITL y sont visibles), puis **sept** maquettes filaires. Le document **dit qu'elles ont été dessinées après l'interface** plutôt que de faire croire l'inverse, et consigne les deux écrans (US-03, US-17) codés dans la nuit sans passer par la maquette, avec ce que le code a décidé à leur place. Le dernier écran promis, la saisie assistée du SIRET (US-01), est désormais décrit — quatre états et dix annotations. Plus rien n'attend d'être dessiné. |
+| 105 | Chaque spécification couvre contexte, scénarios, critères de validation | ✅ | `docs/produit/STORIES.md` : 28 stories, chacune avec son contexte, ses critères d'acceptation et **un cas dégradé**. |
+| 106 | Objectifs d'accessibilité intégrés aux critères d'acceptation des user stories | ✅ | 21 stories portent une rubrique « Accessibilité » **au même rang** que le fonctionnel — c'est exactement ce que le critère demande, et c'est rare. |
+| 107 | Objectifs d'accessibilité appuyés sur un standard (WCAG, RGAA) | ✅ | RGAA 4.1 nommé 23 fois dans `docs/produit/STORIES.md`, avec les numéros de critère. |
+
+### C15 — Cadre technique
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 109 | Spécifications techniques : architecture, dépendances, environnement d'exécution | ✅ | `docs/produit/CADRAGE_MODELE.md` (frontière modèle/code, schéma de sortie), `pyproject.toml` (dépendances épinglées, Python ≥ 3.14), contraintes matérielles argumentées. |
+| 110 | Services et prestataires éco-responsables favorisés | 🟡 | Le critère éco-responsable est désormais **instruit** : `docs/modele/BENCHMARK_STT.md` §6 compare ce que chaque fournisseur publie, et pose la condition d'usage qui rend un modèle servi par nous plus sobre qu'une API. Reste 🟡 tant qu'aucune consommation n'est **relevée** et qu'aucun prestataire n'est effectivement retenu. |
+| 111 | Flux de données représentés par un diagramme de flux | 🟡 | `docs/produit/CADRAGE_MODELE.md` §2 porte un schéma ASCII du flux. Ce n'est pas un **diagramme de flux de données** au sens formel (DFD niveau 0/1). |
+| 112 | Preuve de concept accessible et fonctionnelle en pré-production | 🟡 | La preuve de concept **fonctionne en local et c'est vérifié**, pas supposé : `tools/parcours_bout_en_bout.py` déroule 24 étapes contre le serveur réel et `gpt-oss:20b`, du 401 sans jeton jusqu'à la fermeture, en écrivant un vrai `.docx`. Rejoué **cinq fois de suite** le 08/09/2026, 24/24 à chaque exécution. Il n'y a toujours pas d'environnement de pré-production. |
+| 113 | Conclusion de la preuve de concept permettant une décision | ✅ | `docs/modele/CONCLUSION_POC.md`, adossé à **cinq exécutions** de `tools/parcours_bout_en_bout.py` relevées le 08/09/2026 (21 appels à `gpt-oss:20b`, 24/24 étapes à chaque fois). Il conclut sur trois décisions datées et **nomme le seul seuil franchi dans le mauvais sens** : 71,4 % de JSON valide contre 98 % visés. Il dit aussi ce que l'échantillon ne permet pas de conclure. |
+
+### C16 — Conduite agile
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 115 | Cycles, étapes, rôles, rituels et outils de la méthode respectés | 🟡 | Le découpage agile est réel — 28 stories, 7 épiques, deux files de priorité, sprints dans `PLANNING.md`. Les **rituels ne sont pas tenus ni tracés** (pas de revue de sprint, pas de rétrospective écrite). |
+| 116 | Outils de pilotage disponibles (kanban, burndown, backlog) | 🟡 | Le backlog existe et fait autorité. Le kit de transposition Notion est prêt (`docs/pilotage/NOTION_BOARD.md`, CSV, CLI) mais **le tableau n'est pas encore monté**. |
+| 117 | Objectifs et modalités des rituels partagés aux parties prenantes | 🟡 | `docs/pilotage/RITUELS.md` — cinq rituels avec objectif, modalités, production et destinataires, plus la définition de fini et le tableau des canaux de partage. Il **nomme la difficulté** plutôt que de la masquer : les rituels agiles supposent une équipe, et le projet est conduit à une personne ; chacun garde son objectif et change de modalités. Reste 🟡 : le document énonce, il ne prouve pas — et le canal de partage principal (Notion) n'est pas monté. |
+| 118 | Éléments de pilotage accessibles à toutes les parties tout au long du projet | 🟡 | Accessibles dans le dépôt ; `docs/pilotage/RITUELS.md` en donne désormais le tableau des canaux et de leurs destinataires. Pas de vue partagée hors dépôt tant que Notion n'est pas monté. |
+
+> C16 se joue sur des **traces**, pas sur du code : un tableau Notion vivant,
+> des revues de sprint datées, une rétrospective. Le projet est conduit de façon
+> agile, et ses modalités sont désormais écrites ; il ne le **prouve** pas encore.
+> Les trois 🟡 de C16 tomberont ensemble, du jour où le tableau sera monté et où
+> une première revue sera déposée dans `docs/revues/`.
+
+### C17 — Développement des composants et interfaces
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 120 | Environnement de développement conforme aux spécifications | ✅ | uv, venv hors dépôt, Python ≥ 3.14, dépendances épinglées. |
+| 121 | Interfaces intégrées respectant les maquettes | ✅ | L'interface respecte les maquettes par construction, puisqu'elles en sont tirées. Ce qui rend le critère défendable est ailleurs : **chaque maquette porte ses annotations d'accessibilité et le test qui les tient**. Quatre propriétés annotées n'étaient couvertes par aucun test — lien d'évitement, région vivante du fil, piège de focus de la modale — elles le sont depuis. |
+| 122 | Comportements des composants et navigation conformes aux spécifications | ✅ | Validation, modale accessible, arbitrage des quantités, correction de ligne — conformes aux stories. |
+| 123 | Composants métier développés et fonctionnels | ✅ | Moteur de devis déterministe : référentiel, taux de chute, rendements, TVA, ventilation, acompte. 12 tests dédiés. |
+| 124 | Gestion des droits d'accès développée | 🟡 | L'accès est fermé, testé et journalisé (voir C5-33), mais **il n'y a qu'un seul rôle** : un artisan sur sa machine. Il n'existe donc pas de gestion de droits différenciés, et il n'en faut pas encore — US-01 (comptes) la rendra nécessaire. |
+| 125 | Flux de données intégrés conformément aux spécifications | ✅ | La frontière est tenue : le modèle décrit, le code calcule. Le schéma de sortie ne comporte **ni prix ni référence produit** — le modèle ne peut pas halluciner ce qu'il n'a pas la possibilité d'exprimer. |
+| 126 | Bonnes pratiques d'éco-conception (éco-index, Green IT) | 🟡 | Le front est **un seul fichier de 36 Ko, sans cadriciel, sans dépendance externe, sans image**, l'audio n'est jamais conservé et HITL-0 filtre avant l'appel modèle plutôt qu'après. C'est de l'éco-conception effective, désormais **revendiquée et argumentée** (`docs/modele/BENCHMARK_STT.md` §6), toujours pas **mesurée** — aucun éco-index n'a été passé. |
+| 127 | Préconisations OWASP top 10 implémentées quand nécessaire | ✅ | Mêmes six mesures qu'en C9-61, plus les garde-fous d'entrée. Le front n'ajoute pas de surface : un seul fichier, aucune dépendance externe, aucun script tiers. |
+| 128 | Tests unitaires ou d'intégration couvrant composants métier et gestion des accès | ✅ | Composants métier largement couverts ; **la gestion des accès l'est aussi** depuis `0442fbe` — `tests/test_auth.py` couvre le refus sans jeton, le jeton forgé, l'expiration, la limitation de tentatives et la fermeture de session. |
+| 129 | Sources versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
+| 130 | Documentation : installation, architecture, dépendances, tests, normes d'accessibilité | ✅ | Installation, architecture, dépendances et tests documentés ; les normes d'accessibilité documentaire sont désormais **écrites et tenues mécaniquement** (`docs/exploitation/ACCESSIBILITE_DOCUMENTS.md`, étape de la chaîne). |
+
+### C18 — Intégration continue
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 132 | Documentation couvrant outils, étapes, tâches, déclencheurs | ✅ | `docs/exploitation/CHAINE_CI_CD.md` — outil retenu et pourquoi, déclencheurs, étapes une à une avec le motif de chacune, procédure pour reproduire la chaîne en local, et une section « ce que la chaîne ne fait pas encore ». |
+| 133 | Outil d'intégration continue sélectionné de façon cohérente | ✅ | GitHub Actions, choisi parce que le dépôt ira sur GitHub et qu'aucun autre service n'est à installer ni à payer. L'argument est écrit. |
+| 134 | Chaîne intégrant les étapes préalables aux tests (build, configuration) | ✅ | `actions/checkout`, `astral-sh/setup-uv` avec cache sur `uv.lock`, puis `uv sync --frozen --all-groups` : le lock fait foi, et la chaîne **échoue** s'il a dérivé au lieu de résoudre en silence (c'est INC-07). |
+| 135 | Chaîne exécutant les tests au déclenchement | ✅ | `uv run --frozen pytest -q` à chaque déclenchement, suivi du contrôle d'accessibilité documentaire et d'un `node --check` sur le JavaScript du front. |
+| 136 | Configurations versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
+| 137 | Documentation au format accessible | ✅ | Voir C8-57 — et `docs/exploitation/CHAINE_CI_CD.md` est lui-même dans le corpus contrôlé. |
+
+> **C'était le meilleur rapport effort/points du dossier, et il a été pris.**
+> Cinq critères sur six sont fermés par un fichier de trente lignes qui
+> réutilise les tests déjà écrits. Le sixième, C18-136, ne demande pas de
+> travail : il demande un dépôt distant, et la décision n'est pas la mienne.
+> La chaîne est d'ailleurs déjà *utile* — c'est elle qui ferait tomber une
+> dérive de `uv.lock` (INC-07), un JavaScript qui ne compile plus, ou un
+> document qui casse la hiérarchie de ses titres.
+
+### C19 — Livraison continue
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 139 | Documentation couvrant étapes, tâches, déclencheurs | ✅ | `docs/exploitation/CHAINE_CI_CD.md` : l'artefact et les quatre décisions qui le façonnent, les quatre déclencheurs, les deux tâches et leurs six étapes, la reproduction locale, et trois limites assumées. |
+| 140 | Fichiers de configuration reconnus et exécutés | 🟡 | `Dockerfile`, `.dockerignore` et `.github/workflows/livraison.yml` sont écrits et **valides** : l'image se construit, démarre et répond en local (vérifié le 08/09/2026). Le workflow, lui, n'a jamais été exécuté par GitHub Actions — voir constat nº 1. |
+| 141 | Étape de packaging intégrée et sans erreur | ✅ | Image OCI en deux étapes, dépendances figées par `uv.lock`, base catalogue construite à la construction et non au démarrage, utilisateur non privilégié (UID 10001), sonde de santé sur le seul chemin ouvert. Construite en local : 212 Mo, démarrage vert, `/` en 200 et `/api/catalogue/familles` en 401. |
+| 142 | Étape de livraison intégrée après validation du packaging | ✅ | La tâche `publication` porte `needs: empaquetage` et `if: github.event_name == 'push'` : elle ne peut ni précéder l'épreuve, ni publier une pull request. Publication sur GHCR, étiquetage par branche, version sémantique et SHA long. |
+| 143 | Sources versionnées sur dépôt Git distant | ❌ | Voir constat nº 1. |
+
+---
+
+## E5 — Exploitation (C20-C21)
+
+### C20 — Surveillance et journalisation
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 145 | Documentation listant métriques, seuils et valeurs d'alerte | 🟡 | Les huit métriques et leurs seuils sont écrits (`docs/produit/DISPOSITIF_AGENT.md` §4). Les **valeurs d'alerte** — à partir de quand on réveille quelqu'un — ne le sont pas. |
+| 146 | Arguments en faveur des choix techniques d'outillage | ✅ | Écrits dans `app/observabilite.py` : trois partis pris assumés (le journal ne casse jamais un tour ; un seul fichier JSONL relisible à l'œil, sans dépendance ; on ne mesure que ce qu'on observe vraiment). Les métriques 2 à 5 sont déclarées « non mesurée » plutôt qu'approchées par un chiffre flatteur. |
+| 147 | Outils installés et opérationnels au moins en local | ✅ | Journal applicatif et tableau de bord installés et opérationnels en local, vérifiés par le parcours de bout en bout. |
+| 148 | Règles de journalisation intégrées aux sources | ✅ | Dix points de journalisation branchés dans les sources : appel au modèle (validité, motif, tentative, latence), tour, escalade, injection neutralisée, hors périmètre, correction de l'artisan selon quatre origines, et échec d'authentification. **Le journal ne porte aucun texte libre** — la dictée reste hors du journal, par construction (`docs/donnees/RGPD.md`, T4). |
+| 149 | Alertes configurées et en état de marche | 🟡 | Le tableau de bord **écrit** l'état de chaque métrique par rapport à son seuil, et ne s'en remet pas à la couleur. Mais rien n'est émis vers personne : pas de notification, pas de destinataire, pas de valeur de réveil. |
+| 150 | Documentation d'installation et de configuration | 🟡 | `README.md` et `docs/exploitation/CHAINE_CI_CD.md` couvrent l'installation de l'application, donc du journal. La configuration propre au dispositif (rotation, destination, seuils) n'est pas documentée à part. |
+| 151 | Documentation au format accessible | ✅ | Voir C8-57. |
+
+### C21 — Résolution d'incidents
+
+| # | Critère | Statut | Constat |
+|---|---|---|---|
+| 153 | Causes des problèmes identifiées correctement | ✅ | `docs/exploitation/INCIDENTS.md` — **douze fiches**, chacune avec son symptôme, sa reproduction, sa cause remontée au-delà du symptôme, son correctif et son test de non-régression. Cinq portent en plus un « comment il a été trouvé », et le journal en tire une conclusion : **trois des douze n'avaient aucun symptôme visible** (fuite de la dictée, remise invisible, prise réseau chiffrée comme prise de courant) et aucun n'a été trouvé par un test — les tests vérifiaient ce qu'on savait déjà. Les trois sont sortis d'une confrontation du code à autre chose que lui-même. |
+| 154 | Problème reproduit en environnement de développement | ✅ | Chaque fiche porte sa reproduction, et la commande commune est donnée en tête du journal. Neuf des douze incidents ont un test de non-régression dédié dans la suite. |
+| 155 | Procédure de débogage documentée depuis l'outil de suivi | 🟡 | La procédure de débogage est écrite une fois pour toutes en tête de `docs/exploitation/INCIDENTS.md` — reproduire d'abord, écrire le test qui échoue avant le correctif, remonter à la cause, un correctif un commit, relancer la suite entière. Elle n'est pas *tenue depuis un outil de suivi* : le fichier en tient lieu jusqu'à ce que le tableau Notion soit monté. |
+| 156 | Solution documentée expliquant chaque étape | ✅ | Chaque fiche explique la solution et ce qu'elle change, pas seulement le fichier touché. |
+| 157 | Solution versionnée dans le dépôt (merge request par exemple) | 🟡 | Versionnée par commits atomiques et messages explicatifs. **Sans remote, pas de merge request.** |
+
+> **C21 est presque gratuit et pourtant à zéro.** Le travail d'investigation a
+> été fait ; il manque le *format*. Une fiche d'incident par anomalie —
+> symptôme, cause, reproduction, correctif, test de non-régression, commit —
+> ferme cinq critères avec des faits déjà établis. Six anomalies sont
+> disponibles immédiatement.
+
+---
+
+## Ce qu'il faut faire, dans l'ordre du rendement
+
+1. **Créer le dépôt distant et pousser.** Neuf critères, une commande. *(Décision de l'utilisateur : je n'ai pas le droit de pousser.)*
+2. ~~**Chaîne d'intégration continue** (`.github/workflows/`).~~ **Fait** : `tests.yml` et `docs/exploitation/CHAINE_CI_CD.md`. Cinq des six critères de C18 sont fermés ; le sixième attend le dépôt distant.
+3. ~~**Fiches d'incident** pour les anomalies déjà corrigées.~~ **Fait** : `docs/exploitation/INCIDENTS.md`, douze fiches. → C21 pour l'essentiel.
+4. ~~**Quatre séances de veille** au gabarit.~~ **Fait pour une** (08/09/2026), et pas pour quatre : voir la note de C6. La suite est un rituel à tenir, pas un document à écrire. → C6.
+5. ~~**Registre des traitements de données personnelles** + procédures de tri.~~ **Fait** le 08/09/2026 : `docs/donnees/RGPD.md`. Trois critères fermés, et un défaut de confidentialité trouvé et corrigé au passage. → C4.
+6. ~~**Journalisation applicative** branchée sur les escalades et corrections existantes.~~ **Fait** : `app/observabilite.py`, dix points de journalisation, tableau de bord `/metriques`. → C20 et C11 largement fermés.
+7. ~~**Modèle Merise** du référentiel métier et du catalogue.~~ **Fait** : `docs/donnees/MODELE_DONNEES.md`. C4-19 et C14-103 fermés, C4-20 passe à partiel, et le schéma cible du catalogue est prêt pour C2.
+8. ~~**Authentification de l'API.**~~ **Fait** : `app/authentification.py`, 19 tests. C5-31, C5-33, C9-59, C9-61, C9-65 fermés ; C10-70 et C17-124 restent 🟡 (pas de renouvellement de jeton, un seul rôle).
+9. ~~**Wireframes** de l'interface existante.~~ **Fait** : `docs/produit/MAQUETTES.md`, sept maquettes annotées. C14-104, C17-121 et C10-72 fermés, quatre tests d'accessibilité ajoutés au passage.
+10. ~~**Benchmark STT** avec colonne éco-responsable.~~ **Fait** : `docs/modele/BENCHMARK_STT.md`. Six des sept critères de C7 fermés, C7-48 reste 🟡 faute de mesure ; C15-110 et C17-126 passent à partiel. Le protocole de mesure est écrit et attend un corpus de trente dictées.
+
+11. ~~**Chaîne de données** : collecte multi-sources, agrégation, base, requêtes.~~ **Fait** : `tools/donnees/` et `docs/donnees/CHAINE_DONNEES.md`. E1 passe de 14 ❌ à 2, C2 et C3 sont fermés, C4-21 à C4-25 avancent. Le moteur de devis y est branché derrière `BTP_CATALOGUE_SOURCE=base`, par la table déclarative de `app/correspondance.py` ; deux lots sur treize attendent un arbitrage métier et ne servent pas (§8 du document).
+
+12. ~~**Empaquetage et livraison continue** : le produit ne s'installe qu'en connaissant la commande.~~ **Fait** : `Dockerfile`, `.dockerignore`, `.github/workflows/livraison.yml` et `docs/exploitation/CHAINE_CI_CD.md`. C19 passe de 5 ❌ à 1 (le dernier étant le dépôt distant). L'image est construite, démarrée et interrogée en local ; ce qui n'est pas vérifié, c'est l'exécution du workflow — comme pour l'intégration continue, et pour la même raison.
+
+13. ~~**Chaîne MLOps** : la chaîne du modèle, écrite avant l'entraînement pour pouvoir en porter la trace.~~ **Fait** : `tools/mlops/`, `mlops/pipeline.toml`, `mlops/lora.toml`, `.github/workflows/modele.yml` et `docs/modele/CHAINE_MLOPS.md`. C13 passe de 7 ❌ à 1 (le dépôt distant). L'étape de test des données tourne et réussit ; les trois autres se déclarent `ignoré` en nommant leur prérequis manquant.
+
+14. ~~**Conclusion de la preuve de concept.**~~ **Fait** : `docs/modele/CONCLUSION_POC.md`, adossé à cinq exécutions relevées, pas à un souvenir. C15-113 fermé. Le relevé qui compte : **71,4 % de JSON valide** sur `gpt-oss:20b` brut, contre 98 % visés — la valeur de référence du fine-tuning existe désormais, et elle est datée.
+
+15. ~~**Objectifs et modalités des rituels.**~~ **Fait** : `docs/pilotage/RITUELS.md`. C16-117 passe à partiel, C16-118 s'appuie dessus. Le document refuse le rituel de façade — il adapte les modalités à un projet conduit à une personne au lieu de mimer une équipe, et dit ce qui n'est pas encore tenu.
+
+16. ~~**Accessibilité des sources de veille et recoupement.**~~ **Fait** : `veille/DISPOSITIF.md`. C6-43 fermé, dernier ❌ hors dépôt distant. L'argument qui porte : le format du flux Atom/RSS *est* la mesure d'accessibilité, et c'est celle que le projet contrôle.
+
+**Ce qui reste, en une phrase.** Pousser le dépôt (neuf critères), **tenir** le
+protocole de mesure du banc d'essai plutôt que l'écrire (trois critères à
+mi-chemin), et **écrire le dataset à la main** — le reste est du rituel à
+tenir, pas du travail à inventer. Les six gisements documentaires de la liste
+ci-dessus sont fermés, et il ne reste plus de gisement de ❌ : les douze
+restants sont **tous les neuf** des dépendances au dépôt distant. Il n'y a plus
+un seul ❌ que le dépôt puisse fermer par lui-même.
+Ce qui bloque le projet n'est plus de l'outillage, c'est de la matière — les
+2000 exemples que personne ne peut écrire à ma place.
+
+---
+
+*Audit établi le 08/09/2026, révisé le même jour sur le dépôt à l'état du
+commit `9c5b8c3`. Les statuts décrivent ce qui est dans le dépôt à ce
+commit-là, pas ce qui est prévu — et pas ce qui a été écrit depuis.*

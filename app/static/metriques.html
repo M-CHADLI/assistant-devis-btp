@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Métriques d'exploitation — Assistant chantier BTP</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 1.5rem;
+         max-width: 60rem; background: Canvas; color: CanvasText; line-height: 1.5; }
+  h1 { font-size: 1.4rem; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+  caption { text-align: left; font-weight: bold; margin-bottom: .4rem; }
+  th, td { border: 1px solid #8884; padding: .45rem .6rem; text-align: left; }
+  th { background: #8881; }
+  .statut { font-weight: bold; }
+  /* Le statut est porté par le texte : la couleur n'ajoute qu'un rappel
+     (RGAA 3.1 — l'information ne doit pas passer par la couleur seule). */
+  .statut.sous { color: #b91c1c; }
+  .statut.conforme { color: #15803d; }
+  .note { font-size: .9rem; color: GrayText; }
+  a { color: LinkText; }
+</style>
+</head>
+<body>
+<a href="/">← Retour à l'assistant</a>
+<h1>Métriques d'exploitation</h1>
+<p class="note">Seuils repris de <code>docs/produit/DISPOSITIF_AGENT.md</code> §4.3, sans
+réinterprétation. Cette page lit le journal applicatif : elle reste consultable
+même quand le modèle est arrêté.</p>
+
+<p id="periode" class="note" role="status"></p>
+
+<table id="table-metriques">
+  <caption>Les huit métriques du dispositif, leur seuil et leur état mesuré</caption>
+  <thead>
+    <tr><th scope="col">Nº</th><th scope="col">Métrique</th><th scope="col">Seuil</th>
+        <th scope="col">Mesure</th><th scope="col">État</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<table id="table-volumes">
+  <caption>Volumes observés depuis le début du journal</caption>
+  <thead><tr><th scope="col">Compteur</th><th scope="col">Valeur</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<p id="erreur" class="note" role="alert" hidden></p>
+
+<script>
+const LIBELLES = {
+  appels_modele: "Appels au modèle",
+  tours: "Tours (un message de l'artisan)",
+  reprises: "Reprises après sortie invalide",
+  hors_perimetre: "Demandes hors périmètre recadrées",
+  injections_neutralisees: "Tentatives d'injection neutralisées",
+  corrections_artisan: "Corrections de l'artisan (signal qualité)"
+};
+
+function texteSeuil(m) {
+  if (m.seuil === null) return '—';
+  return (m.sens === 'min' ? '≥ ' : '≤ ') + m.seuil + ' ' + m.unite;
+}
+
+fetch('/api/metriques').then(r => r.json()).then(data => {
+  const corps = document.querySelector('#table-metriques tbody');
+  // Même règle que dans index.html : ce tableau lit le journal applicatif, dont
+  // les libellés et commentaires viennent de l'usage réel. Rien n'y est balisage.
+  const esc = (v) => String(v ?? '')
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+
+  data.metriques.forEach(m => {
+    const tr = document.createElement('tr');
+    const mesure = (m.valeur === null) ? '—' : m.valeur + ' ' + m.unite;
+    const classe = m.statut === 'conforme' ? 'conforme'
+                 : (m.statut === 'sous le seuil' ? 'sous' : '');
+    tr.innerHTML = `<th scope="row">${esc(m.numero)}</th><td>${esc(m.libelle)}</td>
+      <td>${esc(texteSeuil(m))}</td><td>${esc(mesure)}</td>
+      <td class="statut ${classe}">${esc(m.statut)}${m.commentaire ? ' — ' + esc(m.commentaire) : ''}</td>`;
+    corps.appendChild(tr);
+  });
+  const volumes = document.querySelector('#table-volumes tbody');
+  for (const [cle, valeur] of Object.entries(data.volumes)) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<th scope="row">${LIBELLES[cle] || esc(cle)}</th><td>${esc(valeur)}</td>`;
+    volumes.appendChild(tr);
+  }
+  document.getElementById('periode').textContent = data.depuis
+    ? `Journal du ${data.depuis} au ${data.jusqu_a}.`
+      + (data.modeles_vus.length ? ` Modèle observé : ${data.modeles_vus.join(', ')}.` : '')
+    : "Journal vide : aucun tour n'a encore été joué.";
+}).catch(() => {
+  const zone = document.getElementById('erreur');
+  zone.textContent = "Le journal n'a pas pu être lu. Les métriques ne sont pas affichables pour l'instant.";
+  zone.hidden = false;
+});
+</script>
+</body>
+</html>

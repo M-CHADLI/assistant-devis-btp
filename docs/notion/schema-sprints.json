@@ -1,0 +1,16 @@
+{
+  "titre": "Sprints",
+  "description": "Itérations de deux semaines, alignées sur les jalons de PLANNING.md.",
+  "proprietes": {
+    "Sprint": { "title": {} },
+    "Début": { "date": {} },
+    "Fin": { "date": {} },
+    "Objectif": { "rich_text": {} },
+    "Jalon PLANNING.md": { "rich_text": {} },
+    "État": { "select": { "options": [
+      { "name": "En cours", "color": "blue" },
+      { "name": "À venir", "color": "gray" },
+      { "name": "Clos", "color": "green" }
+    ] } }
+  }
+}

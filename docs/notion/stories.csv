@@ -1,0 +1,29 @@
+Clé,Titre,Épique,Type,File,Rang,Priorité,État,Sprint,Points,Compétences,Source,État du code
+US-01,Créer mon compte à partir de mon SIRET,A — Profil artisan,Story,Certification,5,Moyenne,En cours,S6,5,C5 · C14 · C17,docs/produit/CADRAGE_MODELE.md §6,partiel
+US-02,Déclarer mon régime de TVA et mon assurance décennale,A — Profil artisan,Story,Noyau démontrable,6,Haute,Terminé,S2,3,C14 · C17,docs/produit/CADRAGE_MODELE.md §6,fait
+US-03,Déposer un devis existant pour en faire mon gabarit,A — Profil artisan,Story,Certification,6,Basse,En cours,S6,5,C8 · C14,docs/produit/CADRAGE_MODELE.md §6,partiel
+US-04,Dicter mon chantier sur place,B — Capture vocale,Story,Noyau démontrable,11,Haute,En cours,S5,8,C10 · C14 · C17,docs/produit/CADRAGE_MODELE.md §2,partiel
+US-05,Relire et corriger la transcription avant traitement,B — Capture vocale,Story,Noyau démontrable,4,Critique,Terminé,S2,5,C10 · C14 · C17,docs/produit/DISPOSITIF_AGENT.md §1.4 (HITL-0),fait
+US-06,Enchaîner plusieurs enregistrements sur un même chantier,B — Capture vocale,Story,Noyau démontrable,12,Moyenne,Terminé,S5,3,C14 · C17,docs/produit/CADRAGE_MODELE.md §2,fait
+US-07,Être questionné seulement sur ce qui manque,C — Interroger,Story,Noyau démontrable,9,Haute,Terminé,S3,5,C13 · C14 · C17,docs/produit/DISPOSITIF_AGENT.md §1.4 (HITL-1),fait
+US-08,Voir mon chantier découpé en lots ordonnés,C — Interroger,Story,Terminé,0,Haute,Terminé,S1,3,C13 · C14,docs/produit/CADRAGE_MODELE.md §4,fait
+US-09,Obtenir les quantités sans jamais faire le calcul moi-même,D — Calculer,Story,Noyau démontrable,1,Critique,Terminé,S1,2,C13 · C14,docs/produit/DISPOSITIF_AGENT.md §1.2 étapes 5-6,fait
+US-10,Ne pas oublier les consommables,D — Calculer,Story,Terminé,0,Moyenne,Terminé,S3,2,C13 · C14,docs/produit/CADRAGE_MODELE.md §4,fait
+US-11,Être arrêté sur une quantité invraisemblable,D — Calculer,Story,Noyau démontrable,10,Haute,Terminé,S3,5,C13 · C17,docs/produit/DISPOSITIF_AGENT.md §3.1 · §3.2,fait
+US-12,Valider la structure avant de voir le moindre prix,E — Arbitrer,Story,Noyau démontrable,5,Critique,Terminé,S2,5,C13 · C14 · C17,docs/produit/DISPOSITIF_AGENT.md §1.4 (HITL-2),fait
+US-13,Voir le devis chiffré à partir du catalogue pas du modèle,E — Arbitrer,Story,Terminé,0,Critique,Terminé,S1,5,C13 · C14,docs/produit/DISPOSITIF_AGENT.md §3.2,fait
+US-14,Corriger une ligne et que ma correction fasse autorité,E — Arbitrer,Story,Noyau démontrable,8,Haute,Terminé,S3,5,C13 · C17 · C20,docs/produit/DISPOSITIF_AGENT.md §1.4 · §5.2,fait
+US-15,Obtenir un devis conforme aux mentions obligatoires BTP,E — Arbitrer,Story,Noyau démontrable,7,Critique,Terminé,S2,8,C13 · C14,docs/produit/CADRAGE_MODELE.md §6,fait
+US-16,Retrouver mon devis après un rechargement,E — Arbitrer,Story,Noyau démontrable,3,Critique,Terminé,S1,5,C13 · C17,docs/produit/DISPOSITIF_AGENT.md §2.5,fait
+US-17,Repartir d'un devis pour un chantier voisin,E — Arbitrer,Story,Hors file,0,Basse,Terminé,S6,3,C13,hors cadrage explicite,fait
+US-18,Être averti sur un domaine réglementé sans être bloqué,F — Garde-fous,Story,Noyau démontrable,8,Critique,Terminé,S3,3,C13 · C17,docs/produit/DISPOSITIF_AGENT.md §3.3,fait
+US-19,Être redirigé quand ma demande sort du périmètre,F — Garde-fous,Story,Certification,8,Haute,Terminé,S6,5,C13 · C17,docs/produit/DISPOSITIF_AGENT.md §3.3,fait
+US-20,Que l'application résiste à une tentative d'injection,F — Garde-fous,Story,Certification,8,Haute,Terminé,S6,5,C17 · C21,docs/produit/DISPOSITIF_AGENT.md §3.1,fait
+US-21,Pouvoir escalader quand l'agent échoue,F — Garde-fous,Story,Noyau démontrable,2,Critique,Terminé,S1,3,C17 · C20,docs/produit/DISPOSITIF_AGENT.md §1.4 (HITL-4),fait
+US-22,Que l'API soit documentée et contractuelle,G — Socle,Story,Certification,3,Haute,Terminé,S4,3,C5 · C9 · C13,—,fait
+US-23,Que l'accès soit authentifié,G — Socle,Story,Certification,1,Critique,Terminé,S4,8,C9 · C17 · C21,—,fait
+US-24,Que l'exploitation soit observable,G — Socle,Story,Certification,2,Critique,Terminé,S4,8,C11 · C20,docs/produit/DISPOSITIF_AGENT.md §4.3,fait
+US-25,Que les corrections alimentent la boucle qualité,G — Socle,Story,Certification,7,Haute,Terminé,S6,5,C20,docs/produit/DISPOSITIF_AGENT.md §4.2 · §5.2,fait
+US-26,Que le produit s'installe et se relance sans moi,G — Socle,Story,Certification,4,Haute,En cours,S5,5,C18 · C19,—,partiel
+US-27,"Que le catalogue vienne de vraies sources, trous compris",G — Socle,Story,Certification,9,Haute,En cours,S5,8,C1 · C2 · C3 · C4 · C5,docs/donnees/CHAINE_DONNEES.md,partiel
+US-28,Que la chaîne du modèle existe avant l'entraînement,G — Socle,Story,Certification,10,Haute,En cours,S6,8,C13,docs/modele/CHAINE_MLOPS.md,partiel

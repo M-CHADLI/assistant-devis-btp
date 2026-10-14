@@ -1,0 +1,8 @@
+Sprint,Début,Fin,Objectif,Jalon PLANNING.md,État
+S1,2026-09-01,2026-09-14,Fermer les anomalies ouvertes du moteur et isoler les sessions — clos par anticipation le 08/09,Septembre — dataset v1 + jeu de test gelé,Clos
+S2,2026-09-15,2026-09-28,Poser HITL-0 et HITL-2 puis rendre le devis conforme — clos par anticipation le 08/09,Septembre — dataset v1 + jeu de test gelé,Clos
+S3,2026-09-29,2026-10-12,Garde-fous visibles et accessibilité du front — clos par anticipation le 08/09,Octobre — 20b brut mesuré,Clos
+S4,2026-10-13,2026-10-26,Socle de certification : authentification observabilité API — clos par anticipation le 08/09,Octobre — LoRA 20b et remesure,Clos
+S5,2026-10-27,2026-11-09,STT local livraison et intégration continue ; reste veille RGPD Merise et maquettes,Novembre — 120b et interface,En cours
+S6,2026-11-10,2026-11-23,Périmètre injection boucle qualité et dossier — périmètre injection et boucle qualité livrés,Novembre — démo bout en bout,En cours
+S7,2026-11-24,2026-11-30,Répétition et soutenance,Novembre — soutenance,À venir

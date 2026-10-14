@@ -1,0 +1,45 @@
+# Chaîne MLOps — déclaration des étapes. Documentation : docs/modele/CHAINE_MLOPS.md
+#
+# Ce fichier est la source de vérité de l'ordre des étapes. L'exécuteur
+# (tools/mlops/executer.py) ne connaît aucune étape en dur : ajouter une étape
+# se fait ici, et se lit dans git.
+#
+# `prerequis` liste des chemins. S'il en manque un, l'étape est *ignorée*, pas
+# échouée — la chaîne décrit un entraînement qui n'a pas encore eu lieu.
+# `bloquant` dit si un échec de l'étape arrête la chaîne.
+
+[chaine]
+nom = "assistant-devis-btp"
+version = "1"
+
+[[etape]]
+nom = "donnees"
+description = "Valider le dataset : enveloppe, payload, raisonnement, fuite essai/entraînement"
+module = "tools.mlops.valider_dataset"
+arguments = []
+prerequis = []
+bloquant = true
+
+[[etape]]
+nom = "preparation"
+description = "Convertir le dataset validé au format chat attendu par Unsloth"
+module = "tools.mlops.preparer"
+arguments = []
+prerequis = ["dataset/entrainement.jsonl"]
+bloquant = true
+
+[[etape]]
+nom = "entrainement"
+description = "LoRA sur gpt-oss-20b via Unsloth, hyperparamètres dans mlops/lora.toml"
+module = "tools.mlops.entrainer"
+arguments = []
+prerequis = ["mlops/artefacts/entrainement.chat.jsonl"]
+bloquant = true
+
+[[etape]]
+nom = "validation"
+description = "Mesurer sur le jeu d'essai : JSON valide, justesse de mention, prix inventés"
+module = "tools.mlops.evaluer"
+arguments = []
+prerequis = ["dataset/essai.jsonl"]
+bloquant = true

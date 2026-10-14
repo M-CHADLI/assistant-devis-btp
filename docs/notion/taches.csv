@@ -1,0 +1,57 @@
+Clé,Tâche,Story,Sprint,Type,Estimation (h),État,Fichier visé
+T-001,Ajouter la branche quantitatif dans _router,US-09,S1,Développement,1,Terminé,app/pipeline.py
+T-002,Test : un intent quantitatif ne lève plus ValueError,US-09,S1,Test,1,Terminé,tests/test_pipeline.py
+T-003,Supprimer la reprise redondante entre appeler_modele et traiter_message,US-21,S1,Développement,1,Terminé,app/llm.py · app/pipeline.py
+T-004,Journaliser le motif d'escalade et non le seul événement,US-21,S1,Développement,2,Terminé,app/pipeline.py
+T-005,Test : au plus deux appels modèle par message,US-21,S1,Test,1,Terminé,tests/test_pipeline.py
+T-006,Remplacer la SESSION de module par un registre de projets identifiés,US-16,S1,Développement,4,Terminé,app/main.py
+T-007,Persister l'état projet sur disque local,US-16,S1,Développement,3,Terminé,app/persistance.py
+T-008,Test : deux projets ne se voient pas,US-16,S1,Test,2,Terminé,tests/test_api.py
+T-009,Résoudre index.html par chemin absolu depuis __file__,US-26,S1,Développement,1,Terminé,app/main.py
+T-010,Corriger les cinq affirmations périmées de CLAUDE.md,—,S1,Documentation,1,Terminé,CLAUDE.md
+T-011,Écran de relecture de la transcription avant traitement,US-05,S2,Développement,4,Terminé,app/static/index.html
+T-012,Endpoint de validation de transcription et journalisation de l'écart,US-05,S2,Développement,3,Terminé,app/main.py
+T-013,Textarea étiqueté redimensionnable à 200 % sans perte,US-05,S2,Accessibilité,2,Terminé,app/static/index.html
+T-014,Séparer la construction du devis de son chiffrage,US-12,S2,Développement,4,Terminé,app/devis.py
+T-015,Endpoint de validation de structure avant chiffrage,US-12,S2,Développement,2,Terminé,app/main.py
+T-016,Test : aucun montant transmis avant validation,US-12,S2,Test,2,Terminé,tests/test_api.py
+T-017,Modèle Artisan avec régime de TVA et décennale,US-02,S2,Développement,3,Terminé,app/profil.py
+T-018,Chemin franchise en base 293 B sans aucune ligne de TVA,US-02,S2,Développement,3,Terminé,app/export.py
+T-019,Test : export en 293 B sans occurrence de TVA hors mention légale,US-02,S2,Test,2,Terminé,tests/test_export.py
+T-020,Ajouter délai d'exécution client adresse de chantier RCS APE-NAF TVA intracom,US-15,S2,Développement,4,Terminé,app/export.py
+T-021,Bloquer l'export si une donnée légale obligatoire manque,US-15,S2,Développement,2,Terminé,app/export.py
+T-022,Test : chaque mention obligatoire présente dans le docx,US-15,S2,Test,3,Terminé,tests/test_export.py
+T-023,Détecter les cinq domaines hors périmètre et les nommer,US-19,S3,Développement,4,Terminé,app/garde_fous.py
+T-024,Traiter la partie chantier d'une demande mixte au lieu de tout renvoyer,US-19,S3,Développement,2,Terminé,app/pipeline.py
+T-025,"Neutraliser l'injection en la cadrant comme donnée, sans rien supprimer",US-20,S3,Développement,3,Terminé,app/garde_fous.py
+T-026,Journaliser chaque injection avec son motif,US-20,S3,Développement,2,Terminé,app/pipeline.py
+T-027,Annoncer les messages de cadrage en role=alert,US-20,S3,Accessibilité,2,Terminé,app/static/index.html
+T-028,Arbitrage d'une quantité hors bornes depuis l'interface,US-11,S3,Développement,3,Terminé,app/static/index.html
+T-029,Reprendre un projet à son identifiant après redémarrage,US-16,S3,Développement,3,Terminé,app/persistance.py
+T-030,Règle d'accessibilité documentaire et son vérificateur,—,S3,Documentation,3,Terminé,tools/verifier_accessibilite_docs.py
+T-031,Journal applicatif structuré et tableau de bord des métriques,US-24,S4,Développement,5,Terminé,app/observabilite.py
+T-032,Modèles de sortie et erreurs déclarées dans OpenAPI,US-22,S4,Développement,4,Terminé,app/api_schema.py
+T-033,Test : le contrat OpenAPI décrit chaque route et chaque erreur,US-22,S4,Test,3,Terminé,tests/test_contrat_api.py
+T-034,Phrase de passe scrypt et jeton signé en cookie HttpOnly,US-23,S4,Développement,5,Terminé,app/authentification.py
+T-035,Middleware fermé par défaut : seuls / et /api/session sont ouverts,US-23,S4,Développement,3,Terminé,app/main.py
+T-036,"Test : balayage des routes, aucune n'est ouverte par oubli",US-23,S4,Test,2,Terminé,tests/test_auth.py
+T-037,Panneau de connexion accessible et bascule sur 401,US-23,S4,Accessibilité,3,Terminé,app/static/index.html
+T-038,Section 3.4 Contrôle d'accès et table des mesures OWASP,US-23,S4,Documentation,2,Terminé,docs/produit/DISPOSITIF_AGENT.md
+T-039,Capturer le triplet entrée / sortie modèle / corrigé à chaque correction,US-25,S6,Développement,4,Terminé,app/pipeline.py
+T-040,Refuser d'exporter le signal qualité sur un disque distant ou synchronisé,US-25,S6,Développement,3,Terminé,app/boucle_qualite.py
+T-041,"CLI d'export du jeu de candidats, avec passage à blanc",US-25,S6,Développement,2,Terminé,tools/exporter_signal_qualite.py
+T-042,Détecter la demande explicite d'un humain avant tout appel modèle,US-21,S6,Développement,3,Terminé,app/garde_fous.py · app/pipeline.py
+T-043,Test : neuf tournures de chantier ordinaire ne déclenchent pas l'escalade,US-21,S6,Test,2,Terminé,tests/test_garde_fous.py
+T-044,Écrire quatre séances de veille d'après le gabarit (C6),—,S5,Documentation,6,À faire,veille/seances/
+T-045,Registre des traitements RGPD et procédure de tri des données,—,S5,Documentation,5,À faire,docs/
+T-046,Modèle de données Merise du produit,—,S5,Documentation,4,À faire,docs/
+T-047,Maquettes des écrans du parcours artisan,—,S5,Documentation,5,À faire,docs/
+T-048,Benchmark STT avec colonne éco-responsabilité,US-04,S5,Documentation,5,À faire,docs/
+T-049,Lire les valeurs métier depuis la source au lieu de les recopier en dur,—,S5,Test,3,À faire,tests/test_devis.py
+T-050,Créer le compte artisan à partir du seul SIRET (API Pappers),US-01,S6,Développement,8,À faire,app/profil.py
+T-051,Publier la sévérité d'une mention comme donnée (niveau + texte),US-18,S5,Développement,2,Terminé,app/api_schema.py
+T-052,Classer la mention sur niveau au lieu d'inspecter la chaîne,US-18,S5,Développement,1,Terminé,app/static/index.html
+T-053,Test : la détection de chaîne ne peut pas revenir,US-18,S5,Test,1,Terminé,tests/test_front.py
+T-054,Détecter une contradiction entre deux dictées sur un même poste,US-06,S5,Développement,3,Terminé,app/pipeline.py
+T-055,Arbitrage à l'écran : retenir la nouvelle valeur ou garder l'ancienne,US-06,S5,Développement,2,Terminé,app/static/index.html
+T-056,"Tests : ni addition, ni arbitrage silencieux, arbitrage journalisé",US-06,S5,Test,2,Terminé,tests/test_pipeline.py

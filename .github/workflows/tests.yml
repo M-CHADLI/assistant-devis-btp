@@ -1,0 +1,63 @@
+# Chaîne d'intégration continue — voir docs/exploitation/CHAINE_CI_CD.md
+#
+# Déclencheurs : tout push sur main ou sur une branche de travail, toute pull
+# request visant main, et le lancement manuel depuis l'onglet Actions.
+name: Tests
+
+on:
+  push:
+    branches: ["main", "feat/**", "fix/**", "docs/**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Une seule exécution par branche : un nouveau push annule la précédente
+# plutôt que de faire tourner deux fois les mêmes tests.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: Suite pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Récupérer les sources
+        uses: actions/checkout@v4
+
+      - name: Installer uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Installer Python et les dépendances
+        # --frozen : uv.lock fait foi, la chaîne échoue si le lock a dérivé du
+        # pyproject.toml plutôt que de le résoudre silencieusement.
+        run: uv sync --frozen --all-groups
+
+      - name: Lancer la suite de tests
+        # BTP_DONNEES isole la persistance dans un répertoire jetable : aucun
+        # test ne doit écrire dans le dépôt.
+        env:
+          BTP_DONNEES: ${{ runner.temp }}/donnees
+        run: uv run --frozen pytest -q
+
+      - name: Vérifier l'accessibilité des documents
+        # Règles 1, 2 et 4 de docs/exploitation/ACCESSIBILITE_DOCUMENTS.md : un seul titre de
+        # niveau 1, aucun saut de hiérarchie, aucun libellé de lien creux.
+        run: python3 tools/verifier_accessibilite_docs.py
+
+      - name: Vérifier la syntaxe du front
+        # Le front est un fichier unique sans build : node --check sur le
+        # JavaScript extrait suffit à attraper une faute de frappe.
+        run: |
+          python - <<'PY' > /tmp/front.js
+          import re, pathlib
+          html = pathlib.Path("app/static/index.html").read_text(encoding="utf-8")
+          blocs = re.findall(r"<script>(.*?)</script>", html, re.S)
+          print("\n".join(blocs))
+          PY
+          node --check /tmp/front.js

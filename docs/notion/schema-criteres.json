@@ -1,0 +1,41 @@
+{
+  "titre": "Critères RNCP — suivi par critère",
+  "description": "Les 135 critères d'évaluation du référentiel, avec leur état constaté et leur preuve. Source de vérité : docs/pilotage/COUVERTURE_RNCP.md, pas Notion. Un critère n'est ✅ que si la preuve est dans le dépôt.",
+  "proprietes": {
+    "Critère": { "title": {} },
+    "Clé": { "rich_text": {} },
+    "Compétence": { "select": { "options": [
+      { "name": "C1", "color": "blue" }, { "name": "C2", "color": "blue" },
+      { "name": "C3", "color": "blue" }, { "name": "C4", "color": "blue" },
+      { "name": "C5", "color": "blue" },
+      { "name": "C6", "color": "purple" }, { "name": "C7", "color": "purple" },
+      { "name": "C8", "color": "purple" },
+      { "name": "C9", "color": "green" }, { "name": "C10", "color": "green" },
+      { "name": "C11", "color": "green" }, { "name": "C12", "color": "green" },
+      { "name": "C13", "color": "green" },
+      { "name": "C14", "color": "orange" }, { "name": "C15", "color": "orange" },
+      { "name": "C16", "color": "orange" }, { "name": "C17", "color": "orange" },
+      { "name": "C18", "color": "orange" }, { "name": "C19", "color": "orange" },
+      { "name": "C20", "color": "red" }, { "name": "C21", "color": "red" }
+    ] } },
+    "Intitulé de la compétence": { "rich_text": {} },
+    "Livrable": { "select": { "options": [
+      { "name": "E1 — Données", "color": "blue" },
+      { "name": "E2 — Veille et benchmark", "color": "purple" },
+      { "name": "E3 — Modèle IA", "color": "green" },
+      { "name": "E4 — Application", "color": "orange" },
+      { "name": "E5 — Exploitation", "color": "red" }
+    ] } },
+    "Statut": { "select": { "options": [
+      { "name": "✅ Couvert", "color": "green" },
+      { "name": "🟡 Partiel", "color": "yellow" },
+      { "name": "❌ Absent", "color": "red" },
+      { "name": "➖ Écarté", "color": "gray" }
+    ] } },
+    "Constat et preuve": { "rich_text": {} },
+    "Dernière vérification": { "date": {} },
+    "Validé jury": { "checkbox": {} },
+    "Ligne du classeur": { "number": { "format": "number" } },
+    "Texte du référentiel": { "rich_text": {} }
+  }
+}
